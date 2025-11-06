@@ -28,6 +28,7 @@ import { SupportsModule } from './app/modules/supports/supports.module';
 import { ProgressesModule } from './app/modules/progresses/progresses.module';
 import { DiscussionsModule } from './app/modules/discussions/discussions.module';
 import { GroupMessagesModule } from './app/modules/group-messages/group-messages.module';
+import { RedisModule } from './app/configs/database/redis.config';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { GroupMessagesModule } from './app/modules/group-messages/group-messages
     ProgressesModule,
     DiscussionsModule,
     GroupMessagesModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],
