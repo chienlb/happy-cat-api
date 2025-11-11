@@ -109,12 +109,13 @@ async function bootstrap(): Promise<void> {
 
   app.enableShutdownHooks();
 
-  await app.listen(env.PORT, '0.0.0.0');
-  const prefix = env.API_PREFIX;
-  app.setGlobalPrefix(prefix);
-  logger.log(`Server started at http://localhost:${env.PORT}`);
+  const port = Number(process.env.PORT) || 3000;
+
+  await app.listen(port, '0.0.0.0');
 
   app.useGlobalFilters(new HttpExceptionFilter());
+
+  logger.log(`🚀 App running on http://localhost:${port}`);
 
   const gracefulShutdown = async (reason: string, code = 0): Promise<void> => {
     try {
