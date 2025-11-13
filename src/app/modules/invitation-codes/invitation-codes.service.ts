@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { ClientSession, Model } from 'mongoose';
 import { CreateInvitationCodeDto } from './dto/create-invitation-code.dto';
 import { UsersService } from '../users/users.service';
 import {
@@ -22,13 +22,11 @@ export class InvitationCodesService {
     @InjectModel(InvitationCode.name)
     private readonly invitationCodeModel: Model<InvitationCodeDocument>,
     private readonly userService: UsersService,
-  ) {}
+  ) { }
 
-  async createInvitationCode(createInvitationCodeDto: CreateInvitationCodeDto) {
+  async createInvitationCode(createInvitationCodeDto: CreateInvitationCodeDto, session: ClientSession) {
     try {
-      const user = await this.userService.findUserById(
-        createInvitationCodeDto.createdBy,
-      );
+      const user = await this.userService.findUserById(createInvitationCodeDto.createdBy);
       if (!user) {
         throw new NotFoundException(
           'Creator of invitation code does not exist.',
@@ -46,7 +44,7 @@ export class InvitationCodesService {
 
       const exists = await this.invitationCodeModel.findOne({
         code: codeFinal,
-      });
+      }, null, { session });
       if (exists) {
         throw new BadRequestException(
           'Invitation code already exists, please try again.',
@@ -58,7 +56,7 @@ export class InvitationCodesService {
         code: codeFinal,
         usesLeft: createInvitationCodeDto.totalUses,
         startedAt: createInvitationCodeDto.startedAt || new Date(),
-      });
+      }, { session });
 
       this.logger.log(
         `✅ New invitation code created for user ${user.username}: ${codeFinal}`,

@@ -5,7 +5,7 @@ import {
   HistoryInvitation,
   HistoryInvitationDocument,
 } from './schema/history-invitation.schema';
-import { Model } from 'mongoose';
+import { ClientSession, Model } from 'mongoose';
 import { UsersService } from '../users/users.service';
 import { InjectModel } from '@nestjs/mongoose';
 
@@ -15,10 +15,11 @@ export class HistoryInvitationsService {
     @InjectModel(HistoryInvitation.name)
     private readonly historyModel: Model<HistoryInvitationDocument>,
     private readonly userService: UsersService,
-  ) {}
+  ) { }
 
   async createHistoryInvitation(
     createHistoryInvitationDto: CreateHistoryInvitationDto,
+    session: ClientSession,
   ) {
     const userId = await this.userService.findUserById(
       createHistoryInvitationDto.userId,
@@ -30,31 +31,33 @@ export class HistoryInvitationsService {
       ...createHistoryInvitationDto,
       user: userId,
     });
-    return await historyInvitation.save();
+    return await historyInvitation.save({ session });
   }
 
-  async findAllHistoryInvitations() {
-    return await this.historyModel.find().exec();
+  async findAllHistoryInvitations(session: ClientSession) {
+    return await this.historyModel.find({}, null, { session }).exec();
   }
 
-  async findOneHistoryInvitation(id: string) {
-    return await this.historyModel.findById(id).exec();
+  async findOneHistoryInvitation(id: string, session: ClientSession) {
+    return await this.historyModel.findById(id, null, { session }).exec();
   }
 
   async updateHistoryInvitation(
     id: string,
     updateHistoryInvitationDto: UpdateHistoryInvitationDto,
+    session: ClientSession,
   ) {
     return await this.historyModel.findByIdAndUpdate(
       id,
       updateHistoryInvitationDto,
       {
         new: true,
+        session: session,
       },
-    );
+    ).exec();
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} historyInvitation`;
+  async remove(id: string, session: ClientSession) {
+    return await this.historyModel.findByIdAndDelete(id, { session }).exec();
   }
 }

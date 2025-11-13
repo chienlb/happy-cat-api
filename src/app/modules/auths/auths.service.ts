@@ -35,6 +35,7 @@ import {
   LogoutDeviceAuthDto,
   LogoutNotDeviceAuthDto,
 } from './dto/logout-auth.dto';
+import mongoose from 'mongoose';
 
 @Injectable()
 export class AuthsService {
@@ -56,6 +57,8 @@ export class AuthsService {
     private readonly tokenModel: Model<TokenDocument>,
   ) { }
   async register(registerAuthDto: RegisterAuthDto): Promise<Partial<User>> {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
       // 1. Kiểm tra user trùng
       const existingUser = await this.userModel.findOne({
@@ -136,7 +139,7 @@ export class AuthsService {
             code: inviter.code,
             invitedAt: new Date().toISOString(),
             status: HistoryInvitationStatus.ACCEPTED,
-          });
+          }, session);
 
         this.logger.log(
           `Invitation code ${inviter.code} used by ${registerAuthDto.email}. History record ID: ${historyUsage._id}`,
@@ -181,10 +184,18 @@ export class AuthsService {
           const { data: invitationCode } =
             await this.invitationCodesService.createInvitationCode(
               invitationCodesData,
+              session,
             );
 
+          // invitationCode có thể là một mảng hoặc một object tuỳ theo service trả về, nên kiểm tra và lấy .code phù hợp
+          let codeToLog: string | undefined;
+          if (Array.isArray(invitationCode)) {
+            codeToLog = invitationCode[0]?.code;
+          } else if (invitationCode && typeof invitationCode === 'object' && 'code' in invitationCode) {
+            codeToLog = (invitationCode as any).code;
+          }
           this.logger.log(
-            `Invitation code created for ${savedUser.username}: ${invitationCode.code}`,
+            `Invitation code created for ${savedUser.username}: ${codeToLog}`,
           );
         } catch (err) {
           this.logger.error('Error while creating invitation code:', err);
@@ -234,6 +245,9 @@ export class AuthsService {
       }
 
       throw new BadRequestException('Registration failed. Please try again.');
+    }
+    finally {
+      await session.endSession();
     }
   }
 
