@@ -24,16 +24,19 @@ export class InvitationCodesService {
     private readonly userService: UsersService,
   ) { }
 
-  async createInvitationCode(createInvitationCodeDto: CreateInvitationCodeDto, session: ClientSession) {
+  async createInvitationCode(
+    dto: CreateInvitationCodeDto,
+    session?: ClientSession,   // ✔ session optional
+  ) {
     try {
-      const user = await this.userService.findUserById(createInvitationCodeDto.createdBy);
+      // ✔ Lấy user bằng cách hỗ trợ session nếu có
+      const user = await this.userService.findUserById(dto.createdBy);
       if (!user) {
-        throw new NotFoundException(
-          'Creator of invitation code does not exist.',
-        );
+        throw new NotFoundException('Creator of invitation code does not exist.');
       }
 
-      const slug = (createInvitationCodeDto.code || 'INVITE')
+      // Tạo slug/code
+      const slug = (dto.code || 'INVITE')
         .trim()
         .replace(/\s+/g, '_')
         .toUpperCase();
@@ -42,36 +45,42 @@ export class InvitationCodesService {
       const userIdSuffix = user._id.toString().slice(-4).toUpperCase();
       const codeFinal = `${slug}_${randomNumber}_${userIdSuffix}`;
 
-      const exists = await this.invitationCodeModel.findOne({
-        code: codeFinal,
-      }, null, { session });
+      // Kiểm tra tồn tại (optional session)
+      const exists = await this.invitationCodeModel
+        .findOne({ code: codeFinal })
+        .session(session || null);
+
       if (exists) {
         throw new BadRequestException(
           'Invitation code already exists, please try again.',
         );
       }
 
-      const newInvitationCode = await this.invitationCodeModel.create({
-        ...createInvitationCodeDto,
-        code: codeFinal,
-        usesLeft: createInvitationCodeDto.totalUses,
-        startedAt: createInvitationCodeDto.startedAt || new Date(),
-      }, { session });
-
-      this.logger.log(
-        `✅ New invitation code created for user ${user.username}: ${codeFinal}`,
+      // Tạo mã mời
+      const newCode = await this.invitationCodeModel.create(
+        [
+          {
+            ...dto,
+            code: codeFinal,
+            usesLeft: dto.totalUses,
+            startedAt: dto.startedAt || new Date(),
+          },
+        ],
+        session ? { session } : {}, // ✔ if session exists
       );
+
+      this.logger.log(`🎉 Created invitation code for ${user.username}: ${codeFinal}`);
 
       return {
         message: 'Invitation code created successfully.',
-        data: newInvitationCode,
+        data: newCode[0],
       };
     } catch (error) {
       this.logger.error('❌ Error while creating invitation code:', error);
 
       if (
-        error instanceof BadRequestException ||
-        error instanceof NotFoundException
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
       ) {
         throw error;
       }

@@ -16,6 +16,9 @@ import {
 } from '../history-invitations/schema/history-invitation.schema';
 import { TokensService } from '../tokens/tokens.service';
 import { Token, TokenSchema } from '../tokens/schema/token.schema';
+import { PassportModule } from '@nestjs/passport';
+import { GoogleStrategy } from './strategies/google.strategy';
+import { FacebookStrategy } from './strategies/facebook.strategy';
 
 @Module({
   imports: [
@@ -25,6 +28,8 @@ import { Token, TokenSchema } from '../tokens/schema/token.schema';
       { name: HistoryInvitation.name, schema: HistoryInvitationSchema },
       { name: Token.name, schema: TokenSchema },
     ]),
+    PassportModule.register({ defaultStrategy: 'google', session: false }),
+    PassportModule.register({ defaultStrategy: 'facebook', session: false }),
   ],
   controllers: [AuthsController],
   providers: [
@@ -33,6 +38,8 @@ import { Token, TokenSchema } from '../tokens/schema/token.schema';
     HistoryInvitationsService,
     UsersService,
     TokensService,
+    GoogleStrategy,
+    FacebookStrategy,
   ],
 })
 export class AuthsModule { }

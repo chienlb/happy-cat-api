@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateHistoryInvitationDto } from './dto/create-history-invitation.dto';
 import { UpdateHistoryInvitationDto } from './dto/update-history-invitation.dto';
 import {
@@ -14,50 +14,86 @@ export class HistoryInvitationsService {
   constructor(
     @InjectModel(HistoryInvitation.name)
     private readonly historyModel: Model<HistoryInvitationDocument>,
-    private readonly userService: UsersService,
+    private readonly usersService: UsersService,
   ) { }
 
+  // ============================================================
+  // CREATE HISTORY (inside transaction)
+  // ============================================================
   async createHistoryInvitation(
-    createHistoryInvitationDto: CreateHistoryInvitationDto,
-    session: ClientSession,
+    dto: CreateHistoryInvitationDto,
+    session?: ClientSession,
   ) {
-    const userId = await this.userService.findUserById(
-      createHistoryInvitationDto.userId,
-    );
-    if (!userId) {
-      throw new Error('User not found');
-    }
-    const historyInvitation = new this.historyModel({
-      ...createHistoryInvitationDto,
-      user: userId,
+    const user = await this.usersService.findUserById(dto.userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const history = new this.historyModel({
+      ...dto,
+      userId: user._id,
     });
-    return await historyInvitation.save({ session });
+
+    return await history.save({ session });
   }
 
-  async findAllHistoryInvitations(session: ClientSession) {
-    return await this.historyModel.find({}, null, { session }).exec();
+  // ============================================================
+  // FIND ALL
+  // ============================================================
+  async findAllHistoryInvitations(session?: ClientSession) {
+    return await this.historyModel
+      .find({}, null, session ? { session } : {})
+      .populate('userId')
+      .lean()
+      .exec();
   }
 
-  async findOneHistoryInvitation(id: string, session: ClientSession) {
-    return await this.historyModel.findById(id, null, { session }).exec();
+  // ============================================================
+  // FIND ONE
+  // ============================================================
+  async findOneHistoryInvitation(id: string, session?: ClientSession) {
+    const data = await this.historyModel
+      .findById(id, null, session ? { session } : {})
+      .populate('userId')
+      .lean()
+      .exec();
+
+    if (!data) throw new NotFoundException('History invitation not found');
+
+    return data;
   }
 
+  // ============================================================
+  // UPDATE
+  // ============================================================
   async updateHistoryInvitation(
     id: string,
-    updateHistoryInvitationDto: UpdateHistoryInvitationDto,
-    session: ClientSession,
+    dto: UpdateHistoryInvitationDto,
+    session?: ClientSession,
   ) {
-    return await this.historyModel.findByIdAndUpdate(
-      id,
-      updateHistoryInvitationDto,
-      {
+    const updated = await this.historyModel
+      .findByIdAndUpdate(id, dto, {
         new: true,
-        session: session,
-      },
-    ).exec();
+        session,
+      })
+      .populate('userId')
+      .lean()
+      .exec();
+
+    if (!updated) throw new NotFoundException('History invitation not found');
+
+    return updated;
   }
 
-  async remove(id: string, session: ClientSession) {
-    return await this.historyModel.findByIdAndDelete(id, { session }).exec();
+  // ============================================================
+  // DELETE
+  // ============================================================
+  async remove(id: string, session?: ClientSession) {
+    const deleted = await this.historyModel
+      .findByIdAndDelete(id, { session })
+      .lean()
+      .exec();
+
+    if (!deleted) throw new NotFoundException('History invitation not found');
+
+    return deleted;
   }
 }

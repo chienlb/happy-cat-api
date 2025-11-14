@@ -5,8 +5,8 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectModel, InjectConnection } from '@nestjs/mongoose';
+import { Model, Connection } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import {
   User,
@@ -35,11 +35,14 @@ import {
   LogoutDeviceAuthDto,
   LogoutNotDeviceAuthDto,
 } from './dto/logout-auth.dto';
-import mongoose from 'mongoose';
+import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class AuthsService {
   private readonly logger = new Logger(AuthsService.name);
+  private readonly oauth2Client = new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID as string,
+  );
 
   constructor(
     @InjectModel(User.name)
@@ -48,253 +51,197 @@ export class AuthsService {
     @InjectModel(InvitationCode.name)
     private readonly inviteCodeModel: Model<InvitationCodeDocument>,
 
-    private readonly TokensService: TokensService,
-
+    private readonly tokensService: TokensService,
     private readonly invitationCodesService: InvitationCodesService,
     private readonly historyInvitationsService: HistoryInvitationsService,
 
     @InjectModel(Token.name)
     private readonly tokenModel: Model<TokenDocument>,
+
+    @InjectConnection()
+    private readonly connection: Connection,
   ) { }
+
   async register(registerAuthDto: RegisterAuthDto): Promise<Partial<User>> {
-    const session = await mongoose.startSession();
+    if (this.connection.readyState !== 1) {
+      throw new BadRequestException('Database not ready.');
+    }
+
+    const session = await this.connection.startSession();
     session.startTransaction();
+
+    let savedUser!: UserDocument;
+    let createInvitePayload: CreateInvitationCodeDto | null = null;
+
     try {
-      // 1. Kiểm tra user trùng
-      const existingUser = await this.userModel.findOne({
-        $or: [
-          { email: registerAuthDto.email },
-          { username: registerAuthDto.username },
-        ],
-      });
+      // 1. Check duplicate
+      const existingUser = await this.userModel
+        .findOne({
+          $or: [
+            { email: registerAuthDto.email },
+            { username: registerAuthDto.username },
+          ],
+        })
+        .session(session);
+
       if (existingUser) {
         throw new ConflictException('Email or username already exists.');
       }
 
-      // 2. Kiểm tra logic role
+      // 2. Validate logic
       if (registerAuthDto.role === UserRole.STUDENT) {
-        const missing: string[] = [];
+        const missing = [];
+
         if (!registerAuthDto.inviteCode) {
-          if (!registerAuthDto.school) missing.push('school');
-          if (!registerAuthDto.className) missing.push('className');
-          if (!registerAuthDto.teacher) missing.push('teacher');
-          if (!registerAuthDto.parent) missing.push('parent');
+          if (!registerAuthDto.school) (missing as string[]).push('school');
+          if (!registerAuthDto.className) (missing as string[]).push('className');
+          if (!registerAuthDto.teacher) (missing as string[]).push('teacher');
+          if (!registerAuthDto.parent) (missing as string[]).push('parent');
         }
-        if (missing.length > 0) {
+
+
+        if (missing.length) {
           throw new BadRequestException(
-            `Students must provide the following information: ${missing.join(
-              ', ',
-            )} or enter an invitation code.`,
-          );
-        }
-      } else if (registerAuthDto.role === UserRole.TEACHER) {
-        if (!registerAuthDto.school) {
-          throw new BadRequestException(
-            'Teachers must select the school where they teach.',
+            `Students must provide: ${missing.join(', ')} or enter an invitation code.`,
           );
         }
       }
 
-      // 3. Xử lý mã mời học sinh nhập (nếu có)
+      if (registerAuthDto.role === UserRole.TEACHER) {
+        if (!registerAuthDto.school) {
+          throw new BadRequestException('Teachers must select their school.');
+        }
+      }
+
+      // 3. Handle invite code (student only)
       let invitedBy: string | null = null;
 
-      if (
-        registerAuthDto.inviteCode &&
-        registerAuthDto.role === UserRole.STUDENT
-      ) {
-        const inviter = await this.inviteCodeModel.findOne({
-          code: registerAuthDto.inviteCode,
-        });
+      if (registerAuthDto.inviteCode && registerAuthDto.role === UserRole.STUDENT) {
+        const inviter = await this.inviteCodeModel
+          .findOne({ code: registerAuthDto.inviteCode })
+          .session(session);
 
-        if (!inviter) {
-          this.logger.warn(
-            `Invalid invitation code: ${registerAuthDto.inviteCode}`,
-          );
-          throw new NotFoundException(
-            'Invalid invitation code or inviter does not exist.',
-          );
-        }
+        if (!inviter) throw new NotFoundException('Invalid invite code.');
 
-        const inviterUser = await this.userModel.findById(inviter.createdBy);
-        if (!inviterUser) {
-          this.logger.warn(
-            `Inviter does not exist for code: ${registerAuthDto.inviteCode}`,
-          );
-          throw new NotFoundException(
-            'The inviter does not exist for the provided invitation code.',
-          );
-        }
-
-        if (inviterUser.role === UserRole.STUDENT) {
-          throw new BadRequestException(
-            'Invalid invitation code (students cannot invite).',
-          );
-        }
+        const inviterUser = await this.userModel.findById(inviter.createdBy).session(session);
+        if (!inviterUser) throw new NotFoundException('Inviter does not exist.');
+        if (inviterUser.role === UserRole.STUDENT)
+          throw new BadRequestException('Students cannot invite.');
 
         invitedBy = inviter._id.toString();
 
-        const historyUsage =
-          await this.historyInvitationsService.createHistoryInvitation({
+        await this.historyInvitationsService.createHistoryInvitation(
+          {
             userId: inviterUser._id.toString(),
             code: inviter.code,
             invitedAt: new Date().toISOString(),
             status: HistoryInvitationStatus.ACCEPTED,
-          }, session);
-
-        this.logger.log(
-          `Invitation code ${inviter.code} used by ${registerAuthDto.email}. History record ID: ${historyUsage._id}`,
+          },
+          session,
         );
       }
 
       // 4. Hash password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(registerAuthDto.password, salt);
+      const hashedPassword = await bcrypt.hash(registerAuthDto.password, 10);
 
-      // 5. Tạo user mới (chưa lưu mã mời)
+      // 5. Create user
       const newUser = new this.userModel({
         ...registerAuthDto,
         password: hashedPassword,
         status: UserStatus.ACTIVE,
         isVerify: false,
-        tokenVerify: '',
-        invitedBy: invitedBy ? invitedBy : undefined,
+        invitedBy: invitedBy || undefined,
       });
 
-      // 6. Lưu user trước
-      const savedUser = await newUser.save();
-      this.logger.log(`User ${savedUser.username} registered successfully.`);
+      savedUser = await newUser.save({ session });
 
-      // 7. Tạo mã mời (chỉ cho giáo viên hoặc quản trị)
+      // Prepare auto invite code creation
       if (
         [UserRole.PARENT, UserRole.TEACHER, UserRole.ADMIN].includes(
           savedUser.role as UserRole,
         )
       ) {
+        createInvitePayload = {
+          createdBy: savedUser._id.toString(),
+          event: 'Invitation code for student registration',
+          description: `Invitation code created by ${savedUser.username}`,
+          type: InvitationCodeType.GROUP_JOIN,
+          totalUses: 100,
+          usesLeft: 100,
+          startedAt: new Date().toISOString(),
+        };
+      }
+
+      // 6. Email verify code
+      savedUser.codeVerify = randomUUID().substring(0, 6);
+      await savedUser.save({ session });
+
+      // Commit transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      // 7. Create invitation code AFTER COMMIT (NO SESSION)
+      if (createInvitePayload) {
         try {
-          const invitationCodesData: CreateInvitationCodeDto = {
-            createdBy: savedUser._id.toString(),
-            event: 'Invitation code for student registration',
-            description: `Invitation code created by ${savedUser.username} to invite other students.`,
-            type: InvitationCodeType.GROUP_JOIN,
-            totalUses: 100,
-            usesLeft: 100,
-            startedAt: new Date().toISOString(),
-          };
-
-          const { data: invitationCode } =
-            await this.invitationCodesService.createInvitationCode(
-              invitationCodesData,
-              session,
-            );
-
-          // invitationCode có thể là một mảng hoặc một object tuỳ theo service trả về, nên kiểm tra và lấy .code phù hợp
-          let codeToLog: string | undefined;
-          if (Array.isArray(invitationCode)) {
-            codeToLog = invitationCode[0]?.code;
-          } else if (invitationCode && typeof invitationCode === 'object' && 'code' in invitationCode) {
-            codeToLog = (invitationCode as any).code;
-          }
-          this.logger.log(
-            `Invitation code created for ${savedUser.username}: ${codeToLog}`,
-          );
-        } catch (err) {
-          this.logger.error('Error while creating invitation code:', err);
-          // Không throw — vì không muốn làm fail luôn quá trình đăng ký
+          await this.invitationCodesService.createInvitationCode(createInvitePayload);
+        } catch (e) {
+          this.logger.error('Error creating invitation code:', e);
         }
       }
-      const codeVerify = randomUUID().substring(0, 6);
-      savedUser.codeVerify = codeVerify;
-      await savedUser.save();
 
-      // 8. Gửi email xác minh
-      try {
-        await sendEmail(
-          savedUser.email,
-          'Xác minh email',
-          'account-verification-email',
-          {
-            brandName: 'EnglishOne',
-            userName: savedUser.username,
-            verificationCode: codeVerify,
-            userEmail: savedUser.email,
-            supportEmail: 'support@englishone.com',
-            companyAddress: '242 Nguyen Trai, Q9, TP.HCM',
-            websiteUrl: 'https://englishone.com',
-            twitterUrl: '',
-            facebookUrl: '',
-            year: new Date().getFullYear(),
-          },
-        );
-      } catch (err) {
-        this.logger.error('Error while sending email verification:', err);
-      }
+      // 8. Send verify email
+      sendEmail(
+        savedUser.email,
+        'Mã xác minh tài khoản EnglishOne',
+        'account-verification-email',
+        {
+          brandName: 'EnglishOne',
+          userName: savedUser.username,
+          verificationCode: savedUser.codeVerify,
+          userEmail: savedUser.email,
+          supportEmail: 'support@englishone.com',
+          year: new Date().getFullYear(),
+        },
+      ).catch((e) => this.logger.error('Email send error:', e));
 
-      return savedUser.toObject();
+      const obj = savedUser.toObject();
+      delete (obj as any).password;
+
+      return obj;
     } catch (error) {
-      this.logger.error(
-        `Error registering user ${registerAuthDto.username}:`,
-        error,
-      );
-
-      if (
-        error instanceof BadRequestException ||
-        error instanceof ConflictException ||
-        error instanceof NotFoundException
-      ) {
-        throw error;
-      }
-
-      throw new BadRequestException('Registration failed. Please try again.');
-    }
-    finally {
-      await session.endSession();
+      await session.abortTransaction();
+      session.endSession();
+      this.logger.error('Registration failed:', error);
+      throw error;
     }
   }
-
-  async login(
-    loginAuthDto: LoginAuthDto,
-  ): Promise<Partial<User> & { accessToken: string; refreshToken: string }> {
+  // ============================================================
+  // LOGIN
+  // ============================================================
+  async login(loginAuthDto: LoginAuthDto) {
     try {
       const user = await this.userModel.findOne({
         $or: [{ email: loginAuthDto.email }, { username: loginAuthDto.email }],
       });
 
-      if (!user) {
-        throw new NotFoundException(
-          'User not found with the provided identifier.',
-        );
-      }
+      if (!user) throw new NotFoundException('User not found.');
 
-      const isPasswordValid = await bcrypt.compare(
-        loginAuthDto.password,
-        user.password,
-      );
-
-      if (!isPasswordValid) {
-        throw new BadRequestException('Invalid password.');
-      }
+      const valid = await bcrypt.compare(loginAuthDto.password, user.password);
+      if (!valid) throw new BadRequestException('Invalid password.');
 
       const accessToken = jwt.sign(
         { userId: user._id, role: user.role },
-        process.env.JWT_SECRET || 'default_secret',
+        process.env.JWT_SECRET as string,
         { expiresIn: '1h' },
       );
 
       const refreshToken = jwt.sign(
         { userId: user._id, role: user.role },
-        process.env.JWT_REFRESH_SECRET || 'default_refresh_secret',
+        process.env.JWT_REFRESH_SECRET as string,
         { expiresIn: '7d' },
       );
 
-      await user.save();
-
-      const userObj = user.toObject ? user.toObject() : { ...user };
-      if ('password' in userObj) {
-        // To satisfy the linter and avoid assigning undefined to a string, remove password key entirely
-        delete (userObj as any).password;
-      }
-
-      await this.TokensService.createToken({
+      await this.tokensService.createToken({
         userId: user._id.toString(),
         token: accessToken,
         deviceId: loginAuthDto.deviceId,
@@ -302,180 +249,189 @@ export class AuthsService {
         typeLogin: loginAuthDto.typeLogin,
       });
 
+      const obj = user.toObject();
+      delete (obj as any).password;
+
       return {
-        ...userObj,
+        ...obj,
         accessToken,
         refreshToken,
       };
     } catch (error) {
-      this.logger.error(`Error logging in user ${loginAuthDto.email}:`, error);
-
-      if (
-        error instanceof BadRequestException ||
-        error instanceof NotFoundException
-      ) {
-        throw error;
-      }
-
-      throw new BadRequestException('Login failed. Please try again.');
+      this.logger.error('Login failed:', error);
+      throw error;
     }
   }
 
-  async verifyEmail(
-    codeVerify: string,
-  ): Promise<{ email: string; user: Partial<User> }> {
+  // ============================================================
+  // EMAIL VERIFY / RESEND / FORGOT / RESET / CHANGE PASSWORD
+  // ============================================================
+  async verifyEmail(codeVerify: string) {
     const user = await this.userModel.findOne({ codeVerify });
-    if (!user) {
-      throw new NotFoundException('User not found with the provided code.');
-    }
+    if (!user) throw new NotFoundException('Invalid code.');
 
     user.isVerify = true;
     await user.save();
 
-    return {
-      email: user.email,
-      user: user,
-    };
+    const obj = user.toObject();
+    delete (obj as any).password;
+
+    return { email: user.email, user: obj };
   }
 
-  async resendVerificationEmail(
-    email: string,
-  ): Promise<{ email: string; codeVerify: string }> {
+  async resendVerificationEmail(email: string) {
     const user = await this.userModel.findOne({ email });
-    if (!user) {
-      throw new NotFoundException('User not found with the provided email.');
-    }
+    if (!user) throw new NotFoundException('User not found.');
 
-    const codeVerify = randomUUID().substring(0, 6);
-    user.codeVerify = codeVerify;
+    const code = randomUUID().substring(0, 6);
+    user.codeVerify = code;
     await user.save();
 
-    await sendEmail(email, 'Xác minh email', 'account-verification-email', {
+    sendEmail(email, 'Xác minh email', 'account-verification-email', {
       brandName: 'EnglishOne',
       userName: user.username,
-      verificationCode: codeVerify,
+      verificationCode: code,
       userEmail: user.email,
       supportEmail: 'support@englishone.com',
     });
 
-    return {
-      email: user.email,
-      codeVerify: codeVerify,
-    };
+    return { email: user.email, codeVerify: code };
   }
 
-  async forgotPassword(
-    email: string,
-  ): Promise<{ email: string; codeVerify: string }> {
+  async forgotPassword(email: string) {
     const user = await this.userModel.findOne({ email });
-    if (!user) {
-      throw new NotFoundException('User not found with the provided email.');
-    }
+    if (!user) throw new NotFoundException('User not found.');
 
-    const codeVerify = randomUUID().substring(0, 6);
-    user.codeVerify = codeVerify;
+    const code = randomUUID().substring(0, 6);
+    user.codeVerify = code;
     await user.save();
 
-    await sendEmail(email, 'Đặt lại mật khẩu', 'reset-password-email', {
+    sendEmail(email, 'Đặt lại mật khẩu', 'reset-password-email', {
       brandName: 'EnglishOne',
       userName: user.username,
-      resetCode: codeVerify,
+      resetCode: code,
     });
 
-    return {
-      email: user.email,
-      codeVerify: codeVerify,
-    };
+    return { email: user.email, codeVerify: code };
   }
 
-  async resetPassword(codeVerify: string, password: string): Promise<void> {
+  async resetPassword(codeVerify: string, password: string) {
     const user = await this.userModel.findOne({ codeVerify });
-    if (!user) {
-      throw new NotFoundException('User not found with the provided code.');
-    }
+    if (!user) throw new NotFoundException('User not found.');
 
-    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, 10);
+    await user.save();
   }
 
-  async changePassword(
-    email: string,
-    password: string,
-    codeVerify: string,
-  ): Promise<{ user: Partial<User> }> {
+  async changePassword(email: string, password: string, codeVerify: string) {
     const user = await this.userModel.findOne({ email, codeVerify });
-    if (!user) {
-      throw new NotFoundException('User not found with the provided email.');
-    }
+    if (!user) throw new NotFoundException('User not found.');
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    user.password = hashedPassword;
+    user.password = await bcrypt.hash(password, 10);
     await user.save();
 
+    const obj = user.toObject();
+    delete (obj as any).password;
+
+    return { user: obj };
+  }
+
+  // ============================================================
+  // LOGOUT
+  // ============================================================
+  async logoutAllDevices(dto: LogoutAllDevicesAuthDto) {
+    const r = await this.tokenModel.updateMany(
+      { userId: dto.userId, isDeleted: false },
+      { isDeleted: true },
+    );
+
+    if (r.modifiedCount === 0)
+      throw new NotFoundException('No tokens found.');
+
+    return { message: 'Logout successful.' };
+  }
+
+  async logoutDevice(dto: LogoutDeviceAuthDto) {
+    const r = await this.tokenModel.updateOne(
+      { userId: dto.userId, deviceId: dto.deviceId, isDeleted: false },
+      { isDeleted: true },
+    );
+
+    if (r.modifiedCount === 0)
+      throw new NotFoundException('Token not found.');
+
+    return { message: 'Logout successful.' };
+  }
+
+  async logoutNotDevice(dto: LogoutNotDeviceAuthDto) {
+    const r = await this.tokenModel.updateMany(
+      { userId: dto.userId, deviceId: { $ne: dto.deviceId } },
+      { isDeleted: true },
+    );
+
+    if (r.modifiedCount === 0)
+      throw new NotFoundException('No tokens found.');
+
+    return { message: 'Logout successful.' };
+  }
+
+  async verifyIdToken(credential: string) {
+    const ticket = await this.oauth2Client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID as string,
+    });
+    const payload = ticket.getPayload();
     return {
-      user: user.toObject(),
+      email: payload?.email || '',
+      fullname: payload?.name || '',
+      avatar: payload?.picture || '',
+      provider: 'google',
+      providerId: payload?.sub || '',
     };
   }
 
-  async logoutAllDevices(
-    logoutAllDevicesAuthDto: LogoutAllDevicesAuthDto,
-  ): Promise<{ message: string }> {
-    const tokens = await this.tokenModel.updateMany(
-      {
-        userId: logoutAllDevicesAuthDto.userId,
-        isDeleted: false,
-      },
-      { isDeleted: true },
+  async loginWithGoogle(user: any) {
+    const accessToken = jwt.sign(
+      { userId: user._id.toString(), role: user.role as UserRole },
+      process.env.JWT_SECRET as string,
+      { expiresIn: '1h' },
     );
-    if (tokens.modifiedCount === 0) {
-      throw new NotFoundException('No tokens found for the provided user.');
-    }
-
-    return {
-      message: 'Logout successful.',
-    };
+    const refreshToken = jwt.sign(
+      { userId: user._id.toString(), role: user.role as UserRole },
+      process.env.JWT_REFRESH_SECRET as string,
+      { expiresIn: '7d' },
+    );
+    return { accessToken, refreshToken };
   }
 
-  async logoutDevice(
-    logoutDeviceAuthDto: LogoutDeviceAuthDto,
-  ): Promise<{ message: string }> {
-    const token = await this.tokenModel.updateOne(
-      {
-        userId: logoutDeviceAuthDto.userId,
-        deviceId: logoutDeviceAuthDto.deviceId,
-        isDeleted: false,
-      },
-      { isDeleted: true },
+  async googleOneTap(credential: string) {
+    const result = await this.verifyIdToken(credential);
+    const user = await this.userModel.findOne({ email: result.email });
+    if (!user) throw new NotFoundException('User not found.');
+    const accessToken = jwt.sign(
+      { userId: user._id.toString(), role: user.role as UserRole },
+      process.env.JWT_SECRET as string,
+      { expiresIn: '1h' },
     );
-    if (token.modifiedCount === 0) {
-      throw new NotFoundException(
-        'Token not found for the provided user and device.',
-      );
-    }
-
-    return {
-      message: 'Logout successful.',
-    };
+    const refreshToken = jwt.sign(
+      { userId: user._id.toString(), role: user.role as UserRole },
+      process.env.JWT_REFRESH_SECRET as string,
+      { expiresIn: '7d' },
+    );
+    return { accessToken, refreshToken };
   }
 
-  async logoutNotDevice(
-    logoutNotDeviceAuthDto: LogoutNotDeviceAuthDto,
-  ): Promise<{ message: string }> {
-    const tokens = await this.tokenModel.updateMany(
-      {
-        userId: logoutNotDeviceAuthDto.userId,
-        deviceId: { $ne: logoutNotDeviceAuthDto.deviceId },
-      },
-      { isDeleted: true },
+  async loginWithFacebook(user: any) {
+    const accessToken = jwt.sign(
+      { userId: user._id.toString(), role: user.role as UserRole },
+      process.env.JWT_SECRET as string,
+      { expiresIn: '1h' },
     );
-    if (tokens.modifiedCount === 0) {
-      throw new NotFoundException(
-        'No tokens found for the provided user and device.',
-      );
-    }
-
-    return {
-      message: 'Logout successful.',
-    };
+    const refreshToken = jwt.sign(
+      { userId: user._id.toString(), role: user.role as UserRole },
+      process.env.JWT_REFRESH_SECRET as string,
+      { expiresIn: '7d' },
+    );
+    return { accessToken, refreshToken };
   }
 }

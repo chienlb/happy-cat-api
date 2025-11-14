@@ -15,12 +15,12 @@ export class MailService {
         const env = envSchema.parse(process.env);
 
         this.transporter = nodemailer.createTransport({
-            host: env.EMAIL_HOST,
-            port: env.EMAIL_PORT,
+            host: 'smtp.larksuite.com',
+            port: 587,
             secure: false,
             auth: {
-                user: env.EMAIL_USER,
-                pass: env.EMAIL_PASS,
+                user: 'english.dev@fit.io.vn',
+                pass: 'ZQgcWqGcgWfZF6jV',
             },
         });
     }

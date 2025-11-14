@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Logger } from '@nestjs/common';
+import { Controller, Post, Body, Logger, Get, UseGuards, Req, Res } from '@nestjs/common';
 import { AuthsService } from './auths.service';
 import { RegisterAuthDto } from './dto/register-auth.dto';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
@@ -9,6 +9,7 @@ import {
   LogoutDeviceAuthDto,
   LogoutNotDeviceAuthDto,
 } from './dto/logout-auth.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Auths')
 @Controller('auths')
@@ -272,5 +273,43 @@ export class AuthsController {
       logoutNotDeviceAuthDto,
     );
     return ok(result, 'Logout not device successfully', 200);
+  }
+
+  @ApiOperation({ summary: 'Google login' })
+  @Get('google/login')
+  @UseGuards(AuthGuard('google'))
+  async googleLogin() {
+    return ok('Redirecting to Google...', 'Redirecting to Google...', 200);
+  }
+
+  @ApiOperation({ summary: 'Google callback' })
+  @Get("google/callback")
+  @UseGuards(AuthGuard('google'))
+  async googleCallback(@Req() req, @Res() res) {
+    const { accessToken, refreshToken } = await this.authsService.loginWithGoogle(req.user);
+
+    return res.redirect(`http://localhost:3001/success?token=${accessToken}`);
+  }
+
+  @ApiOperation({ summary: 'Google one tap' })
+  @Post('google/one-tap')
+  async googleOneTap(@Body('credential') credential: string) {
+    const result = await this.authsService.googleOneTap(credential);
+    return ok(result, 'Google one tap successfully', 200);
+  }
+
+  @ApiOperation({ summary: 'Facebook login' })
+  @Get('facebook/login')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookLogin() {
+    return ok('Redirecting to Facebook...', 'Redirecting to Facebook...', 200);
+  }
+
+  @ApiOperation({ summary: 'Facebook callback' })
+  @Get('facebook/callback')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookCallback(@Req() req, @Res() res) {
+    const { accessToken, refreshToken } = await this.authsService.loginWithFacebook(req.user);
+    return res.redirect(`http://localhost:3001/success?token=${accessToken}`);
   }
 }
