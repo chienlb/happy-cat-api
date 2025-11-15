@@ -1,4 +1,13 @@
-import { Controller, Post, Body, Logger, Get, UseGuards, Req, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Logger,
+  Get,
+  UseGuards,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { AuthsService } from './auths.service';
 import { RegisterAuthDto } from './dto/register-auth.dto';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
@@ -285,12 +294,13 @@ export class AuthsController {
   }
 
   @ApiOperation({ summary: 'Google callback' })
-  @Get("google/callback")
+  @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleCallback(@Req() req, @Res() res) {
-    const { accessToken, refreshToken } = await this.authsService.loginWithGoogle(req.user);
+    const { accessToken, refreshToken } =
+      await this.authsService.loginWithGoogle(req.user);
 
-    return res.redirect(`http://localhost:3001/success?token=${accessToken}`);
+    return ok({ accessToken, refreshToken }, 'Google login successfully', 200);
   }
 
   @ApiOperation({ summary: 'Google one tap' })
@@ -311,7 +321,12 @@ export class AuthsController {
   @Get('facebook/callback')
   @UseGuards(AuthGuard('facebook'))
   async facebookCallback(@Req() req, @Res() res) {
-    const { accessToken, refreshToken } = await this.authsService.loginWithFacebook(req.user);
-    return res.redirect(`http://localhost:3001/success?token=${accessToken}`);
+    const { accessToken, refreshToken } =
+      await this.authsService.loginWithFacebook(req.user);
+    return ok(
+      { accessToken, refreshToken },
+      'Facebook login successfully',
+      200,
+    );
   }
 }
