@@ -1,135 +1,383 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang='vi'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <meta http-equiv='X-UA-Compatible' content='IE=edge' />
     <title>Nhắc sắp hết hạn bài tập</title>
-
-    <style>
-        body {
-            margin: 0; padding: 0;
-            background: #F7F9FF;
-            font-family: 'Segoe UI', sans-serif;
-            color: #3A3A3A;
-            line-height: 1.6;
+    <style type='text/css'>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family:
+          'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', 'Trebuchet MS', Arial,
+          sans-serif;
+        background: linear-gradient(
+          135deg,
+          #fff0f5 0%,
+          #fffacd 50%,
+          #ffe5e1 100%
+        );
+        line-height: 1.8;
+        color: #333333;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        box-shadow: 0 8px 24px rgba(255, 182, 193, 0.15);
+        border-radius: 24px;
+        overflow: hidden;
+        border: 4px solid #ffb6c1;
+      }
+      .header {
+        background: linear-gradient(
+          135deg,
+          #ffb6c1 0%,
+          #ffd4a6 50%,
+          #ffb6c1 100%
+        );
+        padding: 50px 30px 40px;
+        text-align: center;
+        position: relative;
+        border-bottom: 6px dashed #ffffff;
+      }
+      .header::before {
+        content: '⏰';
+        font-size: 50px;
+        position: absolute;
+        top: 15px;
+        left: 30px;
+        animation: gentle-bounce 3s infinite;
+      }
+      .header::after {
+        content: '🚨';
+        font-size: 50px;
+        position: absolute;
+        top: 15px;
+        right: 30px;
+        animation: gentle-bounce 3s infinite 0.5s;
+      }
+      @keyframes gentle-bounce {
+        0%,
+        100% {
+          transform: translateY(0);
         }
-
-        .container {
-            max-width: 580px; margin: 0 auto;
-            background: #fff; border-radius: 14px;
-            overflow: hidden;
-            box-shadow: 0 4px 16px rgba(100, 120, 255, 0.12);
+        50% {
+          transform: translateY(-5px);
         }
-
+      }
+      .logo {
+        font-size: 32px;
+        font-weight: 700;
+        color: #ffffff;
+        text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+        letter-spacing: 2px;
+        margin: 0;
+      }
+      .content {
+        padding: 40px 35px;
+        background: #ffffff;
+      }
+      .emoji-large {
+        font-size: 56px;
+        text-align: center;
+        margin: 20px 0;
+        line-height: 1;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+      }
+      .greeting {
+        font-size: 28px;
+        font-weight: 700;
+        color: #ffb6c1;
+        margin: 20px 0 25px 0;
+        text-align: center;
+        text-shadow: 2px 2px 0px rgba(255, 250, 205, 0.3);
+      }
+      .description {
+        font-size: 18px;
+        color: #555555;
+        line-height: 2;
+        margin: 0 0 30px 0;
+        text-align: center;
+      }
+      .highlight {
+        color: #ffb6c1;
+        font-weight: 700;
+        background: linear-gradient(120deg, #fffacd 0%, #fffacd 100%);
+        padding: 3px 10px;
+        border-radius: 10px;
+        display: inline-block;
+        border: 2px solid #ffd4a6;
+      }
+      .deadline-box {
+        background: linear-gradient(135deg, #fff0f5 0%, #fff5f0 100%);
+        border: 4px dashed #ffb6c1;
+        padding: 35px 30px;
+        border-radius: 20px;
+        margin: 40px 0;
+        position: relative;
+        box-shadow: 0 6px 20px rgba(255, 182, 193, 0.2);
+      }
+      .deadline-box::before {
+        content: '📋';
+        position: absolute;
+        top: -25px;
+        left: 30px;
+        font-size: 40px;
+        background: #ffffff;
+        padding: 8px;
+        border-radius: 50%;
+        border: 4px solid #fffacd;
+      }
+      .deadline-title {
+        font-size: 22px;
+        color: #ffb6c1;
+        font-weight: 700;
+        margin: 20px 0 20px 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-align: center;
+        text-shadow: 2px 2px 0px rgba(255, 250, 205, 0.3);
+      }
+      .deadline-item {
+        font-size: 17px;
+        color: #555555;
+        margin: 15px 0;
+        line-height: 2;
+        padding-left: 25px;
+        position: relative;
+      }
+      .deadline-item::before {
+        content: '✨';
+        position: absolute;
+        left: 0;
+        font-size: 20px;
+      }
+      .deadline-item b {
+        color: #ffb6c1;
+        font-weight: 700;
+        background: #fffacd;
+        padding: 3px 8px;
+        border-radius: 8px;
+        border: 2px solid #ffd4a6;
+      }
+      .action-box {
+        background: linear-gradient(135deg, #fffacd 0%, #fff0f5 100%);
+        border: 3px solid #fffacd;
+        padding: 35px 30px;
+        margin: 40px 0;
+        text-align: center;
+        border-radius: 20px;
+        box-shadow: 0 6px 20px rgba(255, 250, 205, 0.2);
+        position: relative;
+      }
+      .action-box::before {
+        content: '⚡';
+        font-size: 40px;
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #ffffff;
+        padding: 8px;
+        border-radius: 50%;
+        border: 4px solid #fffacd;
+      }
+      .action-text {
+        font-size: 18px;
+        color: #555555;
+        line-height: 2;
+        margin-bottom: 20px;
+        font-weight: 600;
+      }
+      .action-link {
+        display: inline-block;
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 20px;
+        padding: 15px 35px;
+        background: linear-gradient(135deg, #ffb6c1, #ffd4a6);
+        border-radius: 30px;
+        border: 4px solid #ffffff;
+        box-shadow: 0 6px 20px rgba(255, 182, 193, 0.25);
+        transition: all 0.3s;
+        text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+      }
+      .action-link:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 25px rgba(255, 182, 193, 0.3);
+      }
+      .divider {
+        height: 4px;
+        background: repeating-linear-gradient(
+          90deg,
+          #ffb6c1 0px,
+          #ffb6c1 10px,
+          #fffacd 10px,
+          #fffacd 20px,
+          #ffd4a6 20px,
+          #ffd4a6 30px,
+          #ffb6c1 30px,
+          #ffb6c1 40px
+        );
+        margin: 40px 0;
+        border-radius: 2px;
+      }
+      .sparkles {
+        text-align: center;
+        font-size: 28px;
+        margin: 30px 0;
+        letter-spacing: 15px;
+      }
+      .footer {
+        background: linear-gradient(
+          135deg,
+          #fff0f5 0%,
+          #fffacd 50%,
+          #fff0f5 100%
+        );
+        padding: 40px 30px;
+        text-align: center;
+        border-top: 4px dashed #ffb6c1;
+      }
+      .footer-text {
+        font-size: 14px;
+        color: #666666;
+        margin: 0 0 15px 0;
+        line-height: 2;
+      }
+      .footer-divider {
+        height: 3px;
+        background: repeating-linear-gradient(
+          90deg,
+          #ffb6c1 0px,
+          #ffb6c1 8px,
+          #fffacd 8px,
+          #fffacd 16px,
+          #ffd4a6 16px,
+          #ffd4a6 24px,
+          #ffb6c1 24px,
+          #ffb6c1 32px
+        );
+        margin: 25px 0;
+        border-radius: 2px;
+      }
+      @media (max-width: 600px) {
+        .content {
+          padding: 30px 20px;
+        }
         .header {
-            background: linear-gradient(135deg, #3A6BFF 0%, #76A7FF 100%);
-            padding: 55px 40px; text-align: center;
+          padding: 40px 20px 30px;
         }
-        .logo {
-            color: #fff; font-size: 20px;
-            letter-spacing: 3px; font-weight: 300;
-            text-transform: uppercase;
-        }
-
-        .content { padding: 60px 40px; }
         .greeting {
-            font-size: 24px; color: #3A6BFF;
-            margin-bottom: 20px; font-weight: 300;
+          font-size: 24px;
         }
         .description {
-            font-size: 15px; color: #555;
-            margin-bottom: 30px;
+          font-size: 16px;
         }
-        .highlight { color: #FF7A3D; font-weight: 600; }
-
-        /* Deadline box */
         .deadline-box {
-            background: #FFF6EE;
-            border: 2px solid #FFB48A;
-            padding: 35px;
-            border-radius: 12px;
-            margin-bottom: 40px;
+          padding: 25px 20px;
         }
-        .deadline-title {
-            font-size: 20px;
-            color: #FF7A3D;
-            font-weight: 600;
-            margin-bottom: 15px;
+        .action-box {
+          padding: 25px 20px;
+        }
+        .footer {
+          padding: 30px 20px;
         }
         .deadline-item {
-            font-size: 14px;
-            color: #554;
-            margin-bottom: 10px;
+          font-size: 15px;
         }
-
-        /* CTA */
-        .action-box {
-            background: #E9F1FF;
-            border: 2px solid #3A6BFF;
-            padding: 35px; text-align: center;
-            border-radius: 12px; margin-bottom: 40px;
-        }
-        .action-link {
-            color: #3A6BFF; font-weight: 600;
-            border-bottom: 2px solid #FF7A3D;
-            text-decoration: none; padding-bottom: 2px;
-            transition: .3s;
-        }
-        .action-link:hover {
-            color: #FF7A3D;
-            border-bottom-color: #3A6BFF;
-        }
-
-        .footer {
-            background: #EEF2FF; padding: 45px;
-            text-align: center;
-            border-top: 2px solid #3A6BFF;
-        }
-        .footer-text { font-size: 12px; color: #3A6BFF; }
+      }
     </style>
-</head>
-
-<body>
-<table width="100%">
-    <tr><td align="center" style="padding: 30px 10px;">
-        <table class="container">
-
-            <tr><td class="header"><div class="logo">{{brandName}}</div></td></tr>
-
-            <tr><td class="content">
-
-                <p class="greeting">Xin chào <b>{{studentName}}</b>,</p>
-
-                <p class="description">
-                    Đây là lời nhắc rằng bài tập <span class="highlight">{{assignmentTitle}}</span> của bạn  
-                    đang <span class="highlight">sắp đến hạn nộp</span>. Hãy hoàn thành trước khi quá muộn nhé!
+  </head>
+  <body>
+    <table width='100%'>
+      <tr>
+        <td align='center' style='padding: 30px 10px;'>
+          <table class='container'>
+            <tr>
+              <td class='header'>
+                <div class='logo'>⏰ {{brandName}} 🚨</div>
+              </td>
+            </tr>
+            <tr>
+              <td class='content'>
+                <div class='emoji-large'>⚠️</div>
+                <p class='greeting'>Xin chào {{studentName}}!</p>
+                <p class='description'>
+                  🔔 Đây là lời nhắc rằng bài tập
+                  <span class='highlight'>{{assignmentTitle}}</span>
+                  của bạn đang
+                  <span class='highlight'>sắp đến hạn nộp</span>
+                  rồi nhé! 🔔<br />
+                  Hãy hoàn thành trước khi quá muộn! ⚡
                 </p>
-
-                <div class="deadline-box">
-                    <div class="deadline-title">Thông tin bài tập</div>
-                    <p class="deadline-item">📘 Khóa học: <b>{{courseName}}</b></p>
-                    <p class="deadline-item">⏳ Hạn nộp: <b>{{deadline}}</b></p>
-                    <p class="deadline-item">🎯 Trạng thái: {{status}}</p>
+                <div class='sparkles'>✨ ⭐ ✨</div>
+                <div class='deadline-box'>
+                  <div class='deadline-title'>📋 Thông tin bài tập</div>
+                  <p class='deadline-item'>
+                    📘 Khóa học:
+                    <b>{{courseName}}</b>
+                  </p>
+                  <p class='deadline-item'>
+                    ⏳ Hạn nộp:
+                    <b>{{deadline}}</b>
+                  </p>
+                  <p class='deadline-item'>🎯 Trạng thái: <b>{{status}}</b></p>
                 </div>
-
-                <div class="action-box">
-                    <p>Nhấn vào đây để hoàn thành bài tập:</p>
-                    <a href="{{assignmentLink}}" class="action-link">Làm bài ngay</a>
+                <div class='divider'></div>
+                <div class='action-box'>
+                  <p class='action-text'>
+                    ⚡ Nhấn vào đây để hoàn thành bài tập ngay nhé!<br />
+                    Đừng để trễ hạn nộp nhé! 🚀
+                  </p>
+                  <a href='{{assignmentLink}}' class='action-link'>📝 Làm bài
+                    ngay</a>
                 </div>
-
-                <p class="description">
-                    Chúc bạn hoàn thành bài tập thật tốt!  
-                    Nếu cần hỗ trợ, đừng ngần ngại liên hệ đội ngũ của chúng tôi.
+                <p class='description'>
+                  💪 Chúc bạn hoàn thành bài tập thật tốt!<br />
+                  🤔 Nếu cần hỗ trợ, đừng ngần ngại liên hệ đội ngũ của chúng
+                  mình nhé! 💌
                 </p>
-
-            </td></tr>
-
-            <tr><td class="footer">
-                <p class="footer-text">© {{year}} {{brandName}}. Mọi quyền được bảo lưu.</p>
-            </td></tr>
-
-        </table>
-    </td></tr>
-</table>
-</body>
+                <div class='sparkles'>🌟 ✨ 🌟 ✨ 🌟</div>
+              </td>
+            </tr>
+            <tr>
+              <td class='footer'>
+                <p class='footer-text'>
+                  ©
+                  {{year}}
+                  {{brandName}}
+                  – Tất cả quyền được bảo lưu! 🎨
+                </p>
+                <p style='font-size: 12px; color: #999999; margin: 20px 0 0 0;'>
+                  💝 Cảm ơn bạn đã tin tưởng
+                  {{brandName}}! 💝
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
 </html>

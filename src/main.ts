@@ -116,6 +116,7 @@ async function bootstrap(): Promise<void> {
     .setVersion(env.SWAGGER_VERSION)
     .addServer('/api/v1')
     .addTag(env.SWAGGER_TAG)
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' })
     .build();
 
   const document = SwaggerModule.createDocument(app, config, {

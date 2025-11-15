@@ -1,248 +1,493 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang='vi'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <meta http-equiv='X-UA-Compatible' content='IE=edge' />
     <title>Tổng kết khóa học</title>
-
-    <style>
-        body {
-            margin: 0; padding: 0;
-            background: #F4F7FF;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
-            color: #2F3A4A;
-            line-height: 1.6;
+    <style type='text/css'>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family:
+          'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', 'Trebuchet MS', Arial,
+          sans-serif;
+        background: linear-gradient(
+          135deg,
+          #f0f8ff 0%,
+          #fffacd 50%,
+          #fff0f5 100%
+        );
+        line-height: 1.8;
+        color: #333333;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        box-shadow: 0 8px 24px rgba(168, 216, 234, 0.15);
+        border-radius: 24px;
+        overflow: hidden;
+        border: 4px solid #a8d8ea;
+      }
+      .header {
+        background: linear-gradient(
+          135deg,
+          #a8d8ea 0%,
+          #b5e5cf 50%,
+          #ffb6c1 100%
+        );
+        padding: 50px 30px 40px;
+        text-align: center;
+        position: relative;
+        border-bottom: 6px dashed #ffffff;
+      }
+      .header::before {
+        content: '🎓';
+        font-size: 50px;
+        position: absolute;
+        top: 15px;
+        left: 30px;
+        animation: gentle-bounce 3s infinite;
+      }
+      .header::after {
+        content: '🏆';
+        font-size: 50px;
+        position: absolute;
+        top: 15px;
+        right: 30px;
+        animation: gentle-bounce 3s infinite 0.5s;
+      }
+      @keyframes gentle-bounce {
+        0%,
+        100% {
+          transform: translateY(0);
         }
-
-        .container {
-            max-width: 580px;
-            margin: 0 auto;
-            background: #ffffff;
-            border-radius: 14px;
-            overflow: hidden;
-            box-shadow: 0 4px 18px rgba(0, 43, 128, 0.12);
+        50% {
+          transform: translateY(-5px);
         }
-
-        /* HEADER */
-        .header {
-            background: linear-gradient(135deg, #0C2E77 0%, #4E8CFF 100%);
-            padding: 60px 40px;
-            text-align: center;
+      }
+      .logo {
+        font-size: 32px;
+        font-weight: 700;
+        color: #ffffff;
+        text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+        letter-spacing: 2px;
+        margin: 0;
+      }
+      .content {
+        padding: 40px 35px;
+        background: #ffffff;
+      }
+      .emoji-large {
+        font-size: 56px;
+        text-align: center;
+        margin: 20px 0;
+        line-height: 1;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
         }
-
-        .logo {
-            font-size: 20px;
-            color: #ffffff;
-            font-weight: 300;
-            letter-spacing: 3px;
-            text-transform: uppercase;
+        50% {
+          transform: scale(1.1);
         }
-
+      }
+      .greeting {
+        font-size: 28px;
+        font-weight: 700;
+        color: #a8d8ea;
+        margin: 20px 0 25px 0;
+        text-align: center;
+        text-shadow: 2px 2px 0px rgba(255, 250, 205, 0.3);
+      }
+      .description {
+        font-size: 18px;
+        color: #555555;
+        line-height: 2;
+        margin: 0 0 30px 0;
+        text-align: center;
+      }
+      .highlight {
+        color: #a8d8ea;
+        font-weight: 700;
+        background: linear-gradient(120deg, #fffacd 0%, #fffacd 100%);
+        padding: 3px 10px;
+        border-radius: 10px;
+        display: inline-block;
+        border: 2px solid #b5e5cf;
+      }
+      .summary-box {
+        background: linear-gradient(135deg, #f0f8ff 0%, #fff5f0 100%);
+        padding: 40px 30px;
+        border-radius: 20px;
+        border: 4px dashed #a8d8ea;
+        margin: 40px 0;
+        position: relative;
+        box-shadow: 0 6px 20px rgba(168, 216, 234, 0.2);
+        text-align: center;
+      }
+      .summary-box::before {
+        content: '📊';
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 40px;
+        background: #ffffff;
+        padding: 8px;
+        border-radius: 50%;
+        border: 4px solid #fffacd;
+      }
+      .summary-title {
+        font-size: 24px;
+        color: #a8d8ea;
+        font-weight: 700;
+        margin: 20px 0 25px 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-shadow: 2px 2px 0px rgba(255, 250, 205, 0.3);
+      }
+      .summary-item {
+        font-size: 17px;
+        margin: 15px 0;
+        color: #555555;
+        line-height: 2;
+        padding-left: 25px;
+        position: relative;
+        text-align: left;
+      }
+      .summary-item::before {
+        content: '✨';
+        position: absolute;
+        left: 0;
+        font-size: 20px;
+      }
+      .summary-item b {
+        color: #a8d8ea;
+        font-weight: 700;
+        background: #fffacd;
+        padding: 3px 8px;
+        border-radius: 8px;
+        border: 2px solid #b5e5cf;
+      }
+      .achievement-box {
+        background: linear-gradient(135deg, #fffacd 0%, #fff5f0 100%);
+        border-radius: 20px;
+        border: 4px dashed #ffd4a6;
+        padding: 35px 30px;
+        margin: 40px 0;
+        position: relative;
+        box-shadow: 0 6px 20px rgba(255, 212, 166, 0.2);
+        text-align: center;
+      }
+      .achievement-box::before {
+        content: '🏅';
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 40px;
+        background: #ffffff;
+        padding: 8px;
+        border-radius: 50%;
+        border: 4px solid #fffacd;
+      }
+      .achievement-title {
+        font-size: 22px;
+        color: #ffb6c1;
+        font-weight: 700;
+        margin: 20px 0 20px 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-shadow: 2px 2px 0px rgba(255, 250, 205, 0.3);
+      }
+      .achievement-text {
+        font-size: 17px;
+        color: #555555;
+        line-height: 2;
+        margin: 15px 0;
+        text-align: left;
+        padding-left: 25px;
+        position: relative;
+      }
+      .achievement-text::before {
+        content: '⭐';
+        position: absolute;
+        left: 0;
+        font-size: 20px;
+      }
+      .achievement-text b {
+        color: #ffb6c1;
+        font-weight: 700;
+        background: #fffacd;
+        padding: 3px 8px;
+        border-radius: 8px;
+        border: 2px solid #ffd4a6;
+      }
+      .achievement-text i {
+        color: #a8d8ea;
+        font-style: italic;
+        font-weight: 600;
+      }
+      .action-box {
+        background: linear-gradient(135deg, #fffacd 0%, #f0f8ff 100%);
+        padding: 35px 30px;
+        border-radius: 20px;
+        border: 3px solid #fffacd;
+        text-align: center;
+        margin: 40px 0;
+        box-shadow: 0 6px 20px rgba(255, 250, 205, 0.2);
+        position: relative;
+      }
+      .action-box::before {
+        content: '📜';
+        font-size: 40px;
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #ffffff;
+        padding: 8px;
+        border-radius: 50%;
+        border: 4px solid #fffacd;
+      }
+      .action-text {
+        font-size: 18px;
+        color: #555555;
+        margin: 15px 0 20px 0;
+        line-height: 2;
+        font-weight: 600;
+      }
+      .action-link {
+        display: inline-block;
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 20px;
+        padding: 15px 35px;
+        background: linear-gradient(135deg, #a8d8ea, #b5e5cf);
+        border-radius: 30px;
+        border: 4px solid #ffffff;
+        box-shadow: 0 6px 20px rgba(168, 216, 234, 0.25);
+        transition: all 0.3s;
+        text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+      }
+      .action-link:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 25px rgba(168, 216, 234, 0.3);
+      }
+      .divider {
+        height: 4px;
+        background: repeating-linear-gradient(
+          90deg,
+          #a8d8ea 0px,
+          #a8d8ea 10px,
+          #fffacd 10px,
+          #fffacd 20px,
+          #b5e5cf 20px,
+          #b5e5cf 30px,
+          #a8d8ea 30px,
+          #a8d8ea 40px
+        );
+        margin: 40px 0;
+        border-radius: 2px;
+      }
+      .sparkles {
+        text-align: center;
+        font-size: 28px;
+        margin: 30px 0;
+        letter-spacing: 15px;
+      }
+      .footer {
+        background: linear-gradient(
+          135deg,
+          #f0f8ff 0%,
+          #fffacd 50%,
+          #f0f8ff 100%
+        );
+        padding: 40px 30px;
+        text-align: center;
+        border-top: 4px dashed #a8d8ea;
+      }
+      .footer-text {
+        font-size: 14px;
+        color: #666666;
+        margin: 0 0 15px 0;
+        line-height: 2;
+      }
+      .footer-divider {
+        height: 3px;
+        background: repeating-linear-gradient(
+          90deg,
+          #a8d8ea 0px,
+          #a8d8ea 8px,
+          #fffacd 8px,
+          #fffacd 16px,
+          #b5e5cf 16px,
+          #b5e5cf 24px,
+          #a8d8ea 24px,
+          #a8d8ea 32px
+        );
+        margin: 25px 0;
+        border-radius: 2px;
+      }
+      .support-link {
+        color: #a8d8ea;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 16px;
+        border-bottom: 3px solid #fffacd;
+        padding-bottom: 2px;
+      }
+      .support-link:hover {
+        color: #ffb6c1;
+        border-bottom-color: #ffb6c1;
+      }
+      @media (max-width: 600px) {
         .content {
-            padding: 60px 40px;
+          padding: 30px 20px;
         }
-
+        .header {
+          padding: 40px 20px 30px;
+        }
         .greeting {
-            font-size: 24px;
-            font-weight: 300;
-            color: #0C2E77;
-            margin-bottom: 25px;
+          font-size: 24px;
         }
-
         .description {
-            font-size: 15px;
-            color: #4A5568;
-            margin-bottom: 30px;
+          font-size: 16px;
         }
-
-        .highlight {
-            font-weight: 600;
-            color: #0C2E77;
-        }
-
-        /* SUMMARY BOX */
         .summary-box {
-            background: linear-gradient(135deg, #EAF1FF 0%, #F4F8FF 100%);
-            padding: 40px;
-            border-radius: 14px;
-            border: 2px solid #B8CEFF;
-            margin-bottom: 40px;
-            box-shadow: 0 4px 14px rgba(78, 140, 255, 0.10);
+          padding: 30px 20px;
         }
-
-        .summary-title {
-            font-size: 22px;
-            color: #0C2E77;
-            font-weight: 600;
-            margin-bottom: 15px;
-        }
-
         .summary-item {
-            font-size: 14px;
-            margin-bottom: 12px;
-            color: #445066;
+          font-size: 15px;
         }
-
-        /* Achievement Box */
         .achievement-box {
-            background: linear-gradient(135deg, #FFF6E2 0%, #FFFDF7 100%);
-            border-radius: 12px;
-            border: 2px solid #FFD98A;
-            padding: 30px;
-            margin-bottom: 40px;
+          padding: 25px 20px;
         }
-
-        .achievement-title {
-            font-size: 20px;
-            color: #C78500;
-            font-weight: 600;
-            margin-bottom: 15px;
-        }
-
         .achievement-text {
-            font-size: 14px;
-            color: #6A5520;
-            line-height: 1.8;
+          font-size: 15px;
         }
-
-        /* CTA */
         .action-box {
-            background: linear-gradient(135deg, #E6F3FF 0%, #F0F9FF 100%);
-            padding: 35px;
-            border-radius: 12px;
-            border: 2px solid #4E8CFF;
-            text-align: center;
-            margin-bottom: 40px;
+          padding: 25px 20px;
         }
-
-        .action-text {
-            font-size: 14px;
-            color: #4A5568;
-            margin-bottom: 15px;
-        }
-
-        .action-link {
-            color: #0C2E77;
-            font-weight: 600;
-            text-decoration: none;
-            border-bottom: 2px solid #4E8CFF;
-            padding-bottom: 2px;
-            transition: .3s;
-        }
-
-        .action-link:hover {
-            color: #4E8CFF;
-            border-bottom-color: #0C2E77;
-        }
-
-        .divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #4E8CFF, transparent);
-            margin: 40px 0;
-        }
-
-        /* FOOTER */
         .footer {
-            background: linear-gradient(135deg, #E8EEFF 0%, #F3F7FF 100%);
-            padding: 50px 40px;
-            text-align: center;
-            border-top: 2px solid #4E8CFF;
+          padding: 30px 20px;
         }
-
-        .footer-text {
-            font-size: 12px;
-            color: #0C2E77;
-            margin-bottom: 12px;
-        }
-
-        .footer-divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #FFD98A, transparent);
-            margin: 25px 0;
-        }
-
-        @media (max-width: 600px) {
-            .content, .header, .footer { padding: 40px 25px; }
-            .summary-box, .achievement-box, .action-box { padding: 25px; }
-        }
+      }
     </style>
-</head>
-
-<body>
-<table width="100%" role="presentation">
-    <tr>
-        <td align="center" style="padding: 30px 10px;">
-            <table class="container" role="presentation">
-
-                <!-- HEADER -->
-                <tr>
-                    <td class="header">
-                        <div class="logo">{{brandName}}</div>
-                    </td>
-                </tr>
-
-                <!-- CONTENT -->
-                <tr>
-                    <td class="content">
-                        <p class="greeting">Xin chào <b>{{studentName}}</b>,</p>
-
-                        <p class="description">
-                            Chúc mừng bạn đã <span class="highlight">hoàn thành khóa học {{courseName}}</span>!  
-                            Dưới đây là tổng kết toàn bộ hành trình học tập của bạn.
-                        </p>
-
-                        <!-- SUMMARY BOX -->
-                        <div class="summary-box">
-                            <div class="summary-title">Tổng quan kết quả học tập</div>
-
-                            <p class="summary-item">🎯 Tỷ lệ hoàn thành: <b>{{completionRate}}%</b></p>
-                            <p class="summary-item">⭐ Điểm trung bình: <b>{{averageScore}}</b></p>
-                            <p class="summary-item">⏳ Tổng thời gian học: <b>{{studyHours}} giờ</b></p>
-                            <p class="summary-item">📚 Số bài đã hoàn thành: <b>{{totalLessons}}</b></p>
-                        </div>
-
-                        <!-- ACHIEVEMENT BOX -->
-                        <div class="achievement-box">
-                            <div class="achievement-title">Thành tích nổi bật</div>
-                            <p class="achievement-text">
-                                • Bạn đã thể hiện sự kiên trì và tiến bộ rõ rệt trong suốt khóa học.<br>
-                                • Thế mạnh của bạn: <b>{{strengths}}</b><br>
-                                • Gợi ý cải thiện thêm: <b>{{improvements}}</b><br>
-                                • Giảng viên nhận xét: <i>{{teacherComment}}</i>
-                            </p>
-                        </div>
-
-                        <!-- CTA -->
-                        <div class="action-box">
-                            <p class="action-text">Bạn có thể tải chứng nhận hoàn thành tại đây:</p>
-                            <a href="{{certificateLink}}" class="action-link">Tải chứng nhận</a>
-                        </div>
-
-                        <p class="description">
-                            Cảm ơn bạn đã đồng hành cùng chúng tôi.  
-                            Chúc bạn tiếp tục thành công trên hành trình học tập tiếp theo!
-                        </p>
-
-                        <div class="divider"></div>
-                    </td>
-                </tr>
-
-                <!-- FOOTER -->
-                <tr>
-                    <td class="footer">
-                        <p class="footer-text">© {{year}} {{brandName}}. Mọi quyền được bảo lưu.</p>
-                        <div class="footer-divider"></div>
-                        <p class="footer-text">
-                            <a href="{{supportLink}}" style="color:#0C2E77; text-decoration:none;">
-                                Liên hệ hỗ trợ
-                            </a>
-                        </p>
-                    </td>
-                </tr>
-
-            </table>
+  </head>
+  <body>
+    <table width='100%' role='presentation'>
+      <tr>
+        <td align='center' style='padding: 30px 10px;'>
+          <table class='container' role='presentation'>
+            <tr>
+              <td class='header'>
+                <div class='logo'>🎓 {{brandName}} 🏆</div>
+              </td>
+            </tr>
+            <tr>
+              <td class='content'>
+                <div class='emoji-large'>🎉</div>
+                <p class='greeting'>Xin chào {{studentName}}!</p>
+                <p class='description'>
+                  🎊 Chúc mừng bạn đã
+                  <span class='highlight'>hoàn thành khóa học
+                    {{courseName}}</span>
+                  rồi nhé! 🎊<br />
+                  Dưới đây là tổng kết toàn bộ hành trình học tập tuyệt vời của
+                  bạn! 🌟
+                </p>
+                <div class='sparkles'>✨ ⭐ ✨</div>
+                <div class='summary-box'>
+                  <div class='summary-title'>📊 Tổng quan kết quả học tập</div>
+                  <p class='summary-item'>
+                    🎯 Tỷ lệ hoàn thành:
+                    <b>{{completionRate}}%</b>
+                  </p>
+                  <p class='summary-item'>⭐ Điểm trung bình:
+                    <b>{{averageScore}}</b></p>
+                  <p class='summary-item'>
+                    ⏳ Tổng thời gian học:
+                    <b>{{studyHours}} giờ</b>
+                  </p>
+                  <p class='summary-item'>
+                    📚 Số bài đã hoàn thành:
+                    <b>{{totalLessons}}</b>
+                  </p>
+                </div>
+                <div class='achievement-box'>
+                  <div class='achievement-title'>🏅 Thành tích nổi bật</div>
+                  <p class='achievement-text'>
+                    ⭐ Bạn đã thể hiện sự kiên trì và tiến bộ rõ rệt trong suốt
+                    khóa học! 🌟
+                  </p>
+                  <p class='achievement-text'>
+                    💪 Thế mạnh của bạn:
+                    <b>{{strengths}}</b>
+                  </p>
+                  <p class='achievement-text'>
+                    💡 Gợi ý cải thiện thêm:
+                    <b>{{improvements}}</b>
+                  </p>
+                  <p class='achievement-text'>
+                    👨‍🏫 Giảng viên nhận xét:
+                    <i>{{teacherComment}}</i>
+                  </p>
+                </div>
+                <div class='divider'></div>
+                <div class='action-box'>
+                  <p class='action-text'>
+                    📜 Bạn có thể tải chứng nhận hoàn thành tại đây nhé!<br />
+                    Hãy bấm vào đây để tải ngay!
+                  </p>
+                  <a href='{{certificateLink}}' class='action-link'>🏆 Tải chứng
+                    nhận</a>
+                </div>
+                <p class='description'>
+                  💝 Cảm ơn bạn đã đồng hành cùng chúng mình! 💝<br />
+                  🚀 Chúc bạn tiếp tục thành công trên hành trình học tập tiếp
+                  theo! 🚀
+                </p>
+                <div class='sparkles'>🌟 ✨ 🌟 ✨ 🌟</div>
+              </td>
+            </tr>
+            <tr>
+              <td class='footer'>
+                <p class='footer-text'>
+                  ©
+                  {{year}}
+                  {{brandName}}
+                  – Tất cả quyền được bảo lưu! 🎨
+                </p>
+                <div class='footer-divider'></div>
+                <p class='footer-text'>
+                  💭 Có thắc mắc gì không? Hãy
+                  <a href='{{supportLink}}' class='support-link'>💌 Liên hệ hỗ
+                    trợ</a>
+                  ngay nhé!
+                </p>
+                <p style='font-size: 12px; color: #999999; margin: 20px 0 0 0;'>
+                  💝 Cảm ơn bạn đã tin tưởng
+                  {{brandName}}! 💝
+                </p>
+              </td>
+            </tr>
+          </table>
         </td>
-    </tr>
-</table>
-</body>
+      </tr>
+    </table>
+  </body>
 </html>

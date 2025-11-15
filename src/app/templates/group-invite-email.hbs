@@ -1,268 +1,418 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<html lang='vi'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <meta http-equiv='X-UA-Compatible' content='IE=edge' />
     <title>Được thêm vào nhóm</title>
-    <style type="text/css">
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
-            background: #FFFEF5;
-            line-height: 1.6;
-            color: #3a3a3a;
+    <style type='text/css'>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family:
+          'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', 'Trebuchet MS', Arial,
+          sans-serif;
+        background: linear-gradient(
+          135deg,
+          #f0f8ff 0%,
+          #fffacd 50%,
+          #fff0f5 100%
+        );
+        line-height: 1.8;
+        color: #333333;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        box-shadow: 0 8px 24px rgba(168, 216, 234, 0.15);
+        border-radius: 24px;
+        overflow: hidden;
+        border: 4px solid #a8d8ea;
+      }
+      .header {
+        background: linear-gradient(
+          135deg,
+          #a8d8ea 0%,
+          #b5e5cf 50%,
+          #a8d8ea 100%
+        );
+        padding: 50px 30px 40px;
+        text-align: center;
+        position: relative;
+        border-bottom: 6px dashed #ffffff;
+      }
+      .header::before {
+        content: '👥';
+        font-size: 50px;
+        position: absolute;
+        top: 15px;
+        left: 30px;
+        animation: gentle-bounce 3s infinite;
+      }
+      .header::after {
+        content: '🎉';
+        font-size: 50px;
+        position: absolute;
+        top: 15px;
+        right: 30px;
+        animation: gentle-bounce 3s infinite 0.5s;
+      }
+      @keyframes gentle-bounce {
+        0%,
+        100% {
+          transform: translateY(0);
         }
-        table {
-            border-collapse: collapse;
-            width: 100%;
+        50% {
+          transform: translateY(-5px);
         }
-        img {
-            max-width: 100%;
-            height: auto;
-            display: block;
+      }
+      .logo {
+        font-size: 32px;
+        font-weight: 700;
+        color: #ffffff;
+        text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+        letter-spacing: 2px;
+        margin: 0;
+      }
+      .content {
+        padding: 40px 35px;
+        background: #ffffff;
+      }
+      .emoji-large {
+        font-size: 56px;
+        text-align: center;
+        margin: 20px 0;
+        line-height: 1;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
         }
-        .container {
-            max-width: 580px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            box-shadow: 0 4px 16px rgba(45, 157, 217, 0.12);
-            border-radius: 12px;
-            overflow: hidden;
+        50% {
+          transform: scale(1.1);
         }
-        /* header gradient sky blue sang mint */
-        .header {
-            background: linear-gradient(135deg, #2D9DD9 0%, #4ECDC4 100%);
-            padding: 70px 40px 50px;
-            text-align: center;
-        }
-        .logo {
-            font-size: 18px;
-            font-weight: 300;
-            color: #ffffff;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }
+      }
+      .greeting {
+        font-size: 28px;
+        font-weight: 700;
+        color: #a8d8ea;
+        margin: 20px 0 25px 0;
+        text-align: center;
+        text-shadow: 2px 2px 0px rgba(255, 250, 205, 0.3);
+      }
+      .description {
+        font-size: 18px;
+        color: #555555;
+        line-height: 2;
+        margin: 0 0 30px 0;
+        text-align: center;
+      }
+      .highlight {
+        color: #ffb6c1;
+        font-weight: 700;
+        background: linear-gradient(120deg, #fffacd 0%, #fffacd 100%);
+        padding: 3px 10px;
+        border-radius: 10px;
+        display: inline-block;
+        border: 2px solid #ffd4a6;
+      }
+      .group-card {
+        background: linear-gradient(135deg, #fff0f5 0%, #f0f8ff 100%);
+        border: 4px dashed #ffb6c1;
+        padding: 40px 30px;
+        border-radius: 20px;
+        margin: 40px 0;
+        position: relative;
+        text-align: center;
+        box-shadow: 0 6px 20px rgba(255, 182, 193, 0.2);
+      }
+      .group-card::before {
+        content: '🎊';
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 40px;
+        background: #ffffff;
+        padding: 8px;
+        border-radius: 50%;
+        border: 4px solid #fffacd;
+      }
+      .group-icon {
+        font-size: 56px;
+        margin-bottom: 20px;
+        line-height: 1;
+      }
+      .group-name {
+        font-size: 26px;
+        color: #a8d8ea;
+        font-weight: 700;
+        margin: 20px 0 18px 0;
+        text-shadow: 2px 2px 0px rgba(255, 250, 205, 0.3);
+      }
+      .group-description {
+        font-size: 16px;
+        color: #666666;
+        line-height: 2;
+        margin: 0;
+      }
+      .members-section {
+        margin: 40px 0;
+        background: linear-gradient(135deg, #f0f8ff 0%, #fff5f0 100%);
+        border: 3px solid #b5e5cf;
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 6px 15px rgba(181, 229, 207, 0.2);
+        position: relative;
+      }
+      .members-section::before {
+        content: '👫';
+        position: absolute;
+        top: -25px;
+        left: 30px;
+        font-size: 40px;
+        background: #ffffff;
+        padding: 8px;
+        border-radius: 50%;
+        border: 4px solid #fffacd;
+      }
+      .members-title {
+        font-size: 18px;
+        color: #a8d8ea;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin: 20px 0 25px 0;
+        font-weight: 700;
+        text-align: center;
+      }
+      .member-item {
+        font-size: 17px;
+        color: #555555;
+        margin: 0 0 15px 0;
+        padding-left: 30px;
+        position: relative;
+        line-height: 1.8;
+      }
+      .member-item::before {
+        content: '👤';
+        position: absolute;
+        left: 0;
+        font-size: 20px;
+      }
+      .action-section {
+        margin: 40px 0;
+        text-align: center;
+        background: linear-gradient(135deg, #fffacd 0%, #fff0f5 100%);
+        padding: 30px;
+        border-radius: 20px;
+        border: 3px solid #fffacd;
+        box-shadow: 0 6px 15px rgba(255, 250, 205, 0.2);
+      }
+      .action-text {
+        font-size: 18px;
+        color: #555555;
+        line-height: 2;
+        margin: 0 0 20px 0;
+        font-weight: 600;
+      }
+      .action-link {
+        display: inline-block;
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 20px;
+        padding: 15px 35px;
+        background: linear-gradient(135deg, #a8d8ea, #b5e5cf);
+        border-radius: 30px;
+        border: 4px solid #ffffff;
+        box-shadow: 0 6px 20px rgba(168, 216, 234, 0.25);
+        transition: all 0.3s;
+        text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+      }
+      .action-link:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 25px rgba(168, 216, 234, 0.3);
+      }
+      .divider {
+        height: 4px;
+        background: repeating-linear-gradient(
+          90deg,
+          #a8d8ea 0px,
+          #a8d8ea 10px,
+          #fffacd 10px,
+          #fffacd 20px,
+          #b5e5cf 20px,
+          #b5e5cf 30px,
+          #a8d8ea 30px,
+          #a8d8ea 40px
+        );
+        margin: 40px 0;
+        border-radius: 2px;
+      }
+      .sparkles {
+        text-align: center;
+        font-size: 28px;
+        margin: 30px 0;
+        letter-spacing: 15px;
+      }
+      .footer {
+        background: linear-gradient(
+          135deg,
+          #f0f8ff 0%,
+          #fffacd 50%,
+          #f0f8ff 100%
+        );
+        padding: 40px 30px;
+        text-align: center;
+        border-top: 4px dashed #a8d8ea;
+      }
+      .footer-text {
+        font-size: 14px;
+        color: #666666;
+        margin: 0 0 15px 0;
+        line-height: 2;
+      }
+      .footer-divider {
+        height: 3px;
+        background: repeating-linear-gradient(
+          90deg,
+          #a8d8ea 0px,
+          #a8d8ea 8px,
+          #fffacd 8px,
+          #fffacd 16px,
+          #b5e5cf 16px,
+          #b5e5cf 24px,
+          #a8d8ea 24px,
+          #a8d8ea 32px
+        );
+        margin: 25px 0;
+        border-radius: 2px;
+      }
+      .leave-link {
+        color: #ffb6c1;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 16px;
+        border-bottom: 3px solid #fffacd;
+        padding-bottom: 2px;
+      }
+      .leave-link:hover {
+        color: #ffc0cb;
+        border-bottom-color: #ffb6c1;
+      }
+      @media (max-width: 600px) {
         .content {
-            padding: 70px 40px;
+          padding: 30px 20px;
         }
-        /* greeting màu sky blue */
+        .header {
+          padding: 40px 20px 30px;
+        }
         .greeting {
-            font-size: 24px;
-            font-weight: 300;
-            color: #2D9DD9;
-            margin: 0 0 35px 0;
-            letter-spacing: 0.5px;
+          font-size: 24px;
         }
         .description {
-            font-size: 15px;
-            color: #5a5a5a;
-            line-height: 1.8;
-            margin: 0 0 32px 0;
+          font-size: 16px;
         }
-        /* highlight màu coral */
-        .highlight {
-            color: #FF6B6B;
-            font-weight: 600;
-        }
-        /* group-card background gradient soft pink nhạt */
         .group-card {
-            background: linear-gradient(135deg, #FFE8E6 0%, #FFF5F5 100%);
-            border: 2px solid #FFB6C1;
-            border-radius: 12px;
-            padding: 50px 40px;
-            margin: 50px 0;
-            position: relative;
-            text-align: center;
-            box-shadow: 0 4px 16px rgba(255, 182, 193, 0.15);
+          padding: 30px 20px;
         }
-        .group-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #FFD700 0%, #4ECDC4 100%);
-            border-radius: 12px 12px 0 0;
-        }
-        .group-icon {
-            font-size: 48px;
-            margin-bottom: 20px;
-            line-height: 1;
-        }
-        /* group-name màu sky blue */
-        .group-name {
-            font-size: 24px;
-            color: #2D9DD9;
-            font-weight: 500;
-            margin: 20px 0 18px 0;
-            letter-spacing: -0.2px;
-        }
-        .group-description {
-            font-size: 14px;
-            color: #666666;
-            line-height: 1.8;
-            margin: 0;
-        }
-        /* members-section background gradient mint nhạt */
         .members-section {
-            margin: 50px 0;
-            background: linear-gradient(135deg, #E0F7F4 0%, #F0FFFE 100%);
-            border: 2px solid #4ECDC4;
-            padding: 35px 40px;
-            border-radius: 8px;
+          padding: 25px 20px;
         }
-        /* members-title màu mint green */
-        .members-title {
-            font-size: 12px;
-            color: #4ECDC4;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin: 0 0 25px 0;
-            font-weight: 700;
+        .footer {
+          padding: 30px 20px;
         }
         .member-item {
-            font-size: 14px;
-            color: #666666;
-            margin: 0 0 12px 0;
-            padding-left: 20px;
-            position: relative;
+          font-size: 15px;
         }
-        /* member-item bullet màu coral */
-        .member-item::before {
-            content: '•';
-            position: absolute;
-            left: 0;
-            color: #FF6B6B;
-            font-weight: 600;
-        }
-        .action-section {
-            margin: 40px 0;
-            text-align: center;
-        }
-        .action-text {
-            font-size: 14px;
-            color: #666666;
-            line-height: 1.8;
-            margin: 0 0 20px 0;
-        }
-        /* action-link màu sky blue */
-        .action-link {
-            color: #2D9DD9;
-            text-decoration: none;
-            font-weight: 600;
-            border-bottom: 2px solid #FF6B6B;
-            transition: all 0.3s ease;
-        }
-        .action-link:hover {
-            color: #FF6B6B;
-            border-bottom-color: #2D9DD9;
-        }
-        /* divider gradient mint sang sky blue */
-        .divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #4ECDC4, transparent);
-            margin: 50px 0;
-        }
-        /* footer gradient mint sang sky blue */
-        .footer {
-            background: linear-gradient(135deg, #E0F7F4 0%, #E8F8FC 100%);
-            padding: 60px 40px;
-            text-align: center;
-            border-top: 2px solid #4ECDC4;
-            border-radius: 0 0 12px 12px;
-        }
-        /* footer-text màu sky blue */
-        .footer-text {
-            font-size: 12px;
-            color: #2D9DD9;
-            margin: 0 0 12px 0;
-            line-height: 1.9;
-            letter-spacing: 0.4px;
-            font-weight: 500;
-        }
-        .footer-divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #FFD700, transparent);
-            margin: 30px 0;
-        }
-        @media (max-width: 600px) {
-            .content {
-                padding: 50px 25px;
-            }
-            .header {
-                padding: 50px 25px 40px;
-            }
-            .greeting {
-                font-size: 22px;
-            }
-            .group-card {
-                padding: 35px 25px;
-            }
-            .members-section {
-                padding: 25px;
-            }
-            .footer {
-                padding: 50px 25px;
-            }
-        }
+      }
     </style>
-</head>
-<body>
-    <table role="presentation">
-        <tr>
-            <td align="center" style="padding: 30px 10px;">
-                <table role="presentation" class="container">
-                    <tr>
-                        <td class="header">
-                            <div class="logo">{{brandName}}</div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="content">
-                            <p class="greeting">Xin chào {{userName}},</p>
-                            <p class="description">
-                                Bạn đã được thêm vào nhóm <span class="highlight">{{groupName}}</span> bởi {{invitedByName}}.
-                            </p>
-                            <div class="group-card">
-                                <div class="group-icon">👥</div>
-                                <div class="group-name">{{groupName}}</div>
-                                <div class="group-description">{{groupDescription}}</div>
-                            </div>
-                            <div class="members-section">
-                                <p class="members-title">Thành viên nhóm</p>
-                                {{#each groupMembers}}
-                                <div class="member-item">{{this.name}}</div>
-                                {{/each}}
-                            </div>
-                            <div class="divider"></div>
-                            <div class="action-section">
-                                <p class="action-text">Truy cập nhóm để xem thêm chi tiết và bắt đầu cộng tác</p>
-                                <p class="action-text">
-                                    <a href="{{groupLink}}" class="action-link">Xem nhóm</a>
-                                </p>
-                            </div>
-                            <p class="description">
-                                Trong nhóm, bạn có thể chia sẻ tài liệu, thảo luận và cùng nhau hoàn thành các nhiệm vụ một cách hiệu quả.
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="footer">
-                            <p class="footer-text">
-                                © {{year}} {{brandName}}. Bảo lưu mọi quyền.
-                            </p>
-                            <div class="footer-divider"></div>
-                            <p class="footer-text">
-                                <a href="{{leaveGroupLink}}" style="color: #2D9DD9; text-decoration: none;">Rời khỏi nhóm</a>
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
+  </head>
+  <body>
+    <table role='presentation'>
+      <tr>
+        <td align='center' style='padding: 30px 10px;'>
+          <table role='presentation' class='container'>
+            <tr>
+              <td class='header'>
+                <div class='logo'>👥 {{brandName}} 🎉</div>
+              </td>
+            </tr>
+            <tr>
+              <td class='content'>
+                <div class='emoji-large'>🎊</div>
+                <p class='greeting'>Xin chào {{userName}}!</p>
+                <p class='description'>
+                  🎉 Tin vui đây! Bạn đã được thêm vào nhóm
+                  <span class='highlight'>{{groupName}}</span>
+                  bởi
+                  {{invitedByName}}! 🎉<br />
+                  Chúc mừng bạn đã trở thành thành viên mới của nhóm nhé! 🎈
+                </p>
+                <div class='sparkles'>✨ ⭐ ✨</div>
+                <div class='group-card'>
+                  <div class='group-icon'>👥</div>
+                  <div class='group-name'>{{groupName}}</div>
+                  <div class='group-description'>{{groupDescription}}</div>
+                </div>
+                <div class='members-section'>
+                  <p class='members-title'>👫 Danh sách thành viên nhóm</p>
+                  {{#each groupMembers}}
+                    <div class='member-item'>{{this.name}}</div>
+                  {{/each}}
+                </div>
+                <div class='divider'></div>
+                <div class='action-section'>
+                  <p class='action-text'>
+                    🔍 Truy cập nhóm để xem thêm chi tiết và bắt đầu cộng tác
+                    cùng các bạn nhé!
+                  </p>
+                  <a href='{{groupLink}}' class='action-link'>🚀 Xem nhóm ngay</a>
+                </div>
+                <p class='description'>
+                  💡 Trong nhóm, bạn có thể:<br />
+                  📚 Chia sẻ tài liệu học tập<br />
+                  💬 Thảo luận cùng nhau<br />
+                  ✅ Cùng nhau hoàn thành các nhiệm vụ một cách hiệu quả!<br />
+                  Hãy tận hưởng trải nghiệm học tập cùng nhóm nhé! 🌈
+                </p>
+                <div class='sparkles'>🌟 ✨ 🌟 ✨ 🌟</div>
+              </td>
+            </tr>
+            <tr>
+              <td class='footer'>
+                <p class='footer-text'>
+                  ©
+                  {{year}}
+                  {{brandName}}
+                  – Tất cả quyền được bảo lưu! 🎨
+                </p>
+                <div class='footer-divider'></div>
+                <p class='footer-text'>
+                  💭 Nếu bạn không muốn tham gia nhóm này, bạn có thể
+                  <a href='{{leaveGroupLink}}' class='leave-link'>🚪 Rời khỏi
+                    nhóm</a>
+                </p>
+                <p style='font-size: 12px; color: #999999; margin: 20px 0 0 0;'>
+                  💝 Cảm ơn bạn đã tin tưởng
+                  {{brandName}}! 💝
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
     </table>
-</body>
+  </body>
 </html>

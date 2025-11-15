@@ -1,211 +1,514 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content=device-width, initial-scale=1.0">
+<html lang='vi'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <meta http-equiv='X-UA-Compatible' content='IE=edge' />
     <title>Thông báo khuyến mãi</title>
-
-    <style>
-        body {
-            margin: 0; padding: 0;
-            background: #FFF8F2;
-            font-family: 'Segoe UI', sans-serif;
-            color: #3A3A3A;
-            line-height: 1.6;
+    <style type='text/css'>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family:
+          'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', 'Trebuchet MS', Arial,
+          sans-serif;
+        background: linear-gradient(
+          135deg,
+          #fff0f5 0%,
+          #fffacd 50%,
+          #ffe5e1 100%
+        );
+        line-height: 1.8;
+        color: #333333;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        box-shadow: 0 8px 24px rgba(255, 182, 193, 0.15);
+        border-radius: 24px;
+        overflow: hidden;
+        border: 4px solid #ffb6c1;
+      }
+      .header {
+        background: linear-gradient(
+          135deg,
+          #ffb6c1 0%,
+          #fffacd 25%,
+          #ffd4a6 50%,
+          #ffb6c1 75%,
+          #fffacd 100%
+        );
+        padding: 50px 30px 40px;
+        text-align: center;
+        position: relative;
+        border-bottom: 6px dashed #ffffff;
+      }
+      .header::before {
+        content: '🎁';
+        font-size: 50px;
+        position: absolute;
+        top: 15px;
+        left: 30px;
+        animation: bounce 2s infinite;
+      }
+      .header::after {
+        content: '🎊';
+        font-size: 50px;
+        position: absolute;
+        top: 15px;
+        right: 30px;
+        animation: bounce 2s infinite 0.5s;
+      }
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
         }
-
-        .container {
-            max-width: 580px;
-            margin: 0 auto;
-            background: #ffffff;
-            border-radius: 14px;
-            overflow: hidden;
-            box-shadow: 0 4px 18px rgba(255,150,80,0.18);
+        50% {
+          transform: translateY(-10px);
         }
-
-        /* HEADER */
-        .header {
-            background: linear-gradient(135deg, #FF8A3D 0%, #FFB784 100%);
-            padding: 60px 40px;
-            text-align: center;
+      }
+      .logo {
+        font-size: 32px;
+        font-weight: 700;
+        color: #ffffff;
+        text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+        letter-spacing: 2px;
+        margin: 0;
+      }
+      .content {
+        padding: 40px 35px;
+        background: #ffffff;
+      }
+      .emoji-large {
+        font-size: 56px;
+        text-align: center;
+        margin: 20px 0;
+        line-height: 1;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
         }
-        .logo {
-            color: #fff;
-            font-size: 20px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            font-weight: 300;
+        50% {
+          transform: scale(1.1);
         }
-
-        /* CONTENT */
+      }
+      .greeting {
+        font-size: 32px;
+        font-weight: 700;
+        color: #ffb6c1;
+        margin: 20px 0 25px 0;
+        text-align: center;
+        text-shadow: 2px 2px 0px rgba(255, 215, 61, 0.3);
+      }
+      .description {
+        font-size: 18px;
+        color: #555555;
+        line-height: 2;
+        margin: 0 0 30px 0;
+        text-align: center;
+      }
+      .highlight {
+        color: #ffb6c1;
+        font-weight: 700;
+        background: linear-gradient(120deg, #fffacd 0%, #fffacd 100%);
+        padding: 3px 10px;
+        border-radius: 10px;
+        display: inline-block;
+        border: 2px solid #ffd4a6;
+      }
+      .promo-box {
+        background: linear-gradient(
+          135deg,
+          #fff0f5 0%,
+          #fffacd 50%,
+          #fff0f5 100%
+        );
+        border: 4px dashed #ffb6c1;
+        padding: 40px 30px;
+        border-radius: 25px;
+        margin: 40px 0;
+        text-align: center;
+        position: relative;
+        box-shadow: 0 8px 24px rgba(255, 182, 193, 0.2);
+      }
+      .promo-box::before {
+        content: '💰';
+        position: absolute;
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 48px;
+        background: #ffffff;
+        padding: 10px;
+        border-radius: 50%;
+        border: 4px solid #fffacd;
+      }
+      .promo-title {
+        font-size: 26px;
+        font-weight: 700;
+        color: #ffb6c1;
+        margin: 20px 0 20px 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-shadow: 2px 2px 0px rgba(255, 215, 61, 0.3);
+      }
+      .promo-value {
+        font-size: 56px;
+        font-weight: 800;
+        color: #ffb6c1;
+        margin: 25px 0;
+        letter-spacing: 2px;
+        text-shadow: 3px 3px 0px rgba(255, 217, 61, 0.4);
+        background: linear-gradient(135deg, #fffacd, #ffd4a6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+      }
+      .promo-detail {
+        font-size: 17px;
+        color: #555555;
+        margin: 15px 0;
+        line-height: 1.8;
+      }
+      .promo-detail b {
+        color: #ffb6c1;
+        font-weight: 700;
+        background: #fffacd;
+        padding: 3px 8px;
+        border-radius: 8px;
+        border: 2px solid #fffacd;
+      }
+      .code-box {
+        display: inline-block;
+        background: linear-gradient(135deg, #fffacd 0%, #fff0f5 100%);
+        padding: 20px 35px;
+        border-radius: 15px;
+        font-size: 28px;
+        font-weight: 700;
+        color: #ffb6c1;
+        border: 4px dashed #fffacd;
+        margin: 25px 0 15px 0;
+        letter-spacing: 4px;
+        text-shadow: 2px 2px 0px rgba(255, 217, 61, 0.3);
+        box-shadow: 0 6px 15px rgba(255, 217, 61, 0.3);
+        font-family: 'Courier New', monospace;
+        position: relative;
+      }
+      .code-box::before {
+        content: '🎟️';
+        position: absolute;
+        left: -15px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 32px;
+        background: #ffffff;
+        padding: 5px;
+        border-radius: 50%;
+        border: 3px solid #fffacd;
+      }
+      .code-box::after {
+        content: '🎟️';
+        position: absolute;
+        right: -15px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 32px;
+        background: #ffffff;
+        padding: 5px;
+        border-radius: 50%;
+        border: 3px solid #fffacd;
+      }
+      .action-box {
+        background: linear-gradient(135deg, #fffacd 0%, #fff0f5 100%);
+        border: 4px solid #fffacd;
+        padding: 35px 30px;
+        border-radius: 20px;
+        text-align: center;
+        margin: 40px 0;
+        box-shadow: 0 6px 20px rgba(255, 250, 205, 0.2);
+        position: relative;
+      }
+      .action-box::before {
+        content: '👉';
+        font-size: 40px;
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #ffffff;
+        padding: 8px;
+        border-radius: 50%;
+        border: 3px solid #fffacd;
+      }
+      .action-text {
+        font-size: 18px;
+        color: #555555;
+        margin-bottom: 20px;
+        font-weight: 600;
+      }
+      .action-link {
+        display: inline-block;
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 22px;
+        padding: 18px 40px;
+        background: linear-gradient(135deg, #ffb6c1, #ffd4a6);
+        border-radius: 30px;
+        border: 4px solid #ffffff;
+        box-shadow: 0 6px 20px rgba(255, 182, 193, 0.25);
+        transition: all 0.3s;
+        text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+      }
+      .action-link:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 25px rgba(255, 182, 193, 0.3);
+      }
+      .divider {
+        height: 4px;
+        background: repeating-linear-gradient(
+          90deg,
+          #ffb6c1 0px,
+          #ffb6c1 10px,
+          #fffacd 10px,
+          #fffacd 20px,
+          #ffd4a6 20px,
+          #ffd4a6 30px,
+          #ffb6c1 30px,
+          #ffb6c1 40px
+        );
+        margin: 40px 0;
+        border-radius: 2px;
+      }
+      .info-section {
+        margin: 35px 0;
+        padding: 30px;
+        background: linear-gradient(135deg, #fffacd 0%, #fff0f5 100%);
+        border: 3px solid #ffd4a6;
+        border-radius: 20px;
+        box-shadow: 0 6px 15px rgba(255, 212, 166, 0.2);
+        text-align: center;
+      }
+      .info-title {
+        font-size: 20px;
+        color: #ffb6c1;
+        margin-bottom: 20px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .info-text {
+        font-size: 16px;
+        color: #555555;
+        line-height: 2;
+        margin: 10px 0;
+      }
+      .sparkles {
+        text-align: center;
+        font-size: 28px;
+        margin: 30px 0;
+        letter-spacing: 15px;
+      }
+      .footer {
+        background: linear-gradient(
+          135deg,
+          #fff0f5 0%,
+          #fffacd 50%,
+          #fff0f5 100%
+        );
+        padding: 40px 30px;
+        text-align: center;
+        border-top: 4px dashed #ffb6c1;
+      }
+      .footer-text {
+        font-size: 14px;
+        color: #666666;
+        margin: 0 0 15px 0;
+        line-height: 2;
+      }
+      .footer-divider {
+        height: 3px;
+        background: repeating-linear-gradient(
+          90deg,
+          #ff6b9d 0px,
+          #ff6b9d 8px,
+          #ffd93d 8px,
+          #ffd93d 16px,
+          #ff8a3d 16px,
+          #ff8a3d 24px,
+          #ff6b9d 24px,
+          #ff6b9d 32px
+        );
+        margin: 25px 0;
+        border-radius: 2px;
+      }
+      .social-links {
+        text-align: center;
+        margin-top: 20px;
+      }
+      .social-link {
+        display: inline-block;
+        margin: 0 15px;
+        color: #ffb6c1;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: 700;
+        padding: 10px 20px;
+        background: #ffffff;
+        border-radius: 25px;
+        border: 3px solid #ffb6c1;
+        transition: all 0.3s;
+      }
+      .social-link:hover {
+        color: #ffffff;
+        background: #ffb6c1;
+        transform: scale(1.1);
+      }
+      @media (max-width: 600px) {
         .content {
-            padding: 60px 40px;
+          padding: 30px 20px;
+        }
+        .header {
+          padding: 40px 20px 30px;
         }
         .greeting {
-            font-size: 26px;
-            color: #FF7A29;
-            font-weight: 300;
-            margin-bottom: 20px;
+          font-size: 26px;
         }
         .description {
-            font-size: 15px;
-            color: #4A4A4A;
-            margin-bottom: 25px;
-        }
-        .highlight {
-            color: #FF5F00;
-            font-weight: 600;
-        }
-
-        /* PROMO BOX */
-        .promo-box {
-            background: linear-gradient(135deg, #FFF1E6 0%, #FFF7F2 100%);
-            border: 2px solid #FFC7A4;
-            padding: 40px;
-            border-radius: 14px;
-            margin-bottom: 40px;
-            text-align: center;
-        }
-        .promo-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #FF7A29;
-            margin-bottom: 15px;
+          font-size: 16px;
         }
         .promo-value {
-            font-size: 38px;
-            font-weight: 800;
-            color: #FF5F00;
-            margin-bottom: 10px;
-            letter-spacing: 1px;
+          font-size: 42px;
         }
-        .promo-detail {
-            font-size: 14px;
-            color: #4A4A4A;
-            margin-bottom: 10px;
-        }
-
-        /* CODE BOX */
         .code-box {
-            display: inline-block;
-            background: #FFF9E6;
-            padding: 14px 20px;
-            border-radius: 10px;
-            font-size: 20px;
-            font-weight: 700;
-            color: #FF7A29;
-            border: 2px dashed #FFB784;
-            margin: 15px 0;
-        }
-
-        /* CTA */
-        .action-box {
-            background: #FFF4E8;
-            border: 2px solid #FF8A3D;
-            padding: 35px;
-            border-radius: 12px;
-            text-align: center;
-            margin-bottom: 40px;
+          font-size: 22px;
+          padding: 15px 25px;
+          letter-spacing: 2px;
         }
         .action-link {
-            color: #FF5F00;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 16px;
-            border-bottom: 3px solid #FF8A3D;
-            padding-bottom: 3px;
-            transition: .3s ease;
+          font-size: 18px;
+          padding: 15px 30px;
         }
-        .action-link:hover {
-            color: #FF8A3D;
-            border-bottom-color: #FF5F00;
-        }
-
-        /* FOOTER */
         .footer {
-            background: #FFEFE2;
-            text-align: center;
-            padding: 45px;
-            border-top: 2px solid #FF8A3D;
+          padding: 30px 20px;
         }
-        .footer-text {
-            font-size: 12px;
-            color: #FF7A29;
+        .promo-box {
+          padding: 30px 20px;
         }
-
-        @media (max-width:600px) {
-            .content, .header, .footer {
-                padding: 40px 25px;
-            }
-            .promo-box, .action-box {
-                padding: 25px;
-            }
+        .action-box {
+          padding: 25px 20px;
         }
+      }
     </style>
-</head>
-
-<body>
-<table width="100%">
-    <tr>
-        <td align="center" style="padding: 30px 10px;">
-            <table class="container">
-
-                <!-- HEADER -->
-                <tr>
-                    <td class="header">
-                        <div class="logo">{{brandName}}</div>
-                    </td>
-                </tr>
-
-                <!-- CONTENT -->
-                <tr>
-                    <td class="content">
-
-                        <p class="greeting">🎉 Ưu đãi đặc biệt dành cho bạn! 🎉</p>
-
-                        <p class="description">
-                            Chúng tôi rất vui thông báo rằng <span class="highlight">{{promoName}}</span>  
-                            đang chính thức bắt đầu! Đừng bỏ lỡ cơ hội nhận ưu đãi cực lớn ngay hôm nay.
-                        </p>
-
-                        <!-- PROMO BOX -->
-                        <div class="promo-box">
-                            <div class="promo-title">{{promoTitle}}</div>
-                            <div class="promo-value">{{promoValue}}</div>
-                            <div class="promo-detail">
-                                Áp dụng cho: <b>{{applyFor}}</b>
-                            </div>
-                            <div class="promo-detail">
-                                Hạn sử dụng: <b>{{expiredDate}}</b>
-                            </div>
-
-                            <div class="code-box">{{promoCode}}</div>
-                        </div>
-
-                        <!-- CTA -->
-                        <div class="action-box">
-                            <p>Sử dụng mã ngay tại đây:</p>
-                            <a href="{{promoLink}}" class="action-link">Nhận ưu đãi</a>
-                        </div>
-
-                        <p class="description">
-                            Hãy tranh thủ vì ưu đãi chỉ diễn ra trong thời gian ngắn!  
-                            Chúc bạn có trải nghiệm tuyệt vời cùng chúng tôi 💛🔥
-                        </p>
-
-                    </td>
-                </tr>
-
-                <!-- FOOTER -->
-                <tr>
-                    <td class="footer">
-                        <p class="footer-text">© {{year}} {{brandName}} – Tất cả quyền được bảo lưu.</p>
-                    </td>
-                </tr>
-
-            </table>
+  </head>
+  <body>
+    <table role='presentation'>
+      <tr>
+        <td align='center' style='padding: 30px 10px;'>
+          <table role='presentation' class='container'>
+            <tr>
+              <td class='header'>
+                <div class='logo'>🎉 {{brandName}} 🎉</div>
+              </td>
+            </tr>
+            <tr>
+              <td class='content'>
+                <div class='emoji-large'>🎊</div>
+                <p class='greeting'>Ưu đãi siêu đặc biệt dành cho bạn!</p>
+                <p class='description'>
+                  🎈 Tin vui đây! Chúng mình có một tin tuyệt vời muốn chia sẻ
+                  với bạn! 🎈<br />
+                  Chương trình khuyến mãi
+                  <span class='highlight'>{{promoName}}</span>
+                  đã chính thức bắt đầu rồi!<br />
+                  Đừng bỏ lỡ cơ hội nhận ưu đãi siêu to khổng lồ nhé! 🚀✨
+                </p>
+                <div class='sparkles'>✨ ⭐ ✨</div>
+                <div class='promo-box'>
+                  <div class='promo-title'>{{promoTitle}}</div>
+                  <div class='promo-value'>{{promoValue}}</div>
+                  <div class='promo-detail'>
+                    📦 Áp dụng cho:
+                    <b>{{applyFor}}</b>
+                  </div>
+                  <div class='promo-detail'>
+                    ⏰ Hạn sử dụng:
+                    <b>{{expiredDate}}</b>
+                  </div>
+                  <div class='code-box'>{{promoCode}}</div>
+                  <p style='font-size: 14px; color: #888; margin-top: 15px;'>
+                    💡 Hãy nhớ sao chép mã này nhé!
+                  </p>
+                </div>
+                <div class='divider'></div>
+                <div class='action-box'>
+                  <p class='action-text'>
+                    🎯 Bấm vào đây để nhận ưu đãi ngay bây giờ:
+                  </p>
+                  <a href='{{promoLink}}' class='action-link'>🎁 Nhận ưu đãi</a>
+                </div>
+                <div class='info-section'>
+                  <p class='info-title'>💡 Lưu ý quan trọng</p>
+                  <p class='info-text'>
+                    ⏱️ Ưu đãi này chỉ diễn ra trong thời gian ngắn thôi nhé!<br
+                    />
+                    🔥 Hãy tranh thủ sử dụng mã ngay để không bỏ lỡ cơ hội vàng!
+                  </p>
+                </div>
+                <p class='description'>
+                  🎨 Chúc bạn có trải nghiệm siêu tuyệt vời cùng
+                  {{brandName}}! 🎨<br />
+                  💝 Cảm ơn bạn đã luôn ủng hộ chúng mình! 💝
+                </p>
+                <div class='sparkles'>🌟 ✨ 🌟 ✨ 🌟</div>
+              </td>
+            </tr>
+            <tr>
+              <td class='footer'>
+                <p class='footer-text'>
+                  ©
+                  {{year}}
+                  {{brandName}}
+                  – Tất cả quyền được bảo lưu! 🎨
+                </p>
+                {{#if companyAddress}}
+                  <p class='footer-text'>📍 {{companyAddress}}</p>
+                {{/if}}
+                <div class='footer-divider'></div>
+                {{#if websiteUrl}}
+                  <div class='social-links'>
+                    <a href='{{websiteUrl}}' class='social-link'>🌐 Website</a>
+                    {{#if twitterUrl}}
+                      <a href='{{twitterUrl}}' class='social-link'>🐦 Twitter</a>
+                    {{/if}}
+                    {{#if facebookUrl}}
+                      <a href='{{facebookUrl}}' class='social-link'>👥 Facebook</a>
+                    {{/if}}
+                  </div>
+                {{/if}}
+                <p style='font-size: 12px; color: #999999; margin: 20px 0 0 0;'>
+                  💝 Cảm ơn bạn đã tin tưởng
+                  {{brandName}}! 💝
+                </p>
+              </td>
+            </tr>
+          </table>
         </td>
-    </tr>
-</table>
-</body>
+      </tr>
+    </table>
+  </body>
 </html>

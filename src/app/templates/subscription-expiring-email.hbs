@@ -1,251 +1,437 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<html lang='vi'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <meta http-equiv='X-UA-Compatible' content='IE=edge' />
     <title>Gói đăng ký sắp hết hạn</title>
-    <style type="text/css">
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
-            background: #FFFEF5;
-            line-height: 1.6;
-            color: #3a3a3a;
+    <style type='text/css'>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family:
+          'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', 'Trebuchet MS', Arial,
+          sans-serif;
+        background: linear-gradient(
+          135deg,
+          #fff0f5 0%,
+          #fffacd 50%,
+          #ffe5e1 100%
+        );
+        line-height: 1.8;
+        color: #333333;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        box-shadow: 0 8px 24px rgba(255, 182, 193, 0.15);
+        border-radius: 24px;
+        overflow: hidden;
+        border: 4px solid #ffb6c1;
+      }
+      .header {
+        background: linear-gradient(
+          135deg,
+          #ffb6c1 0%,
+          #ffd4a6 50%,
+          #ffb6c1 100%
+        );
+        padding: 50px 30px 40px;
+        text-align: center;
+        position: relative;
+        border-bottom: 6px dashed #ffffff;
+      }
+      .header::before {
+        content: '⏰';
+        font-size: 50px;
+        position: absolute;
+        top: 15px;
+        left: 30px;
+        animation: gentle-bounce 3s infinite;
+      }
+      .header::after {
+        content: '💳';
+        font-size: 50px;
+        position: absolute;
+        top: 15px;
+        right: 30px;
+        animation: gentle-bounce 3s infinite 0.5s;
+      }
+      @keyframes gentle-bounce {
+        0%,
+        100% {
+          transform: translateY(0);
         }
-        table {
-            border-collapse: collapse;
-            width: 100%;
+        50% {
+          transform: translateY(-5px);
         }
-        img {
-            max-width: 100%;
-            height: auto;
-            display: block;
+      }
+      .logo {
+        font-size: 32px;
+        font-weight: 700;
+        color: #ffffff;
+        text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+        letter-spacing: 2px;
+        margin: 0;
+      }
+      .content {
+        padding: 40px 35px;
+        background: #ffffff;
+      }
+      .emoji-large {
+        font-size: 56px;
+        text-align: center;
+        margin: 20px 0;
+        line-height: 1;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
         }
-        .container {
-            max-width: 580px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            box-shadow: 0 4px 16px rgba(45, 157, 217, 0.12);
-            border-radius: 12px;
-            overflow: hidden;
+        50% {
+          transform: scale(1.1);
         }
-        /* header gradient mint sang coral */
-        .header {
-            background: linear-gradient(135deg, #4ECDC4 0%, #FF6B6B 100%);
-            padding: 70px 40px 50px;
-            text-align: center;
-        }
-        .logo {
-            font-size: 18px;
-            font-weight: 300;
-            color: #ffffff;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }
+      }
+      .greeting {
+        font-size: 28px;
+        font-weight: 700;
+        color: #ffb6c1;
+        margin: 20px 0 25px 0;
+        text-align: center;
+        text-shadow: 2px 2px 0px rgba(255, 250, 205, 0.3);
+      }
+      .description {
+        font-size: 18px;
+        color: #555555;
+        line-height: 2;
+        margin: 0 0 30px 0;
+        text-align: center;
+      }
+      .highlight {
+        color: #ffb6c1;
+        font-weight: 700;
+        background: linear-gradient(120deg, #fffacd 0%, #fffacd 100%);
+        padding: 3px 10px;
+        border-radius: 10px;
+        display: inline-block;
+        border: 2px solid #ffd4a6;
+      }
+      .subscription-box {
+        background: linear-gradient(135deg, #fff0f5 0%, #fff5f0 100%);
+        border: 4px dashed #ffb6c1;
+        border-radius: 20px;
+        padding: 40px 30px;
+        margin: 40px 0;
+        position: relative;
+        box-shadow: 0 6px 20px rgba(255, 182, 193, 0.2);
+        text-align: center;
+      }
+      .subscription-box::before {
+        content: '🎁';
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 40px;
+        background: #ffffff;
+        padding: 8px;
+        border-radius: 50%;
+        border: 4px solid #fffacd;
+      }
+      .subscription-name {
+        font-size: 26px;
+        color: #ffb6c1;
+        font-weight: 700;
+        margin: 20px 0 25px 0;
+        text-shadow: 2px 2px 0px rgba(255, 250, 205, 0.3);
+      }
+      .subscription-detail {
+        font-size: 17px;
+        color: #555555;
+        line-height: 2;
+        margin: 15px 0;
+      }
+      .subscription-detail b {
+        color: #ffb6c1;
+        font-weight: 700;
+        background: #fffacd;
+        padding: 3px 8px;
+        border-radius: 8px;
+        border: 2px solid #ffd4a6;
+      }
+      .expiry-warning {
+        background: linear-gradient(135deg, #fff0f5 0%, #fff5f0 100%);
+        border: 3px solid #ffb6c1;
+        padding: 30px 35px;
+        margin: 40px 0;
+        font-size: 17px;
+        color: #555555;
+        line-height: 2;
+        border-radius: 20px;
+        box-shadow: 0 6px 20px rgba(255, 182, 193, 0.15);
+        position: relative;
+        text-align: center;
+      }
+      .expiry-warning::before {
+        content: '⚠️';
+        position: absolute;
+        top: -25px;
+        left: 30px;
+        font-size: 40px;
+        background: #ffffff;
+        padding: 8px;
+        border-radius: 50%;
+        border: 4px solid #fffacd;
+      }
+      .expiry-date {
+        font-weight: 700;
+        color: #ffb6c1;
+        font-size: 18px;
+        background: #fffacd;
+        padding: 3px 10px;
+        border-radius: 10px;
+        border: 2px solid #ffd4a6;
+      }
+      .divider {
+        height: 4px;
+        background: repeating-linear-gradient(
+          90deg,
+          #ffb6c1 0px,
+          #ffb6c1 10px,
+          #fffacd 10px,
+          #fffacd 20px,
+          #ffd4a6 20px,
+          #ffd4a6 30px,
+          #ffb6c1 30px,
+          #ffb6c1 40px
+        );
+        margin: 40px 0;
+        border-radius: 2px;
+      }
+      .action-box {
+        background: linear-gradient(135deg, #fffacd 0%, #fff0f5 100%);
+        border: 3px solid #fffacd;
+        padding: 35px 30px;
+        margin: 40px 0;
+        text-align: center;
+        border-radius: 20px;
+        box-shadow: 0 6px 20px rgba(255, 250, 205, 0.2);
+        position: relative;
+      }
+      .action-box::before {
+        content: '💎';
+        font-size: 40px;
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #ffffff;
+        padding: 8px;
+        border-radius: 50%;
+        border: 4px solid #fffacd;
+      }
+      .action-text {
+        font-size: 18px;
+        color: #555555;
+        line-height: 2;
+        margin-bottom: 20px;
+        font-weight: 600;
+      }
+      .action-link {
+        display: inline-block;
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 20px;
+        padding: 15px 35px;
+        background: linear-gradient(135deg, #ffb6c1, #ffd4a6);
+        border-radius: 30px;
+        border: 4px solid #ffffff;
+        box-shadow: 0 6px 20px rgba(255, 182, 193, 0.25);
+        transition: all 0.3s;
+        text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+      }
+      .action-link:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 25px rgba(255, 182, 193, 0.3);
+      }
+      .sparkles {
+        text-align: center;
+        font-size: 28px;
+        margin: 30px 0;
+        letter-spacing: 15px;
+      }
+      .footer {
+        background: linear-gradient(
+          135deg,
+          #fff0f5 0%,
+          #fffacd 50%,
+          #fff0f5 100%
+        );
+        padding: 40px 30px;
+        text-align: center;
+        border-top: 4px dashed #ffb6c1;
+      }
+      .footer-text {
+        font-size: 14px;
+        color: #666666;
+        margin: 0 0 15px 0;
+        line-height: 2;
+      }
+      .footer-divider {
+        height: 3px;
+        background: repeating-linear-gradient(
+          90deg,
+          #ffb6c1 0px,
+          #ffb6c1 8px,
+          #fffacd 8px,
+          #fffacd 16px,
+          #ffd4a6 16px,
+          #ffd4a6 24px,
+          #ffb6c1 24px,
+          #ffb6c1 32px
+        );
+        margin: 25px 0;
+        border-radius: 2px;
+      }
+      .faq-link {
+        color: #ffb6c1;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 16px;
+        border-bottom: 3px solid #fffacd;
+        padding-bottom: 2px;
+      }
+      .faq-link:hover {
+        color: #ffd4a6;
+        border-bottom-color: #ffd4a6;
+      }
+      @media (max-width: 600px) {
         .content {
-            padding: 70px 40px;
+          padding: 30px 20px;
         }
-        /* greeting màu sky blue */
+        .header {
+          padding: 40px 20px 30px;
+        }
         .greeting {
-            font-size: 24px;
-            font-weight: 300;
-            color: #2D9DD9;
-            margin: 0 0 35px 0;
-            letter-spacing: 0.5px;
+          font-size: 24px;
         }
         .description {
-            font-size: 15px;
-            color: #5a5a5a;
-            line-height: 1.8;
-            margin: 0 0 32px 0;
+          font-size: 16px;
         }
-        /* highlight màu coral */
-        .highlight {
-            color: #FF6B6B;
-            font-weight: 600;
-        }
-        /* subscription-box background gradient soft pink nhạt */
         .subscription-box {
-            background: linear-gradient(135deg, #FFE8E6 0%, #FFF5F5 100%);
-            border: 2px solid #FFB6C1;
-            border-radius: 12px;
-            padding: 50px 40px;
-            margin: 50px 0;
-            position: relative;
-            box-shadow: 0 4px 16px rgba(255, 182, 193, 0.15);
-        }
-        .subscription-box::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #FFD700 0%, #4ECDC4 100%);
-            border-radius: 12px 12px 0 0;
-        }
-        /* subscription-name màu sky blue */
-        .subscription-name {
-            font-size: 23px;
-            color: #2D9DD9;
-            font-weight: 500;
-            margin: 0 0 25px 0;
-            letter-spacing: -0.2px;
+          padding: 30px 20px;
         }
         .subscription-detail {
-            font-size: 14px;
-            color: #5a5a5a;
-            line-height: 2;
-            margin: 0;
+          font-size: 15px;
         }
-        /* expiry-warning background coral nhạt */
         .expiry-warning {
-            background: linear-gradient(135deg, #FFE8E0 0%, #FFEDD5 100%);
-            border-left: 5px solid #FF6B6B;
-            padding: 30px 35px;
-            margin: 50px 0;
-            font-size: 14px;
-            color: #4a4a4a;
-            line-height: 1.9;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.12);
+          padding: 25px 20px;
+          font-size: 15px;
         }
-        /* expiry-date màu sky blue */
-        .expiry-date {
-            font-weight: 700;
-            color: #2D9DD9;
-            font-size: 15px;
-        }
-        /* action-box background gradient sky blue nhạt */
         .action-box {
-            background: linear-gradient(135deg, #E8F8FC 0%, #F0FFFE 100%);
-            border: 2px solid #2D9DD9;
-            padding: 40px;
-            margin: 50px 0;
-            text-align: center;
-            border-radius: 8px;
+          padding: 25px 20px;
         }
-        .action-text {
-            font-size: 14px;
-            color: #666666;
-            line-height: 1.8;
-            margin: 0 0 20px 0;
-        }
-        /* action-link màu sky blue */
-        .action-link {
-            color: #2D9DD9;
-            text-decoration: none;
-            font-weight: 600;
-            border-bottom: 2px solid #FF6B6B;
-            transition: all 0.3s ease;
-        }
-        .action-link:hover {
-            color: #FF6B6B;
-            border-bottom-color: #2D9DD9;
-        }
-        /* divider gradient mint sang coral */
-        .divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #4ECDC4, transparent);
-            margin: 50px 0;
-        }
-        /* footer gradient mint sang sky blue */
         .footer {
-            background: linear-gradient(135deg, #E0F7F4 0%, #E8F8FC 100%);
-            padding: 60px 40px;
-            text-align: center;
-            border-top: 2px solid #4ECDC4;
-            border-radius: 0 0 12px 12px;
+          padding: 30px 20px;
         }
-        /* footer-text màu sky blue */
-        .footer-text {
-            font-size: 12px;
-            color: #2D9DD9;
-            margin: 0 0 12px 0;
-            line-height: 1.9;
-            letter-spacing: 0.4px;
-            font-weight: 500;
-        }
-        .footer-divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #FFD700, transparent);
-            margin: 30px 0;
-        }
-        @media (max-width: 600px) {
-            .content {
-                padding: 50px 25px;
-            }
-            .header {
-                padding: 50px 25px 40px;
-            }
-            .greeting {
-                font-size: 22px;
-            }
-            .subscription-box {
-                padding: 35px 25px;
-            }
-            .action-box {
-                padding: 25px;
-            }
-            .footer {
-                padding: 50px 25px;
-            }
-        }
+      }
     </style>
-</head>
-<body>
-    <table role="presentation">
-        <tr>
-            <td align="center" style="padding: 30px 10px;">
-                <table role="presentation" class="container">
-                    <tr>
-                        <td class="header">
-                            <div class="logo">{{brandName}}</div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="content">
-                            <p class="greeting">Xin chào {{userName}},</p>
-                            <p class="description">
-                                Gói đăng ký của bạn sắp <span class="highlight">hết hạn</span>. Để tiếp tục sử dụng tất cả các tính năng, vui lòng gia hạn ngay.
-                            </p>
-                            <div class="subscription-box">
-                                <div class="subscription-name">{{subscriptionName}}</div>
-                                <div class="subscription-detail">Thời hạn hiện tại: {{currentPeriod}}</div>
-                                <div class="subscription-detail">Hạn chế: {{limit}}</div>
-                                <div class="subscription-detail">Giá: <span class="highlight">{{price}}</span></div>
-                            </div>
-                            <div class="expiry-warning">
-                                Gói của bạn sẽ hết hạn vào <span class="expiry-date">{{expiryDate}}</span>. Sau ngày này, bạn sẽ không thể sử dụng các tính năng cao cấp.
-                            </div>
-                            <div class="divider"></div>
-                            <div class="action-box">
-                                <p class="action-text">Gia hạn gói của bạn để tiếp tục sử dụng không gián đoạn</p>
-                                <p class="action-text">
-                                    <a href="{{renewLink}}" class="action-link">Gia hạn ngay</a>
-                                </p>
-                            </div>
-                            <p class="description">
-                                Nếu bạn không muốn gia hạn, gói của bạn sẽ tự động hạ cấp xuống phiên bản miễn phí vào {{downgradeDate}}.
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="footer">
-                            <p class="footer-text">
-                                © {{year}} {{brandName}}. Bảo lưu mọi quyền.
-                            </p>
-                            <div class="footer-divider"></div>
-                            <p class="footer-text">
-                                <a href="{{faqLink}}" style="color: #2D9DD9; text-decoration: none;">Câu hỏi thường gặp về gia hạn</a>
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
+  </head>
+  <body>
+    <table role='presentation'>
+      <tr>
+        <td align='center' style='padding: 30px 10px;'>
+          <table role='presentation' class='container'>
+            <tr>
+              <td class='header'>
+                <div class='logo'>⏰ {{brandName}} 💳</div>
+              </td>
+            </tr>
+            <tr>
+              <td class='content'>
+                <div class='emoji-large'>⚠️</div>
+                <p class='greeting'>Xin chào {{userName}}!</p>
+                <p class='description'>
+                  🔔 Gói đăng ký của bạn sắp
+                  <span class='highlight'>hết hạn</span>
+                  rồi nhé! 🔔<br />
+                  Để tiếp tục sử dụng tất cả các tính năng, hãy gia hạn ngay
+                  nhé! 💎
+                </p>
+                <div class='sparkles'>✨ ⭐ ✨</div>
+                <div class='subscription-box'>
+                  <div class='subscription-name'>🎁 {{subscriptionName}}</div>
+                  <p class='subscription-detail'>
+                    📅 Thời hạn hiện tại:
+                    <b>{{currentPeriod}}</b>
+                  </p>
+                  <p class='subscription-detail'>🔒 Hạn chế:
+                    <b>{{limit}}</b></p>
+                  <p class='subscription-detail'>
+                    💰 Giá:
+                    <span class='highlight'>{{price}}</span>
+                  </p>
+                </div>
+                <div class='expiry-warning'>
+                  ⚠️ Gói của bạn sẽ hết hạn vào
+                  <span class='expiry-date'>{{expiryDate}}</span>
+                  nhé! ⚠️<br />
+                  Sau ngày này, bạn sẽ không thể sử dụng các tính năng cao cấp
+                  nữa đâu! 😢
+                </div>
+                <div class='divider'></div>
+                <div class='action-box'>
+                  <p class='action-text'>
+                    💎 Gia hạn gói của bạn để tiếp tục sử dụng không gián đoạn
+                    nhé!<br />
+                    Hãy bấm vào đây để gia hạn ngay!
+                  </p>
+                  <a href='{{renewLink}}' class='action-link'>💳 Gia hạn ngay</a>
+                </div>
+                <p class='description'>
+                  💡 Nếu bạn không muốn gia hạn, gói của bạn sẽ tự động hạ cấp
+                  xuống phiên bản miễn phí vào
+                  <b>{{downgradeDate}}</b>
+                  nhé!
+                </p>
+                <div class='sparkles'>🌟 ✨ 🌟 ✨ 🌟</div>
+              </td>
+            </tr>
+            <tr>
+              <td class='footer'>
+                <p class='footer-text'>
+                  ©
+                  {{year}}
+                  {{brandName}}
+                  – Tất cả quyền được bảo lưu! 🎨
+                </p>
+                <div class='footer-divider'></div>
+                <p class='footer-text'>
+                  ❓
+                  <a href='{{faqLink}}' class='faq-link'>Câu hỏi thường gặp về
+                    gia hạn</a>
+                </p>
+                <p style='font-size: 12px; color: #999999; margin: 20px 0 0 0;'>
+                  💝 Cảm ơn bạn đã tin tưởng
+                  {{brandName}}! 💝
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
     </table>
-</body>
+  </body>
 </html>

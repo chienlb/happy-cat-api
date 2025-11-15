@@ -10,8 +10,10 @@ import {
   LogoutNotDeviceAuthDto,
 } from './dto/logout-auth.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('Auths')
+@ApiBearerAuth()
 @Controller('auths')
 export class AuthsController {
   private readonly logger = new Logger(AuthsController.name);

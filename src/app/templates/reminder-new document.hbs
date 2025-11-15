@@ -1,132 +1,384 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang='vi'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <meta http-equiv='X-UA-Compatible' content='IE=edge' />
     <title>Có tài liệu mới</title>
-
-    <style>
-        body {
-            margin: 0; padding: 0;
-            background: #F3FFFA;
-            font-family: 'Segoe UI', sans-serif;
-            color: #2F3A3A; line-height: 1.6;
+    <style type='text/css'>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family:
+          'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', 'Trebuchet MS', Arial,
+          sans-serif;
+        background: linear-gradient(
+          135deg,
+          #f0f8ff 0%,
+          #fffacd 50%,
+          #e0f5e8 100%
+        );
+        line-height: 1.8;
+        color: #333333;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        box-shadow: 0 8px 24px rgba(181, 229, 207, 0.15);
+        border-radius: 24px;
+        overflow: hidden;
+        border: 4px solid #b5e5cf;
+      }
+      .header {
+        background: linear-gradient(
+          135deg,
+          #b5e5cf 0%,
+          #a8d8ea 50%,
+          #b5e5cf 100%
+        );
+        padding: 50px 30px 40px;
+        text-align: center;
+        position: relative;
+        border-bottom: 6px dashed #ffffff;
+      }
+      .header::before {
+        content: '📄';
+        font-size: 50px;
+        position: absolute;
+        top: 15px;
+        left: 30px;
+        animation: gentle-bounce 3s infinite;
+      }
+      .header::after {
+        content: '✨';
+        font-size: 50px;
+        position: absolute;
+        top: 15px;
+        right: 30px;
+        animation: gentle-bounce 3s infinite 0.5s;
+      }
+      @keyframes gentle-bounce {
+        0%,
+        100% {
+          transform: translateY(0);
         }
-
-        .container {
-            max-width: 580px; margin: 0 auto;
-            background: #fff; border-radius: 14px;
-            overflow: hidden;
-            box-shadow: 0 4px 18px rgba(0,150,136,0.12);
+        50% {
+          transform: translateY(-5px);
         }
-
+      }
+      .logo {
+        font-size: 32px;
+        font-weight: 700;
+        color: #ffffff;
+        text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+        letter-spacing: 2px;
+        margin: 0;
+      }
+      .content {
+        padding: 40px 35px;
+        background: #ffffff;
+      }
+      .emoji-large {
+        font-size: 56px;
+        text-align: center;
+        margin: 20px 0;
+        line-height: 1;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+      }
+      .greeting {
+        font-size: 28px;
+        font-weight: 700;
+        color: #b5e5cf;
+        margin: 20px 0 25px 0;
+        text-align: center;
+        text-shadow: 2px 2px 0px rgba(255, 250, 205, 0.3);
+      }
+      .description {
+        font-size: 18px;
+        color: #555555;
+        line-height: 2;
+        margin: 0 0 30px 0;
+        text-align: center;
+      }
+      .highlight {
+        color: #b5e5cf;
+        font-weight: 700;
+        background: linear-gradient(120deg, #fffacd 0%, #fffacd 100%);
+        padding: 3px 10px;
+        border-radius: 10px;
+        display: inline-block;
+        border: 2px solid #a8d8ea;
+      }
+      .doc-box {
+        background: linear-gradient(135deg, #f0f8ff 0%, #fff5f0 100%);
+        border: 4px dashed #b5e5cf;
+        padding: 35px 30px;
+        border-radius: 20px;
+        margin: 40px 0;
+        position: relative;
+        box-shadow: 0 6px 20px rgba(181, 229, 207, 0.2);
+      }
+      .doc-box::before {
+        content: '📚';
+        position: absolute;
+        top: -25px;
+        left: 30px;
+        font-size: 40px;
+        background: #ffffff;
+        padding: 8px;
+        border-radius: 50%;
+        border: 4px solid #fffacd;
+      }
+      .doc-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #b5e5cf;
+        margin: 20px 0 20px 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-align: center;
+        text-shadow: 2px 2px 0px rgba(255, 250, 205, 0.3);
+      }
+      .doc-item {
+        font-size: 17px;
+        color: #555555;
+        margin: 15px 0;
+        line-height: 2;
+        padding-left: 25px;
+        position: relative;
+      }
+      .doc-item::before {
+        content: '✨';
+        position: absolute;
+        left: 0;
+        font-size: 20px;
+      }
+      .doc-item b {
+        color: #b5e5cf;
+        font-weight: 700;
+        background: #fffacd;
+        padding: 3px 8px;
+        border-radius: 8px;
+        border: 2px solid #a8d8ea;
+      }
+      .action-box {
+        background: linear-gradient(135deg, #fffacd 0%, #f0f8ff 100%);
+        border: 3px solid #fffacd;
+        padding: 35px 30px;
+        margin: 40px 0;
+        text-align: center;
+        border-radius: 20px;
+        box-shadow: 0 6px 20px rgba(255, 250, 205, 0.2);
+        position: relative;
+      }
+      .action-box::before {
+        content: '👀';
+        font-size: 40px;
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #ffffff;
+        padding: 8px;
+        border-radius: 50%;
+        border: 4px solid #fffacd;
+      }
+      .action-text {
+        font-size: 18px;
+        color: #555555;
+        line-height: 2;
+        margin-bottom: 20px;
+        font-weight: 600;
+      }
+      .action-link {
+        display: inline-block;
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 20px;
+        padding: 15px 35px;
+        background: linear-gradient(135deg, #b5e5cf, #a8d8ea);
+        border-radius: 30px;
+        border: 4px solid #ffffff;
+        box-shadow: 0 6px 20px rgba(181, 229, 207, 0.25);
+        transition: all 0.3s;
+        text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+      }
+      .action-link:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 25px rgba(181, 229, 207, 0.3);
+      }
+      .divider {
+        height: 4px;
+        background: repeating-linear-gradient(
+          90deg,
+          #b5e5cf 0px,
+          #b5e5cf 10px,
+          #fffacd 10px,
+          #fffacd 20px,
+          #a8d8ea 20px,
+          #a8d8ea 30px,
+          #b5e5cf 30px,
+          #b5e5cf 40px
+        );
+        margin: 40px 0;
+        border-radius: 2px;
+      }
+      .sparkles {
+        text-align: center;
+        font-size: 28px;
+        margin: 30px 0;
+        letter-spacing: 15px;
+      }
+      .footer {
+        background: linear-gradient(
+          135deg,
+          #f0f8ff 0%,
+          #fffacd 50%,
+          #f0f8ff 100%
+        );
+        padding: 40px 30px;
+        text-align: center;
+        border-top: 4px dashed #b5e5cf;
+      }
+      .footer-text {
+        font-size: 14px;
+        color: #666666;
+        margin: 0 0 15px 0;
+        line-height: 2;
+      }
+      .footer-divider {
+        height: 3px;
+        background: repeating-linear-gradient(
+          90deg,
+          #b5e5cf 0px,
+          #b5e5cf 8px,
+          #fffacd 8px,
+          #fffacd 16px,
+          #a8d8ea 16px,
+          #a8d8ea 24px,
+          #b5e5cf 24px,
+          #b5e5cf 32px
+        );
+        margin: 25px 0;
+        border-radius: 2px;
+      }
+      @media (max-width: 600px) {
+        .content {
+          padding: 30px 20px;
+        }
         .header {
-            background: linear-gradient(135deg, #00C49A 0%, #7FE8D8 100%);
-            padding: 55px 40px; text-align: center;
+          padding: 40px 20px 30px;
         }
-        .logo {
-            color: #fff; font-size: 20px;
-            letter-spacing: 3px; font-weight: 300;
-            text-transform: uppercase;
-        }
-
-        .content { padding: 60px 40px; }
         .greeting {
-            font-size: 24px; color: #009E89;
-            margin-bottom: 25px; font-weight: 300;
+          font-size: 24px;
         }
         .description {
-            font-size: 15px; margin-bottom: 30px;
-            color: #4A5A5A;
+          font-size: 16px;
         }
-        .highlight {
-            color: #00A390; font-weight: 600;
-        }
-
         .doc-box {
-            background: linear-gradient(135deg, #E8FFF7 0%, #F4FFFB 100%);
-            border: 2px solid #A6EDE1;
-            padding: 35px; border-radius: 12px;
-            margin-bottom: 40px;
-        }
-        .doc-title {
-            font-size: 20px; font-weight: 600;
-            color: #009E89; margin-bottom: 15px;
+          padding: 25px 20px;
         }
         .doc-item {
-            font-size: 14px; color: #3F5555;
-            margin-bottom: 10px;
+          font-size: 15px;
         }
-
         .action-box {
-            background: #E9F8FF; padding: 35px;
-            border-radius: 12px; text-align: center;
-            border: 2px solid #66A8FF;
+          padding: 25px 20px;
         }
-        .action-link {
-            color: #357BFF; text-decoration: none;
-            font-weight: 600;
-            border-bottom: 2px solid #00C49A;
-            padding-bottom: 2px; transition: .3s;
-        }
-        .action-link:hover {
-            color: #00C49A; border-bottom-color: #357BFF;
-        }
-
         .footer {
-            background: #EEFFF8; padding: 45px;
-            text-align: center;
-            border-top: 2px solid #00C49A;
+          padding: 30px 20px;
         }
-        .footer-text {
-            font-size: 12px; color: #009E89;
-        }
+      }
     </style>
-</head>
-
-<body>
-<table width="100%">
-    <tr><td align="center" style="padding: 30px 10px;">
-        <table class="container">
-
-            <tr><td class="header">
-                <div class="logo">{{brandName}}</div>
-            </td></tr>
-
-            <tr><td class="content">
-
-                <p class="greeting">Xin chào <b>{{studentName}}</b>,</p>
-
-                <p class="description">
-                    Tin vui! Khóa học <b>{{courseName}}</b> vừa được cập nhật  
-                    thêm một <span class="highlight">tài liệu mới</span> dành cho bạn.
+  </head>
+  <body>
+    <table width='100%'>
+      <tr>
+        <td align='center' style='padding: 30px 10px;'>
+          <table class='container'>
+            <tr>
+              <td class='header'>
+                <div class='logo'>📄 {{brandName}} ✨</div>
+              </td>
+            </tr>
+            <tr>
+              <td class='content'>
+                <div class='emoji-large'>🎉</div>
+                <p class='greeting'>Xin chào {{studentName}}!</p>
+                <p class='description'>
+                  🎊 Tin vui đây! Khóa học
+                  <b>{{courseName}}</b>
+                  vừa được cập nhật thêm một
+                  <span class='highlight'>tài liệu mới</span>
+                  dành cho bạn rồi nhé! 🎊
                 </p>
-
-                <div class="doc-box">
-                    <div class="doc-title">Thông tin tài liệu mới</div>
-                    <p class="doc-item">📘 Tiêu đề: <b>{{documentTitle}}</b></p>
-                    <p class="doc-item">📁 Loại tài liệu: {{documentType}}</p>
-                    <p class="doc-item">🕒 Ngày cập nhật: <b>{{updateDate}}</b></p>
+                <div class='sparkles'>✨ ⭐ ✨</div>
+                <div class='doc-box'>
+                  <div class='doc-title'>📚 Thông tin tài liệu mới</div>
+                  <p class='doc-item'>
+                    📘 Tiêu đề:
+                    <b>{{documentTitle}}</b>
+                  </p>
+                  <p class='doc-item'>
+                    📁 Loại tài liệu:
+                    <b>{{documentType}}</b>
+                  </p>
+                  <p class='doc-item'>
+                    🕒 Ngày cập nhật:
+                    <b>{{updateDate}}</b>
+                  </p>
                 </div>
-
-                <div class="action-box">
-                    <p>Nhấn để xem tài liệu:</p>
-                    <a href="{{documentLink}}" class="action-link">Xem tài liệu</a>
+                <div class='divider'></div>
+                <div class='action-box'>
+                  <p class='action-text'>
+                    👀 Nhấn để xem tài liệu ngay nhé!<br />
+                    Hãy đọc sớm để không bỏ lỡ nội dung quan trọng!
+                  </p>
+                  <a href='{{documentLink}}' class='action-link'>📖 Xem tài liệu</a>
                 </div>
-
-                <p class="description">
-                    Hãy đọc tài liệu sớm để không bỏ lỡ nội dung quan trọng nhé!  
-                    Chúc bạn học tập thật hiệu quả 🌿✨
+                <p class='description'>
+                  💡 Hãy đọc tài liệu sớm để không bỏ lỡ nội dung quan trọng
+                  nhé!<br />
+                  🌿 Chúc bạn học tập thật hiệu quả! ✨
                 </p>
-
-            </td></tr>
-
-            <tr><td class="footer">
-                <p class="footer-text">© {{year}} {{brandName}}. Mọi quyền được bảo lưu.</p>
-            </td></tr>
-
-        </table>
-    </td></tr>
-</table>
-</body>
+                <div class='sparkles'>🌟 ✨ 🌟 ✨ 🌟</div>
+              </td>
+            </tr>
+            <tr>
+              <td class='footer'>
+                <p class='footer-text'>
+                  ©
+                  {{year}}
+                  {{brandName}}
+                  – Tất cả quyền được bảo lưu! 🎨
+                </p>
+                <p style='font-size: 12px; color: #999999; margin: 20px 0 0 0;'>
+                  💝 Cảm ơn bạn đã tin tưởng
+                  {{brandName}}! 💝
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
 </html>

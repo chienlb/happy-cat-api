@@ -13,6 +13,7 @@ import {
   UserDocument,
   UserStatus,
   UserRole,
+  UserTypeAccount,
 } from '../users/schema/user.schema';
 import { RegisterAuthDto } from './dto/register-auth.dto';
 import { InvitationCodesService } from '../invitation-codes/invitation-codes.service';
@@ -36,6 +37,8 @@ import {
   LogoutNotDeviceAuthDto,
 } from './dto/logout-auth.dto';
 import { OAuth2Client } from 'google-auth-library';
+import { Secret, SignOptions } from 'jsonwebtoken';
+import { envSchema } from 'src/app/configs/env/env.config';
 
 @Injectable()
 export class AuthsService {
@@ -182,10 +185,9 @@ export class AuthsService {
 
       // 7. Create invitation code AFTER COMMIT (NO SESSION)
       if (createInvitePayload) {
-        try {
-          await this.invitationCodesService.createInvitationCode(createInvitePayload);
-        } catch (e) {
-          this.logger.error('Error creating invitation code:', e);
+        const result = await this.invitationCodesService.createInvitationCode(createInvitePayload)
+        if (!result.data) {
+          throw new BadRequestException('Failed to create invitation code.');
         }
       }
 
@@ -218,7 +220,9 @@ export class AuthsService {
   // ============================================================
   // LOGIN
   // ============================================================
+
   async login(loginAuthDto: LoginAuthDto) {
+    const env = envSchema.parse(process.env);
     try {
       const user = await this.userModel.findOne({
         $or: [{ email: loginAuthDto.email }, { username: loginAuthDto.email }],
@@ -229,16 +233,34 @@ export class AuthsService {
       const valid = await bcrypt.compare(loginAuthDto.password, user.password);
       if (!valid) throw new BadRequestException('Invalid password.');
 
+      // ==========================
+      // FIX SECRET + EXPIRESIN
+      // ==========================
+      const accessSecret =
+        env.JWT_ACCESS_TOKEN_SECRET ?? 'access_token_secret';
+
+      const refreshSecret =
+        env.JWT_REFRESH_TOKEN_SECRET ?? 'refresh_token_secret';
+
+      const accessExpiresIn =
+        env.JWT_ACCESS_TOKEN_EXPIRATION ?? '1h';
+
+      const refreshExpiresIn =
+        env.JWT_REFRESH_TOKEN_EXPIRATION ?? '7d';
+
+      // ==========================
+      // GENERATE TOKENS (NO ERRORS)
+      // ==========================
       const accessToken = jwt.sign(
         { userId: user._id, role: user.role },
-        process.env.JWT_SECRET as string,
-        { expiresIn: '1h' },
+        accessSecret,
+        { expiresIn: accessExpiresIn } as SignOptions
       );
 
       const refreshToken = jwt.sign(
         { userId: user._id, role: user.role },
-        process.env.JWT_REFRESH_SECRET as string,
-        { expiresIn: '7d' },
+        refreshSecret,
+        { expiresIn: refreshExpiresIn } as SignOptions
       );
 
       await this.tokensService.createToken({
@@ -262,6 +284,8 @@ export class AuthsService {
       throw error;
     }
   }
+
+
 
   // ============================================================
   // EMAIL VERIFY / RESEND / FORGOT / RESET / CHANGE PASSWORD
@@ -288,11 +312,12 @@ export class AuthsService {
     await user.save();
 
     sendEmail(email, 'Xác minh email', 'account-verification-email', {
-      brandName: 'EnglishOne',
+      brandName: 'Fit.io',
       userName: user.username,
       verificationCode: code,
       userEmail: user.email,
-      supportEmail: 'support@englishone.com',
+      supportEmail: 'support@fit.io.vn',
+      year: new Date().getFullYear(),
     });
 
     return { email: user.email, codeVerify: code };
@@ -307,9 +332,11 @@ export class AuthsService {
     await user.save();
 
     sendEmail(email, 'Đặt lại mật khẩu', 'reset-password-email', {
-      brandName: 'EnglishOne',
+      brandName: 'Fit.io',
       userName: user.username,
       resetCode: code,
+      supportEmail: 'support@fit.io.vn',
+      year: new Date().getFullYear(),
     });
 
     return { email: user.email, codeVerify: code };
@@ -376,9 +403,10 @@ export class AuthsService {
   }
 
   async verifyIdToken(credential: string) {
+    const env = envSchema.parse(process.env);
     const ticket = await this.oauth2Client.verifyIdToken({
       idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID as string,
+      audience: env.GOOGLE_CLIENT_ID as string,
     });
     const payload = ticket.getPayload();
     return {
@@ -390,48 +418,93 @@ export class AuthsService {
     };
   }
 
-  async loginWithGoogle(user: any) {
+  async loginWithGoogle(googleUser: any) {
+    const env = envSchema.parse(process.env);
+    const { googleId, email, fullname, avatar } = googleUser;
+
+    let user = await this.userModel.findOne({ googleId });
+
+    const password = randomUUID().substring(0, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    if (!user) {
+      user = await this.userModel.create({
+        googleId,
+        email,
+        fullname,
+        avatar,
+        username: email.split('@')[0],
+        password: hashedPassword,
+        role: UserRole.STUDENT,
+        status: UserStatus.ACTIVE,
+        typeAccount: UserTypeAccount.GOOGLE,
+      });
+    }
+
     const accessToken = jwt.sign(
-      { userId: user._id.toString(), role: user.role as UserRole },
-      process.env.JWT_SECRET as string,
-      { expiresIn: '1h' },
+      { userId: user._id.toString(), role: user.role },
+      env.JWT_ACCESS_TOKEN_SECRET as Secret,
+      { expiresIn: env.JWT_ACCESS_TOKEN_EXPIRATION as SignOptions['expiresIn'] },
     );
+
     const refreshToken = jwt.sign(
-      { userId: user._id.toString(), role: user.role as UserRole },
-      process.env.JWT_REFRESH_SECRET as string,
-      { expiresIn: '7d' },
+      { userId: user._id.toString(), role: user.role },
+      env.JWT_REFRESH_TOKEN_SECRET as Secret,
+      { expiresIn: env.JWT_REFRESH_TOKEN_EXPIRATION as SignOptions['expiresIn'] },
     );
-    return { accessToken, refreshToken };
+
+    return { accessToken, refreshToken, user };
   }
 
+
+
   async googleOneTap(credential: string) {
+    const env = envSchema.parse(process.env);
     const result = await this.verifyIdToken(credential);
     const user = await this.userModel.findOne({ email: result.email });
     if (!user) throw new NotFoundException('User not found.');
     const accessToken = jwt.sign(
       { userId: user._id.toString(), role: user.role as UserRole },
-      process.env.JWT_SECRET as string,
+      env.JWT_ACCESS_TOKEN_SECRET as string,
       { expiresIn: '1h' },
     );
     const refreshToken = jwt.sign(
       { userId: user._id.toString(), role: user.role as UserRole },
-      process.env.JWT_REFRESH_SECRET as string,
+      env.JWT_REFRESH_TOKEN_SECRET as string,
       { expiresIn: '7d' },
     );
     return { accessToken, refreshToken };
   }
 
-  async loginWithFacebook(user: any) {
+  async loginWithFacebook(facebookUser: any) {
+    const env = envSchema.parse(process.env);
+    const { facebookId, email, fullname, avatar } = facebookUser;
+    let user = await this.userModel.findOne({ facebookId });
+    const password = randomUUID().substring(0, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    if (!user) {
+      user = await this.userModel.create({
+        facebookId,
+        email,
+        fullname,
+        avatar,
+        username: email.split('@')[0],
+        password: hashedPassword,
+        role: UserRole.STUDENT,
+        status: UserStatus.ACTIVE,
+        typeAccount: UserTypeAccount.FACEBOOK,
+      });
+    }
     const accessToken = jwt.sign(
-      { userId: user._id.toString(), role: user.role as UserRole },
-      process.env.JWT_SECRET as string,
-      { expiresIn: '1h' },
+      { userId: user._id.toString(), role: user.role },
+      env.JWT_ACCESS_TOKEN_SECRET as Secret,
+      { expiresIn: env.JWT_ACCESS_TOKEN_EXPIRATION as SignOptions['expiresIn'] },
     );
     const refreshToken = jwt.sign(
-      { userId: user._id.toString(), role: user.role as UserRole },
-      process.env.JWT_REFRESH_SECRET as string,
-      { expiresIn: '7d' },
+      { userId: user._id.toString(), role: user.role },
+      env.JWT_REFRESH_TOKEN_SECRET as Secret,
+      { expiresIn: env.JWT_REFRESH_TOKEN_EXPIRATION as SignOptions['expiresIn'] },
     );
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken, user };
   }
 }

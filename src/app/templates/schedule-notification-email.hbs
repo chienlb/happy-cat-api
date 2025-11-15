@@ -1,216 +1,369 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<html lang='vi'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <meta http-equiv='X-UA-Compatible' content='IE=edge' />
     <title>Lịch học hôm nay</title>
-    <style type="text/css">
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
-            background: #FFFEF5;
-            line-height: 1.6;
-            color: #3a3a3a;
+    <style type='text/css'>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family:
+          'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', 'Trebuchet MS', Arial,
+          sans-serif;
+        background: linear-gradient(
+          135deg,
+          #f0f8ff 0%,
+          #fffacd 50%,
+          #fff0f5 100%
+        );
+        line-height: 1.8;
+        color: #333333;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        box-shadow: 0 8px 24px rgba(168, 216, 234, 0.15);
+        border-radius: 24px;
+        overflow: hidden;
+        border: 4px solid #a8d8ea;
+      }
+      .header {
+        background: linear-gradient(
+          135deg,
+          #a8d8ea 0%,
+          #b5e5cf 50%,
+          #ffb6c1 100%
+        );
+        padding: 50px 30px 40px;
+        text-align: center;
+        position: relative;
+        border-bottom: 6px dashed #ffffff;
+      }
+      .header::before {
+        content: '📅';
+        font-size: 50px;
+        position: absolute;
+        top: 15px;
+        left: 30px;
+        animation: gentle-bounce 3s infinite;
+      }
+      .header::after {
+        content: '⏰';
+        font-size: 50px;
+        position: absolute;
+        top: 15px;
+        right: 30px;
+        animation: gentle-bounce 3s infinite 0.5s;
+      }
+      @keyframes gentle-bounce {
+        0%,
+        100% {
+          transform: translateY(0);
         }
-        table {
-            border-collapse: collapse;
-            width: 100%;
+        50% {
+          transform: translateY(-5px);
         }
-        img {
-            max-width: 100%;
-            height: auto;
-            display: block;
+      }
+      .logo {
+        font-size: 32px;
+        font-weight: 700;
+        color: #ffffff;
+        text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+        letter-spacing: 2px;
+        margin: 0;
+      }
+      .content {
+        padding: 40px 35px;
+        background: #ffffff;
+      }
+      .emoji-large {
+        font-size: 56px;
+        text-align: center;
+        margin: 20px 0;
+        line-height: 1;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
         }
-        .container {
-            max-width: 580px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            box-shadow: 0 4px 16px rgba(45, 157, 217, 0.12);
-            border-radius: 12px;
-            overflow: hidden;
+        50% {
+          transform: scale(1.1);
         }
-        /* header gradient sky blue sang coral */
-        .header {
-            background: linear-gradient(135deg, #2D9DD9 0%, #FF6B6B 100%);
-            padding: 80px 45px 60px;
-            text-align: center;
-        }
-        .logo {
-            font-size: 18px;
-            font-weight: 300;
-            color: #ffffff;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }
+      }
+      .greeting {
+        font-size: 28px;
+        font-weight: 700;
+        color: #a8d8ea;
+        margin: 20px 0 25px 0;
+        text-align: center;
+        text-shadow: 2px 2px 0px rgba(255, 250, 205, 0.3);
+      }
+      .description {
+        font-size: 18px;
+        color: #555555;
+        line-height: 2;
+        margin: 0 0 30px 0;
+        text-align: center;
+      }
+      .highlight {
+        color: #ffb6c1;
+        font-weight: 700;
+        background: linear-gradient(120deg, #fffacd 0%, #fffacd 100%);
+        padding: 3px 10px;
+        border-radius: 10px;
+        display: inline-block;
+        border: 2px solid #ffd4a6;
+      }
+      .schedule-item {
+        background: linear-gradient(135deg, #f0f8ff 0%, #fff5f0 100%);
+        border: 4px dashed #a8d8ea;
+        padding: 35px 30px;
+        margin: 30px 0;
+        border-radius: 20px;
+        box-shadow: 0 6px 20px rgba(168, 216, 234, 0.2);
+        position: relative;
+      }
+      .schedule-item::before {
+        content: '📚';
+        position: absolute;
+        top: -25px;
+        left: 30px;
+        font-size: 40px;
+        background: #ffffff;
+        padding: 8px;
+        border-radius: 50%;
+        border: 4px solid #fffacd;
+      }
+      .schedule-time {
+        font-size: 16px;
+        color: #a8d8ea;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 15px;
+        font-weight: 700;
+        text-align: center;
+      }
+      .schedule-title {
+        font-size: 22px;
+        color: #a8d8ea;
+        font-weight: 700;
+        margin: 0 0 20px 0;
+        text-align: center;
+        text-shadow: 2px 2px 0px rgba(255, 250, 205, 0.3);
+      }
+      .schedule-details {
+        font-size: 17px;
+        color: #555555;
+        line-height: 2;
+        margin: 0;
+        text-align: center;
+      }
+      .schedule-details b {
+        color: #a8d8ea;
+        font-weight: 700;
+      }
+      .divider {
+        height: 4px;
+        background: repeating-linear-gradient(
+          90deg,
+          #a8d8ea 0px,
+          #a8d8ea 10px,
+          #fffacd 10px,
+          #fffacd 20px,
+          #b5e5cf 20px,
+          #b5e5cf 30px,
+          #a8d8ea 30px,
+          #a8d8ea 40px
+        );
+        margin: 40px 0;
+        border-radius: 2px;
+      }
+      .action-section {
+        text-align: center;
+        margin: 40px 0;
+      }
+      .action-link {
+        display: inline-block;
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 18px;
+        padding: 12px 30px;
+        background: linear-gradient(135deg, #a8d8ea, #b5e5cf);
+        border-radius: 30px;
+        border: 4px solid #ffffff;
+        box-shadow: 0 6px 20px rgba(168, 216, 234, 0.25);
+        transition: all 0.3s;
+        text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+      }
+      .action-link:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 25px rgba(168, 216, 234, 0.3);
+      }
+      .sparkles {
+        text-align: center;
+        font-size: 28px;
+        margin: 30px 0;
+        letter-spacing: 15px;
+      }
+      .footer {
+        background: linear-gradient(
+          135deg,
+          #f0f8ff 0%,
+          #fffacd 50%,
+          #f0f8ff 100%
+        );
+        padding: 40px 30px;
+        text-align: center;
+        border-top: 4px dashed #a8d8ea;
+      }
+      .footer-text {
+        font-size: 14px;
+        color: #666666;
+        margin: 0 0 15px 0;
+        line-height: 2;
+      }
+      .footer-divider {
+        height: 3px;
+        background: repeating-linear-gradient(
+          90deg,
+          #a8d8ea 0px,
+          #a8d8ea 8px,
+          #fffacd 8px,
+          #fffacd 16px,
+          #b5e5cf 16px,
+          #b5e5cf 24px,
+          #a8d8ea 24px,
+          #a8d8ea 32px
+        );
+        margin: 25px 0;
+        border-radius: 2px;
+      }
+      .settings-link {
+        color: #a8d8ea;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 16px;
+        border-bottom: 3px solid #fffacd;
+        padding-bottom: 2px;
+      }
+      .settings-link:hover {
+        color: #ffb6c1;
+        border-bottom-color: #ffb6c1;
+      }
+      @media (max-width: 600px) {
         .content {
-            padding: 70px 40px;
+          padding: 30px 20px;
         }
-        /* greeting màu sky blue */
+        .header {
+          padding: 40px 20px 30px;
+        }
         .greeting {
-            font-size: 28px;
-            font-weight: 400;
-            color: #2D9DD9;
-            margin: 0 0 45px 0;
-            letter-spacing: -0.3px;
-            line-height: 1.3;
+          font-size: 24px;
         }
         .description {
-            font-size: 15px;
-            color: #5a5a5a;
-            line-height: 1.8;
-            margin: 0 0 32px 0;
+          font-size: 16px;
         }
-        /* highlight màu coral orange */
-        .highlight {
-            color: #FF6B6B;
-            font-weight: 600;
-        }
-        /* schedule-item background gradient mint nhạt */
         .schedule-item {
-            background: linear-gradient(135deg, #E0F7F4 0%, #F0FFFE 100%);
-            border-left: 5px solid #4ECDC4;
-            padding: 35px 40px;
-            margin: 30px 0;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(78, 205, 196, 0.12);
-            position: relative;
+          padding: 25px 20px;
         }
-        /* schedule-time màu mint green */
-        .schedule-time {
-            font-size: 12px;
-            color: #4ECDC4;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-bottom: 12px;
-            font-weight: 600;
-        }
-        /* schedule-title màu sky blue */
         .schedule-title {
-            font-size: 19px;
-            color: #2D9DD9;
-            font-weight: 500;
-            margin: 0 0 15px 0;
-            letter-spacing: -0.2px;
+          font-size: 20px;
         }
         .schedule-details {
-            font-size: 14px;
-            color: #5a5a5a;
-            line-height: 1.9;
-            margin: 0;
+          font-size: 15px;
         }
-        /* divider gradient mint sang sky blue */
-        .divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #4ECDC4, transparent);
-            margin: 50px 0;
-        }
-        .action-section {
-            text-align: center;
-            margin: 45px 0;
-        }
-        /* action-link màu sky blue */
-        .action-link {
-            color: #2D9DD9;
-            text-decoration: none;
-            font-weight: 600;
-            border-bottom: 2px solid #FF6B6B;
-            transition: all 0.3s ease;
-        }
-        .action-link:hover {
-            color: #FF6B6B;
-            border-bottom-color: #2D9DD9;
-        }
-        /* footer gradient mint sang sky blue */
         .footer {
-            background: linear-gradient(135deg, #E0F7F4 0%, #E8F8FC 100%);
-            padding: 60px 40px;
-            text-align: center;
-            border-top: 2px solid #4ECDC4;
-            border-radius: 0 0 12px 12px;
+          padding: 30px 20px;
         }
-        /* footer-text màu sky blue */
-        .footer-text {
-            font-size: 12px;
-            color: #2D9DD9;
-            margin: 0 0 12px 0;
-            line-height: 1.9;
-            letter-spacing: 0.4px;
-            font-weight: 500;
-        }
-        .footer-divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #FFD700, transparent);
-            margin: 30px 0;
-        }
-        @media (max-width: 600px) {
-            .content {
-                padding: 50px 25px;
-            }
-            .header {
-                padding: 50px 25px 40px;
-            }
-            .greeting {
-                font-size: 22px;
-            }
-            .schedule-item {
-                padding: 25px;
-            }
-            .footer {
-                padding: 50px 25px;
-            }
-        }
+      }
     </style>
-</head>
-<body>
-    <table role="presentation">
-        <tr>
-            <td align="center" style="padding: 30px 10px;">
-                <table role="presentation" class="container">
-                    <tr>
-                        <td class="header">
-                            <div class="logo">{{brandName}}</div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="content">
-                            <p class="greeting">Xin chào {{userName}},</p>
-                            <p class="description">
-                                Bạn có <span class="highlight">{{scheduleCount}} buổi học</span> hôm nay. Dưới đây là lịch học của bạn:
-                            </p>
-                            {{#each schedules}}
-                            <div class="schedule-item">
-                                <div class="schedule-time">{{this.time}}</div>
-                                <div class="schedule-title">{{this.subject}}</div>
-                                <div class="schedule-details">
-                                    Giáo viên: {{this.instructor}}<br>
-                                    {{#if this.location}}Địa điểm: {{this.location}}{{/if}}
-                                </div>
-                            </div>
-                            {{/each}}
-                            <div class="divider"></div>
-                            <div class="action-section">
-                                <p class="description">
-                                    Xem toàn bộ lịch học bằng cách <a href="{{dashboardLink}}" class="action-link">truy cập bảng điều khiển</a>
-                                </p>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="footer">
-                            <p class="footer-text">
-                                © {{year}} {{brandName}}. Bảo lưu mọi quyền.
-                            </p>
-                            <div class="footer-divider"></div>
-                            <p class="footer-text">
-                                <a href="{{settingsLink}}" style="color: #2D9DD9; text-decoration: none;">Quản lý thông báo</a>
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
+  </head>
+  <body>
+    <table role='presentation'>
+      <tr>
+        <td align='center' style='padding: 30px 10px;'>
+          <table role='presentation' class='container'>
+            <tr>
+              <td class='header'>
+                <div class='logo'>📅 {{brandName}} ⏰</div>
+              </td>
+            </tr>
+            <tr>
+              <td class='content'>
+                <div class='emoji-large'>📚</div>
+                <p class='greeting'>Xin chào {{userName}}!</p>
+                <p class='description'>
+                  🎉 Bạn có
+                  <span class='highlight'>{{scheduleCount}} buổi học</span>
+                  hôm nay nhé! 🎉<br />
+                  Dưới đây là lịch học chi tiết của bạn! 📖
+                </p>
+                <div class='sparkles'>✨ ⭐ ✨</div>
+                {{#each schedules}}
+                  <div class='schedule-item'>
+                    <div class='schedule-time'>⏰ {{this.time}}</div>
+                    <div class='schedule-title'>📚 {{this.subject}}</div>
+                    <div class='schedule-details'>
+                      👨‍🏫 Giáo viên:
+                      <b>{{this.instructor}}</b><br />
+                      {{#if this.location}}📍 Địa điểm:
+                        <b>{{this.location}}</b>{{/if}}
+                    </div>
+                  </div>
+                {{/each}}
+                <div class='divider'></div>
+                <div class='action-section'>
+                  <p class='description'>
+                    🔍 Xem toàn bộ lịch học bằng cách
+                    <a href='{{dashboardLink}}' class='action-link'>📊 Truy cập
+                      bảng điều khiển</a>
+                    nhé!
+                  </p>
+                </div>
+                <p class='description'>
+                  💪 Chúc bạn có một ngày học tập thật hiệu quả!<br />
+                  🌟 Chúng mình luôn đồng hành cùng bạn! 🌟
+                </p>
+                <div class='sparkles'>🌟 ✨ 🌟 ✨ 🌟</div>
+              </td>
+            </tr>
+            <tr>
+              <td class='footer'>
+                <p class='footer-text'>
+                  ©
+                  {{year}}
+                  {{brandName}}
+                  – Tất cả quyền được bảo lưu! 🎨
+                </p>
+                <div class='footer-divider'></div>
+                <p class='footer-text'>
+                  ⚙️
+                  <a href='{{settingsLink}}' class='settings-link'>Quản lý thông
+                    báo</a>
+                </p>
+                <p style='font-size: 12px; color: #999999; margin: 20px 0 0 0;'>
+                  💝 Cảm ơn bạn đã tin tưởng
+                  {{brandName}}! 💝
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
     </table>
-</body>
+  </body>
 </html>

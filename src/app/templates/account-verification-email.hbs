@@ -1,347 +1,525 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<html lang='vi'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <meta http-equiv='X-UA-Compatible' content='IE=edge' />
     <title>Xác thực tài khoản</title>
-    <style type="text/css">
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
-            background: #FFFEF5;
-            line-height: 1.6;
-            color: #3a3a3a;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-        }
-        .container {
-            max-width: 580px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            box-shadow: 0 4px 16px rgba(45, 157, 217, 0.12);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        /* header gradient mint sang coral */
-        .header {
-            background: linear-gradient(135deg, #4ECDC4 0%, #FF6B6B 100%);
-            padding: 70px 40px 50px;
-            text-align: center;
-            border-bottom: none;
-        }
-        .logo {
-            font-size: 18px;
-            font-weight: 300;
-            color: #ffffff;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }
+    <style type='text/css'>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family:
+          'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', 'Trebuchet MS', Arial,
+          sans-serif;
+        background-color: #fff0f5;
+        line-height: 1.8;
+        color: #333333;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 4px solid #ffb6c1;
+      }
+      .header {
+        background: linear-gradient(
+          135deg,
+          #ffb6c1 0%,
+          #fffacd 25%,
+          #b5e5cf 50%,
+          #a8d8ea 75%,
+          #ffb6c1 100%
+        );
+        padding: 50px 30px 40px;
+        text-align: center;
+        position: relative;
+        border-bottom: 6px dashed #ffffff;
+      }
+      .header-emoji {
+        font-size: 40px;
+        position: absolute;
+        top: 15px;
+      }
+      .header-emoji-left {
+        left: 30px;
+      }
+      .header-emoji-right {
+        right: 30px;
+      }
+      .logo {
+        font-size: 32px;
+        font-weight: 700;
+        color: #ffffff;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        letter-spacing: 2px;
+        margin: 0;
+      }
+      .content {
+        padding: 40px 35px;
+        background-color: #ffffff;
+      }
+      .emoji-large {
+        font-size: 48px;
+        text-align: center;
+        margin: 20px 0;
+        line-height: 1;
+      }
+      .greeting {
+        font-size: 28px;
+        font-weight: 700;
+        color: #ffb6c1;
+        margin: 20px 0 25px 0;
+        text-align: center;
+        text-shadow: 1px 1px 2px rgba(255, 215, 61, 0.2);
+      }
+      .description {
+        font-size: 18px;
+        color: #555555;
+        line-height: 2;
+        margin: 0 0 30px 0;
+        text-align: center;
+      }
+      .highlight {
+        color: #ffb6c1;
+        font-weight: 700;
+        background-color: #fffacd;
+        padding: 2px 8px;
+        border-radius: 8px;
+        display: inline-block;
+        border: 2px solid #ffd4a6;
+      }
+      .code-section {
+        margin: 40px 0;
+        text-align: center;
+      }
+      .code-label {
+        font-size: 16px;
+        color: #a8d8ea;
+        letter-spacing: 1px;
+        margin-bottom: 20px;
+        display: block;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .code-box {
+        background: linear-gradient(
+          135deg,
+          #fff0f5 0%,
+          #fffacd 50%,
+          #f0f8ff 100%
+        );
+        border: 4px dashed #ffb6c1;
+        border-radius: 20px;
+        padding: 35px 30px;
+        margin: 0 auto;
+        position: relative;
+        box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
+        max-width: 400px;
+      }
+      .code-box-emoji {
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 36px;
+        background-color: #ffffff;
+        padding: 5px;
+        border-radius: 50%;
+        border: 3px solid #fffacd;
+      }
+      .code {
+        font-family: 'Courier New', monospace;
+        font-size: 32px;
+        font-weight: 700;
+        color: #ffb6c1;
+        letter-spacing: 8px;
+        word-break: break-all;
+        margin: 0;
+        line-height: 1.5;
+        text-shadow: 1px 1px 2px rgba(255, 215, 61, 0.2);
+      }
+      .divider {
+        height: 4px;
+        background: repeating-linear-gradient(
+          90deg,
+          #ffb6c1 0px,
+          #ffb6c1 10px,
+          #fffacd 10px,
+          #fffacd 20px,
+          #b5e5cf 20px,
+          #b5e5cf 30px,
+          #a8d8ea 30px,
+          #a8d8ea 40px
+        );
+        margin: 40px 0;
+        border-radius: 2px;
+      }
+      .verification-steps {
+        margin: 35px 0;
+        background: linear-gradient(135deg, #f5f9ff 0%, #fff5f0 100%);
+        padding: 30px;
+        border-radius: 20px;
+        border: 3px solid #fffacd;
+      }
+      .steps-title {
+        font-size: 20px;
+        color: #ffb6c1;
+        text-align: center;
+        margin-bottom: 25px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .step {
+        display: flex;
+        margin-bottom: 25px;
+        align-items: flex-start;
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-left: 6px solid;
+      }
+      .step:nth-child(1) .step-number {
+        background: linear-gradient(135deg, #ffb6c1, #ffc0cb);
+      }
+      .step:nth-child(1) {
+        border-left-color: #ffb6c1;
+      }
+      .step:nth-child(2) .step-number {
+        background: linear-gradient(135deg, #a8d8ea, #b8d4e3);
+      }
+      .step:nth-child(2) {
+        border-left-color: #a8d8ea;
+      }
+      .step:nth-child(3) .step-number {
+        background: linear-gradient(135deg, #b5e5cf, #c8e6d5);
+      }
+      .step:nth-child(3) {
+        border-left-color: #b5e5cf;
+      }
+      .step-number {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ffffff;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 20px;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        border: 3px solid #ffffff;
+      }
+      .step-content {
+        font-size: 17px;
+        color: #444444;
+        line-height: 1.8;
+        padding-top: 8px;
+        flex: 1;
+      }
+      .info-section {
+        margin: 35px 0;
+        padding: 30px;
+        background: linear-gradient(135deg, #fff0f5 0%, #f0f8ff 100%);
+        border: 3px solid #fffacd;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(255, 250, 205, 0.15);
+        position: relative;
+      }
+      .info-emoji {
+        position: absolute;
+        top: -25px;
+        left: 30px;
+        font-size: 40px;
+        background-color: #ffffff;
+        padding: 8px;
+        border-radius: 50%;
+        border: 3px solid #fffacd;
+      }
+      .info-title {
+        font-size: 18px;
+        color: #ffb6c1;
+        margin-bottom: 15px;
+        font-weight: 700;
+        text-transform: uppercase;
+        text-align: center;
+      }
+      .info-text {
+        font-size: 16px;
+        color: #555555;
+        line-height: 2;
+        margin: 0;
+        text-align: center;
+      }
+      .expiry-notice {
+        background: linear-gradient(135deg, #fffacd 0%, #ffe5e1 100%);
+        border: 3px solid #ffb6c1;
+        padding: 25px 30px;
+        margin: 35px 0;
+        font-size: 16px;
+        color: #444444;
+        line-height: 2;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(255, 182, 193, 0.15);
+        text-align: center;
+      }
+      .expiry-emoji {
+        font-size: 36px;
+        display: block;
+        margin-bottom: 10px;
+      }
+      .support-section {
+        text-align: center;
+        margin: 35px 0 20px 0;
+        padding: 25px;
+        background: linear-gradient(135deg, #f0f8ff 0%, #f5f9ff 100%);
+        border-radius: 20px;
+        border: 3px dashed #a8d8ea;
+      }
+      .support-link {
+        color: #a8d8ea;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 18px;
+        border-bottom: 3px solid #fffacd;
+        padding-bottom: 2px;
+      }
+      .footer {
+        background: linear-gradient(
+          135deg,
+          #fff0f5 0%,
+          #fffacd 50%,
+          #f0f8ff 100%
+        );
+        padding: 40px 30px;
+        text-align: center;
+        border-top: 4px dashed #ffb6c1;
+      }
+      .footer-text {
+        font-size: 14px;
+        color: #666666;
+        margin: 0 0 15px 0;
+        line-height: 2;
+      }
+      .footer-divider {
+        height: 3px;
+        background: repeating-linear-gradient(
+          90deg,
+          #ffb6c1 0px,
+          #ffb6c1 8px,
+          #fffacd 8px,
+          #fffacd 16px,
+          #b5e5cf 16px,
+          #b5e5cf 24px,
+          #a8d8ea 24px,
+          #a8d8ea 32px
+        );
+        margin: 25px 0;
+        border-radius: 2px;
+      }
+      .social-links {
+        text-align: center;
+        margin-top: 20px;
+      }
+      .social-link {
+        display: inline-block;
+        margin: 0 10px;
+        color: #a8d8ea;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: 700;
+        padding: 10px 20px;
+        background-color: #ffffff;
+        border-radius: 25px;
+        border: 3px solid #a8d8ea;
+      }
+      .sparkles {
+        text-align: center;
+        font-size: 24px;
+        margin: 20px 0;
+        letter-spacing: 10px;
+      }
+      @media (max-width: 600px) {
         .content {
-            padding: 70px 40px;
+          padding: 30px 20px;
         }
-        /* greeting màu sky blue */
+        .header {
+          padding: 40px 20px 30px;
+        }
         .greeting {
-            font-size: 24px;
-            font-weight: 300;
-            color: #2D9DD9;
-            margin: 0 0 35px 0;
-            letter-spacing: 0.5px;
+          font-size: 24px;
         }
         .description {
-            font-size: 15px;
-            color: #5a5a5a;
-            line-height: 1.8;
-            margin: 0 0 32px 0;
+          font-size: 16px;
         }
-        /* highlight màu coral */
-        .highlight {
-            color: #FF6B6B;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-        }
-        .code-section {
-            margin: 60px 0;
-            text-align: center;
-        }
-        /* code-label màu sky blue */
-        .code-label {
-            font-size: 11px;
-            color: #2D9DD9;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            margin-bottom: 25px;
-            display: block;
-            font-weight: 600;
-        }
-        /* code-box background gradient mint nhạt */
-        .code-box {
-            background: linear-gradient(135deg, #E0F7F4 0%, #F0FFFE 100%);
-            border: 2px solid #4ECDC4;
-            border-radius: 12px;
-            padding: 50px 40px;
-            margin: 0;
-            position: relative;
-            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.15);
-        }
-        .code-box::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #FFD700 0%, #2D9DD9 100%);
-            border-radius: 12px 12px 0 0;
-        }
-        /* code màu sky blue */
         .code {
-            font-family: 'Courier New', monospace;
-            font-size: 22px;
-            font-weight: 600;
-            color: #2D9DD9;
-            letter-spacing: 6px;
-            word-break: break-all;
-            margin: 0;
-            line-height: 1.6;
+          font-size: 24px;
+          letter-spacing: 4px;
         }
-        /* divider gradient mint sang coral */
-        .divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #4ECDC4, transparent);
-            margin: 50px 0;
+        .code-box {
+          padding: 25px 20px;
         }
-        /* info-section background gradient mint nhạt */
-        .info-section {
-            margin: 50px 0;
-            padding: 35px 40px;
-            background: linear-gradient(135deg, #E0F7F4 0%, #F0FFFE 100%);
-            border-left: 5px solid #4ECDC4;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(78, 205, 196, 0.12);
-        }
-        /* info-title màu mint green */
-        .info-title {
-            font-size: 12px;
-            color: #4ECDC4;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-bottom: 15px;
-            font-weight: 700;
-        }
-        .info-text {
-            font-size: 14px;
-            color: #444444;
-            line-height: 1.8;
-            margin: 0;
+        .footer {
+          padding: 30px 20px;
         }
         .verification-steps {
-            margin: 40px 0;
+          padding: 20px;
         }
-        .step {
-            display: flex;
-            margin-bottom: 20px;
-            align-items: flex-start;
-        }
-        /* step-number background màu sky blue */
-        .step-number {
-            font-size: 14px;
-            font-weight: 700;
-            color: #ffffff;
-            background-color: #2D9DD9;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 18px;
-            flex-shrink: 0;
-            box-shadow: 0 2px 8px rgba(45, 157, 217, 0.3);
+        .info-section {
+          padding: 20px;
         }
         .step-content {
-            font-size: 14px;
-            color: #5a5a5a;
-            line-height: 1.6;
-            padding-top: 4px;
+          font-size: 15px;
         }
-        /* expiry-notice background coral nhạt */
-        .expiry-notice {
-            background: linear-gradient(135deg, #FFE8E0 0%, #FFEDD5 100%);
-            border-left: 5px solid #FF6B6B;
-            padding: 30px 35px;
-            margin: 50px 0;
-            font-size: 14px;
-            color: #4a4a4a;
-            line-height: 1.9;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.12);
-        }
-        /* support-link màu sky blue */
-        .support-link {
-            color: #2D9DD9;
-            text-decoration: none;
-            font-weight: 600;
-            border-bottom: 2px solid #FF6B6B;
-        }
-        .support-link:hover {
-            color: #FF6B6B;
-            border-bottom-color: #2D9DD9;
-        }
-        /* footer gradient mint sang sky blue */
-        .footer {
-            background: linear-gradient(135deg, #E0F7F4 0%, #E8F8FC 100%);
-            padding: 60px 40px;
-            text-align: center;
-            border-top: 2px solid #4ECDC4;
-            border-radius: 0 0 12px 12px;
-        }
-        /* footer-text màu sky blue */
-        .footer-text {
-            font-size: 12px;
-            color: #2D9DD9;
-            margin: 0 0 12px 0;
-            line-height: 1.9;
-            letter-spacing: 0.4px;
-            font-weight: 500;
-        }
-        .footer-divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #FFD700, transparent);
-            margin: 30px 0;
-        }
-        .social-links {
-            text-align: center;
-            margin-top: 30px;
-        }
-        /* social-link màu mint green */
-        .social-link {
-            display: inline-block;
-            margin: 0 18px;
-            color: #4ECDC4;
-            text-decoration: none;
-            font-size: 12px;
-            letter-spacing: 0.5px;
-            font-weight: 500;
-        }
-        .social-link:hover {
-            color: #FF6B6B;
-        }
-        @media (max-width: 600px) {
-            .content {
-                padding: 50px 25px;
-            }
-            .header {
-                padding: 50px 25px 40px;
-            }
-            .greeting {
-                font-size: 22px;
-            }
-            .description {
-                font-size: 14px;
-            }
-            .code {
-                font-size: 20px;
-                letter-spacing: 5px;
-            }
-            .code-box {
-                padding: 35px 25px;
-            }
-            .footer {
-                padding: 50px 25px;
-            }
-            .info-section {
-                padding: 20px;
-            }
-        }
+      }
     </style>
-</head>
-<body>
-    <table role="presentation">
-        <tr>
-            <td align="center" style="padding: 30px 10px;">
-                <table role="presentation" class="container">
-                    <tr>
-                        <td class="header">
-                            <div class="logo">{{brandName}}</div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="content">
-                            <p class="greeting">Chào mừng {{userName}},</p>
-                            <p class="description">
-                                Cảm ơn bạn đã đăng ký tài khoản! Để hoàn tất quá trình xác thực, vui lòng nhập mã bên dưới.
-                            </p>
-                            <div class="code-section">
-                                <span class="code-label">Mã xác thực email của bạn</span>
-                                <div class="code-box">
-                                    <p class="code">{{verificationCode}}</p>
-                                </div>
-                            </div>
-                            <div class="divider"></div>
-                            <div class="verification-steps">
-                                <p style="font-size: 12px; color: #2D9DD9; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 30px; font-weight: 700;">Hướng dẫn xác thực</p>
-                                <div class="step">
-                                    <div class="step-number">1</div>
-                                    <div class="step-content">
-                                        Trở lại ứng dụng và nhập mã xác thực <span class="highlight">{{verificationCode}}</span>
-                                    </div>
-                                </div>
-                                <div class="step">
-                                    <div class="step-number">2</div>
-                                    <div class="step-content">
-                                        Nhấn nút "Xác thực" để hoàn tất đăng ký
-                                    </div>
-                                </div>
-                                <div class="step">
-                                    <div class="step-number">3</div>
-                                    <div class="step-content">
-                                        Bắt đầu sử dụng tài khoản của bạn ngay lập tức
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="info-section">
-                                <p class="info-title">Thông tin tài khoản</p>
-                                <p class="info-text">
-                                    Email: <strong>{{userEmail}}</strong><br>
-                                    Thời gian xác thực hết hạn: <span class="highlight">10 phút</span>
-                                </p>
-                            </div>
-                            <div class="expiry-notice">
-                                Mã này chỉ có hiệu lực trong <span class="highlight">10 phút</span>. Nếu bạn không yêu cầu xác thực, vui lòng bỏ qua email này.
-                            </div>
-                            <p class="description" style="text-align: center;">
-                                Cần trợ giúp? Liên hệ với <a href="mailto:{{supportEmail}}" class="support-link">đội hỗ trợ</a> của chúng tôi.
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="footer">
-                            <p class="footer-text">
-                                © {{year}} {{brandName}}. Bảo lưu mọi quyền.
-                            </p>
-                            <p class="footer-text">
-                                {{companyAddress}}
-                            </p>
-                            <div class="footer-divider"></div>
-                            <div class="social-links">
-                                {{#if websiteUrl}}<a href="{{websiteUrl}}" class="social-link">Website</a>{{/if}}
-                                {{#if twitterUrl}}<a href="{{twitterUrl}}" class="social-link">Twitter</a>{{/if}}
-                                {{#if facebookUrl}}<a href="{{facebookUrl}}" class="social-link">Facebook</a>{{/if}}
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
+  </head>
+  <body>
+    <table role='presentation' width='100%' cellpadding='0' cellspacing='0'>
+      <tr>
+        <td
+          align='center'
+          style='padding: 30px 10px; background-color: #fff0f5;'
+        >
+          <table
+            role='presentation'
+            class='container'
+            cellpadding='0'
+            cellspacing='0'
+          >
+            <tr>
+              <td class='header'>
+                <span class='header-emoji header-emoji-left'>✨</span>
+                <div class='logo'>🎉 {{brandName}} 🎉</div>
+                <span class='header-emoji header-emoji-right'>⭐</span>
+              </td>
+            </tr>
+            <tr>
+              <td class='content'>
+                <div class='emoji-large'>👋</div>
+                <p class='greeting'>Xin chào {{userName}}!</p>
+                <p class='description'>
+                  🎊 Chúc mừng bạn đã đăng ký tài khoản thành công! 🎊<br />
+                  Để bắt đầu khám phá thế giới tuyệt vời, hãy nhập mã xác thực
+                  bên dưới nhé!
+                </p>
+                <div class='code-section'>
+                  <span class='code-label'>🔑 Mã xác thực của bạn</span>
+                  <div class='code-box'>
+                    <span class='code-box-emoji'>🔐</span>
+                    <p class='code'>{{verificationCode}}</p>
+                  </div>
+                </div>
+                <div class='sparkles'>✨ ⭐ ✨</div>
+                <div class='divider'></div>
+                <div class='verification-steps'>
+                  <p class='steps-title'>📝 Cách làm như sau:</p>
+                  <div class='step'>
+                    <div class='step-number'>1</div>
+                    <div class='step-content'>
+                      🔍 Mở lại ứng dụng và tìm chỗ nhập mã xác thực
+                    </div>
+                  </div>
+                  <div class='step'>
+                    <div class='step-number'>2</div>
+                    <div class='step-content'>
+                      ⌨️ Nhập mã
+                      <span class='highlight'>{{verificationCode}}</span>
+                      vào ô trống
+                    </div>
+                  </div>
+                  <div class='step'>
+                    <div class='step-number'>3</div>
+                    <div class='step-content'>
+                      ✅ Nhấn nút "Xác thực" hoặc "Hoàn tất" để hoàn thành!
+                    </div>
+                  </div>
+                </div>
+                <div class='info-section'>
+                  <span class='info-emoji'>📋</span>
+                  <p class='info-title'>📌 Thông tin tài khoản</p>
+                  <p class='info-text'>
+                    📧 Email của bạn:
+                    <strong style='color: #FFB6C1;'>{{userEmail}}</strong><br />
+                    ⏱️ Mã này sẽ hết hạn sau:
+                    <span class='highlight'>10 phút</span>
+                  </p>
+                </div>
+                <div class='expiry-notice'>
+                  <span class='expiry-emoji'>⏰</span>
+                  <strong>💡 Lưu ý quan trọng:</strong><br />
+                  Mã xác thực này chỉ dùng được trong
+                  <span class='highlight'>10 phút</span>
+                  thôi nhé!<br />
+                  Nếu bạn không nhớ đã làm gì, hãy bỏ qua email này. 😊
+                </div>
+                <div class='support-section'>
+                  <p
+                    style='font-size: 16px; color: #555555; margin: 0 0 15px 0;'
+                  >
+                    🤔 Có thắc mắc gì không?<br />
+                    Đừng ngại, hãy liên hệ
+                    <a href='mailto:{{supportEmail}}' class='support-link'>đội
+                      hỗ trợ siêu dễ thương</a>
+                    của chúng mình nhé! 💌
+                  </p>
+                </div>
+                <div class='sparkles'>🌟 ✨ 🌟 ✨ 🌟</div>
+              </td>
+            </tr>
+            <tr>
+              <td class='footer'>
+                <p class='footer-text'>
+                  ©
+                  {{year}}
+                  {{brandName}}
+                  - Tất cả quyền được bảo lưu! 🎨
+                </p>
+                <p class='footer-text'>
+                  📍
+                  {{companyAddress}}
+                </p>
+                <div class='footer-divider'></div>
+                <p style='font-size: 14px; color: #666666; margin: 0 0 15px 0;'>
+                  🌐 Kết nối với chúng mình:
+                </p>
+                <div class='social-links'>
+                  {{#if websiteUrl}}<a
+                      href='{{websiteUrl}}'
+                      class='social-link'
+                    >🌐 Website</a>{{/if}}
+                  {{#if twitterUrl}}<a
+                      href='{{twitterUrl}}'
+                      class='social-link'
+                    >🐦 Twitter</a>{{/if}}
+                  {{#if facebookUrl}}<a
+                      href='{{facebookUrl}}'
+                      class='social-link'
+                    >👥 Facebook</a>{{/if}}
+                </div>
+                <p style='font-size: 12px; color: #999999; margin: 20px 0 0 0;'>
+                  💝 Cảm ơn bạn đã tin tưởng
+                  {{brandName}}! 💝
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
     </table>
-</body>
+  </body>
 </html>
