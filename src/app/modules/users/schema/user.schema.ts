@@ -60,6 +60,13 @@ export enum UserCurrency {
   JPY = 'JPY',
 }
 
+export enum UserAccountPackage {
+  FREE = 'free',
+  STANDARD = 'standard',
+  PREMIUM = 'premium',
+  VIP = 'vip',
+}
+
 export interface IUser {
   fullname: string; // Họ và tên đầy đủ của người dùng
   username: string; // Tên đăng nhập duy nhất của người dùng
@@ -80,6 +87,7 @@ export interface IUser {
   parent?: Types.ObjectId; // Phụ huynh của người dùng
   teacher?: Types.ObjectId; // Giáo viên của người dùng
   typeAccount: UserTypeAccount; // Loại hình tài khoản của người dùng
+  accountPackage: UserAccountPackage; // Gói tài khoản của người dùng
   isVerify: boolean; // Trạng thái xác thực của người dùng
   codeVerify: string; // Mã code dùng để xác thực tài khoản
   exp?: number; // Số kinh nghiệm của người dùng
@@ -167,6 +175,9 @@ export class User implements IUser {
 
   @Prop({ enum: UserTypeAccount, default: UserTypeAccount.EMAIL })
   typeAccount: UserTypeAccount;
+
+  @Prop({ enum: UserAccountPackage, default: UserAccountPackage.FREE })
+  accountPackage: UserAccountPackage;
 
   @Prop({ default: false })
   isVerify: boolean;

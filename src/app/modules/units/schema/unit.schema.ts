@@ -53,6 +53,8 @@ export interface IUnit {
   banner?: string; // Ảnh banner (tùy chọn)
   tags?: string[]; // Tag: ["greetings", "A1", "self-learning"]
   isActive: UnitStatus; // Có hiển thị không
+  createdBy: Types.ObjectId; // Người tạo
+  updatedBy: Types.ObjectId; // Người cập nhật
 }
 
 export interface IUnitResponse extends IUnit {
@@ -144,6 +146,12 @@ export class Unit implements IUnit {
 
   @Prop({ default: UnitStatus.ACTIVE, enum: UnitStatus })
   isActive: UnitStatus;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  createdBy: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  updatedBy: Types.ObjectId;
 }
 
 export const UnitSchema = SchemaFactory.createForClass(Unit);

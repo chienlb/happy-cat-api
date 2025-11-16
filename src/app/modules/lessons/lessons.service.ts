@@ -1,26 +1,165 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Lesson, LessonDocument, LessonStatus } from './schema/lesson.schema';
 import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
+import { UsersService } from '../users/users.service';
+import { UnitsService } from '../units/units.service';
 
 @Injectable()
 export class LessonsService {
-  create(createLessonDto: CreateLessonDto) {
-    return 'This action adds a new lesson';
+  constructor(
+    @InjectModel(Lesson.name) private lessonModel: Model<LessonDocument>,
+    private readonly usersService: UsersService,
+    private readonly unitsService: UnitsService,
+  ) { }
+
+  async createLesson(
+    createLessonDto: CreateLessonDto,
+  ): Promise<LessonDocument> {
+    const session = await this.lessonModel.startSession();
+    session.startTransaction();
+    try {
+      const user = await this.usersService.findUserById(
+        createLessonDto.createdBy,
+      );
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      const unit = await this.unitsService.findUnitById(createLessonDto.unit);
+      if (!unit) {
+        throw new NotFoundException('Unit not found');
+      }
+      const newLesson = new this.lessonModel({
+        ...createLessonDto,
+        createdBy: user._id,
+        updatedBy: user._id,
+        unit: unit._id,
+      });
+      await newLesson.save({ session });
+      await unit.lessons.push(newLesson._id);
+      await unit.save({ session });
+      return newLesson;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw new Error('Failed to create lesson: ' + error.message);
+    }
   }
 
-  findAll() {
-    return `This action returns all lessons`;
+  async findLessonById(id: string): Promise<LessonDocument> {
+    const lesson = await this.lessonModel.findById(id).exec();
+    if (!lesson) {
+      throw new NotFoundException('Lesson not found');
+    }
+    return lesson as LessonDocument;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} lesson`;
+  async findLessonsByUnitId(unitId: string): Promise<LessonDocument[]> {
+    return this.lessonModel.find({ unit: unitId }).exec();
   }
 
-  update(id: number, updateLessonDto: UpdateLessonDto) {
-    return `This action updates a #${id} lesson`;
+  async findLessonsByUserId(userId: string): Promise<LessonDocument[]> {
+    return this.lessonModel.find({ createdBy: userId }).exec();
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} lesson`;
+  async updateLesson(
+    id: string,
+    updateLessonDto: UpdateLessonDto,
+  ): Promise<LessonDocument> {
+    const session = await this.lessonModel.startSession();
+    session.startTransaction();
+    try {
+      const lesson = await this.findLessonById(id);
+      if (!lesson) {
+        throw new NotFoundException('Lesson not found');
+      }
+      const updatedLesson = await this.lessonModel
+        .findByIdAndUpdate(id, updateLessonDto, { new: true, session })
+        .exec();
+      if (!updatedLesson) {
+        throw new NotFoundException('Lesson not found');
+      }
+      return updatedLesson;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw new Error('Failed to update lesson: ' + error.message);
+    }
+  }
+
+  async deleteLesson(id: string): Promise<LessonDocument> {
+    const session = await this.lessonModel.startSession();
+    session.startTransaction();
+    try {
+      const lesson = await this.findLessonById(id);
+      if (!lesson) {
+        throw new NotFoundException('Lesson not found');
+      }
+      const unit = await this.unitsService.findUnitById(lesson.unit.toString());
+      if (!unit) {
+        throw new NotFoundException('Unit not found');
+      }
+      await lesson.updateOne({ isActive: LessonStatus.INACTIVE }, { session });
+
+      const lessonIndex = unit.lessons.findIndex(
+        (l) => l.toString() === lesson._id.toString(),
+      );
+      if (lessonIndex !== -1) {
+        unit.lessons.splice(lessonIndex, 1);
+      }
+
+      await unit.save({ session });
+      return lesson;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw new Error('Failed to delete lesson: ' + error.message);
+    }
+  }
+
+  async restoreLesson(id: string): Promise<LessonDocument> {
+    const session = await this.lessonModel.startSession();
+    session.startTransaction();
+    try {
+      const lesson = await this.findLessonById(id);
+      if (!lesson) {
+        throw new NotFoundException('Lesson not found');
+      }
+      const unit = await this.unitsService.findUnitById(lesson.unit.toString());
+      if (!unit) {
+        throw new NotFoundException('Unit not found');
+      }
+      await lesson.updateOne({ isActive: LessonStatus.ACTIVE }, { session });
+      await unit.lessons.push(lesson._id);
+      await unit.save({ session });
+      return lesson;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw new Error('Failed to restore lesson: ' + error.message);
+    }
+  }
+
+  async findAllLessons(page?: number, limit?: number): Promise<{ data: LessonDocument[], page: number, limit: number, total: number, totalPages: number, nextPage: number, prevPage: number }> {
+    try {
+      const lessons = await this.lessonModel.find({ isActive: LessonStatus.ACTIVE })
+        .skip((page || 1) - 1 * (limit || 10))
+        .limit(limit || 10)
+        .exec();
+      const totalLessons = await this.lessonModel.countDocuments({ isActive: LessonStatus.ACTIVE });
+      return {
+        data: lessons as LessonDocument[],
+        page: page || 1,
+        limit: limit || 10,
+        total: totalLessons,
+        totalPages: Math.ceil(totalLessons / (limit || 10)),
+        nextPage: page ? page + 1 : 2,
+        prevPage: page ? page - 1 : 1,
+      };
+    } catch (error) {
+      throw new Error('Failed to find all lessons: ' + error.message);
+    }
   }
 }

@@ -169,7 +169,7 @@ export class AuthsService {
           event: 'Invitation code for student registration',
           description: `Invitation code created by ${savedUser.username}`,
           type: InvitationCodeType.GROUP_JOIN,
-          totalUses: 100,
+          totalUses: 0,
           usesLeft: 100,
           startedAt: new Date().toISOString(),
         };

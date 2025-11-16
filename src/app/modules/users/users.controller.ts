@@ -56,7 +56,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
   @ApiOperation({ summary: 'Get user by ID' })
   async findUserById(@Param('id') id: string) {
     const user = await this.usersService.findUserById(id);
@@ -65,7 +65,7 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
   @ApiOperation({ summary: 'Update user by ID' })
   @ApiBody({ type: UpdateUserDto })
   async updateUserById(
@@ -78,7 +78,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
   @ApiOperation({ summary: 'Delete user by ID' })
   async deleteUserById(@Param('id') id: string) {
     const user = await this.usersService.remove(id);

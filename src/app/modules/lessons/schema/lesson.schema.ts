@@ -86,6 +86,8 @@ export interface ILesson {
   isActive: LessonStatus; // Trạng thái hiển thị
   createdAt?: Date; // Ngày tạo
   updatedAt?: Date; // Ngày cập nhật
+  createdBy: Types.ObjectId; // Người tạo
+  updatedBy: Types.ObjectId; // Người cập nhật
 }
 
 export interface ILessonInput extends Partial<ILesson> {
@@ -178,6 +180,12 @@ export class Lesson implements ILesson {
 
   @Prop({ enum: LessonStatus, default: LessonStatus.ACTIVE })
   isActive: LessonStatus;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  createdBy: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  updatedBy: Types.ObjectId;
 }
 
 export const LessonSchema = SchemaFactory.createForClass(Lesson);

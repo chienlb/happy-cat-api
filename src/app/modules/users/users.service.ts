@@ -7,7 +7,13 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User, UserDocument, UserRole } from './schema/user.schema';
+import {
+  User,
+  UserAccountPackage,
+  UserDocument,
+  UserRole,
+  UserTypeAccount,
+} from './schema/user.schema';
 import mongoose, { ClientSession, Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
@@ -41,16 +47,19 @@ export class UsersService {
       });
       await newUser.save({ session });
 
-      if (createUserDto.role !== UserRole.STUDENT) {
+      if (
+        createUserDto.role !== UserRole.STUDENT &&
+        newUser.accountPackage !== UserAccountPackage.FREE
+      ) {
         const invitationCode =
           await this.invitationCodesService.createInvitationCode(
             {
               createdBy: newUser._id.toString(),
               event: 'Invitation code for student registration',
               description: `Invitation code created by ${newUser.username}`,
-              type: InvitationCodeType.TRIAL,
-              totalUses: 1,
-              usesLeft: 1,
+              type: InvitationCodeType.GROUP_JOIN,
+              totalUses: 0,
+              usesLeft: 100,
               startedAt: new Date().toISOString(),
             },
             session,
