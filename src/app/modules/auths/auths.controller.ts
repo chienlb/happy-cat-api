@@ -321,4 +321,18 @@ export class AuthsController {
       200,
     );
   }
+
+  @ApiOperation({ summary: 'Get current user profile' })
+  @Get('profile')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiResponse({ status: 200, description: 'Profile retrieved successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getProfile(@Req() req: Request) {
+    const userId = (req as any).user.userId;
+    const result = await this.authsService.getProfile(userId);
+    return ok(result, 'Profile retrieved successfully', 200);
+  }
 }

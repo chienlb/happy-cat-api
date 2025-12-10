@@ -5,30 +5,52 @@ import { Province, ProvinceDocument } from './schema/province.schema';
 import { CreateProvinceDto } from './dto/create-province.dto';
 import { UpdateProvinceDto } from './dto/update-province.dto';
 import { NotFoundException } from '@nestjs/common';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @Injectable()
 export class ProvincesService {
-  constructor(@InjectModel(Province.name) private provinceModel: Model<ProvinceDocument>) { }
+  constructor(
+    @InjectModel(Province.name) private provinceModel: Model<ProvinceDocument>,
+  ) { }
 
-  async createProvince(createProvinceDto: CreateProvinceDto): Promise<ProvinceDocument> {
+  async createProvince(
+    createProvinceDto: CreateProvinceDto,
+  ): Promise<ProvinceDocument> {
     const newProvince = new this.provinceModel(createProvinceDto);
     return await newProvince.save();
   }
 
-  async findAllProvinces(page: number, limit: number): Promise<{ data: ProvinceDocument[], total: number, totalPages: number, nextPage: number, prevPage: number }> {
-    const skip = (page - 1) * limit;
-    const provinces = await this.provinceModel.find().skip(skip).limit(limit).exec();
-    const total = await this.provinceModel.countDocuments();
-    const totalPages = Math.ceil(total / limit);
-    const nextPage = page < totalPages ? page + 1 : null;
-    const prevPage = page > 1 ? page - 1 : null;
-    return {
-      data: provinces,
-      total,
-      totalPages,
-      nextPage: nextPage ?? page,
-      prevPage: prevPage ?? page,
-    };
+  async findAllProvinces(
+    paginationDto: PaginationDto,
+  ): Promise<{
+    data: ProvinceDocument[];
+    total: number;
+    totalPages: number;
+    nextPage: number;
+    prevPage: number;
+  }> {
+    try {
+      const skip = (paginationDto.page - 1) * paginationDto.limit;
+      const provinces = await this.provinceModel
+        .find()
+        .skip(skip)
+        .limit(paginationDto.limit)
+        .exec();
+      const total = await this.provinceModel.countDocuments();
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const nextPage =
+        paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+      const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
+      return {
+        data: provinces,
+        total,
+        totalPages,
+        nextPage: nextPage ?? paginationDto.page,
+        prevPage: prevPage ?? paginationDto.page,
+      };
+    } catch (error) {
+      throw new Error('Failed to find all provinces: ' + error.message);
+    }
   }
 
   async findProvinceById(id: string): Promise<ProvinceDocument> {
@@ -39,26 +61,36 @@ export class ProvincesService {
     return province;
   }
 
-  async updateProvince(id: string, updateProvinceDto: UpdateProvinceDto): Promise<ProvinceDocument> {
-    const updatedProvince = await this.provinceModel.findOneAndUpdate(
-      { provinceId: id },
-      updateProvinceDto,
-      { new: true }
-    );
-
-    if (!updatedProvince) {
-      throw new NotFoundException('Province not found');
+  async updateProvince(
+    id: string,
+    updateProvinceDto: UpdateProvinceDto,
+  ): Promise<ProvinceDocument> {
+    try {
+      const updatedProvince = await this.provinceModel.findOneAndUpdate(
+        { provinceId: id },
+        updateProvinceDto,
+        { new: true },
+      );
+      if (!updatedProvince) {
+        throw new NotFoundException('Province not found');
+      }
+      return updatedProvince;
+    } catch (error) {
+      throw new Error('Failed to update province: ' + error.message);
     }
-    return updatedProvince;
   }
 
   async deleteProvince(id: string): Promise<ProvinceDocument> {
-    const deletedProvince = await this.provinceModel.findOneAndDelete({ provinceId: id });
-
-    if (!deletedProvince) {
-      throw new NotFoundException('Province not found');
+    try {
+      const deletedProvince = await this.provinceModel.findOneAndDelete({
+        provinceId: id,
+      });
+      if (!deletedProvince) {
+        throw new NotFoundException('Province not found');
+      }
+      return deletedProvince;
+    } catch (error) {
+      throw new Error('Failed to delete province: ' + error.message);
     }
-    return deletedProvince;
   }
-
 }

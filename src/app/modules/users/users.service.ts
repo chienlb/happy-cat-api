@@ -19,6 +19,7 @@ import * as bcrypt from 'bcrypt';
 import { InvitationCodeType } from '../invitation-codes/schema/invitation-code.schema';
 import { InvitationCodesService } from '../invitation-codes/invitation-codes.service';
 import { PackageType } from '../packages/schema/package.schema';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @Injectable()
 export class UsersService {
@@ -27,7 +28,7 @@ export class UsersService {
     @Inject(forwardRef(() => InvitationCodesService))
     private readonly invitationCodesService: InvitationCodesService,
   ) { }
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto): Promise<UserDocument> {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
@@ -79,33 +80,52 @@ export class UsersService {
     }
   }
 
-  async findAll(session?: ClientSession) {
+  async findAll(
+    paginationDto: PaginationDto,
+    session?: ClientSession,
+  ): Promise<{
+    data: UserDocument[];
+    total: number;
+    totalPages: number;
+    nextPage: number | null;
+    prevPage: number | null;
+    page: number;
+    limit: number;
+  }> {
     try {
-      const users = await this.userModel.find(
-        { isDeleted: false },
-        null,
-        session ? { session } : {},
-      );
-      return users;
+      const skip = (paginationDto.page - 1) * paginationDto.limit;
+      const users = await this.userModel
+        .find({ isDeleted: false })
+        .skip(skip)
+        .limit(paginationDto.limit)
+        .session(session || null);
+      const total = await this.userModel.countDocuments({ isDeleted: false });
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const nextPage = paginationDto.page ? (paginationDto.page < totalPages ? paginationDto.page + 1 : null) : null;
+      const prevPage = paginationDto.page ? (paginationDto.page > 1 ? paginationDto.page - 1 : null) : null;
+      return { data: users, total, totalPages, nextPage, prevPage, page: paginationDto.page, limit: paginationDto.limit };
     } catch (error) {
       throw new Error('Failed to find all users: ' + error.message);
     }
   }
 
-  async findUserById(id: string, session?: ClientSession) {
-    const user = await this.userModel.findById(
-      id,
-      null,
-      session ? { session } : {},
-    );
-    return user;
+  async findUserById(
+    id: string,
+    session?: ClientSession,
+  ): Promise<UserDocument | null> {
+    try {
+      const user = await this.userModel.findById(id).session(session || null);
+      return user;
+    } catch (error) {
+      throw new Error('Failed to find user by ID: ' + error.message);
+    }
   }
 
   async updateUserById(
     id: string,
     updateUserDto: UpdateUserDto,
     session?: ClientSession,
-  ) {
+  ): Promise<UserDocument | null> {
     try {
       const options = session ? { session, new: true } : { new: true };
       const user = await this.userModel.findByIdAndUpdate(
@@ -119,7 +139,10 @@ export class UsersService {
     }
   }
 
-  async remove(id: string, session?: ClientSession) {
+  async remove(
+    id: string,
+    session?: ClientSession,
+  ): Promise<UserDocument | null> {
     try {
       const user = await this.userModel.findByIdAndUpdate(
         id,
@@ -132,30 +155,51 @@ export class UsersService {
     }
   }
 
-  async getUserBySlug(slug: string, session?: ClientSession) {
-    const user = await this.userModel.findOne(
-      { slug, isDeleted: false },
-      null,
-      session ? { session } : {},
-    );
-    return user;
+  async getUserBySlug(
+    slug: string,
+    session?: ClientSession,
+  ): Promise<UserDocument | null> {
+    try {
+      const user = await this.userModel.findOne(
+        { slug, isDeleted: false },
+        null,
+        session ? { session } : {},
+      );
+      return user;
+    } catch (error) {
+      throw new Error('Failed to get user by slug: ' + error.message);
+    }
   }
 
-  async getUserByEmail(email: string, session?: ClientSession) {
-    const user = await this.userModel.findOne(
-      { email, isDeleted: false },
-      null,
-      session ? { session } : {},
-    );
-    return user;
+  async getUserByEmail(
+    email: string,
+    session?: ClientSession,
+  ): Promise<UserDocument | null> {
+    try {
+      const user = await this.userModel.findOne(
+        { email, isDeleted: false },
+        null,
+        session ? { session } : {},
+      );
+      return user;
+    } catch (error) {
+      throw new Error('Failed to get user by email: ' + error.message);
+    }
   }
 
-  async getUserByUsername(username: string, session?: ClientSession) {
-    const user = await this.userModel.findOne(
-      { username, isDeleted: false },
-      null,
-      session ? { session } : {},
-    );
-    return user;
+  async getUserByUsername(
+    username: string,
+    session?: ClientSession,
+  ): Promise<UserDocument | null> {
+    try {
+      const user = await this.userModel.findOne(
+        { username, isDeleted: false },
+        null,
+        session ? { session } : {},
+      );
+      return user;
+    } catch (error) {
+      throw new Error('Failed to get user by username: ' + error.message);
+    }
   }
 }

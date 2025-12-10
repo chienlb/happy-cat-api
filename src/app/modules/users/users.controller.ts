@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   NotFoundException,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,6 +20,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { ok } from '../../common/response/api-response';
 import { UserRole } from './schema/user.schema';
@@ -27,6 +29,7 @@ import { JwtStrategy } from '../auths/strategies/jwt.strategy';
 import { RolesGuard } from '../../common/guards/role.guard';
 import { Roles } from '../../common/decorators/role.decorator';
 import { AuthGuard } from '@nestjs/passport';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @Controller('users')
 @ApiTags('Users')
@@ -36,6 +39,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new user' })
   @ApiBody({
@@ -43,21 +47,40 @@ export class UsersController {
     type: CreateUserDto,
   })
   @ApiResponse({ status: 201, description: 'Created.' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
   @Get()
+  @UseGuards(AuthGuard('jwt'))
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all users' })
-  async findAll() {
-    const users = await this.usersService.findAll();
+  @ApiQuery({ name: 'page', type: Number, description: 'The page number', required: false })
+  @ApiQuery({ name: 'limit', type: Number, description: 'The number of users per page', required: false })
+  @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async findAll(@Query() paginationDto: PaginationDto) {
+    const users = await this.usersService.findAll(paginationDto);
     return ok(users, 'Users retrieved successfully');
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard('jwt'))
   @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
   @ApiOperation({ summary: 'Get user by ID' })
+  @ApiParam({ name: 'id', description: 'The ID of the user' })
+  @ApiResponse({ status: 200, description: 'User retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 500, description: 'Internal server error.' })
   async findUserById(@Param('id') id: string) {
     const user = await this.usersService.findUserById(id);
     if (!user) throw new NotFoundException('User not found.');
@@ -65,9 +88,16 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard('jwt'))
   @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
   @ApiOperation({ summary: 'Update user by ID' })
   @ApiBody({ type: UpdateUserDto })
+  @ApiParam({ name: 'id', description: 'The ID of the user' })
+  @ApiResponse({ status: 200, description: 'User updated successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async updateUserById(
     @Param('id') id: string,
     @Body() dto: UpdateUserDto,
@@ -78,8 +108,15 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'))
   @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
   @ApiOperation({ summary: 'Delete user by ID' })
+  @ApiParam({ name: 'id', description: 'The ID of the user' })
+  @ApiResponse({ status: 200, description: 'User deleted successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async deleteUserById(@Param('id') id: string) {
     const user = await this.usersService.remove(id);
     if (!user) throw new NotFoundException('User not found.');

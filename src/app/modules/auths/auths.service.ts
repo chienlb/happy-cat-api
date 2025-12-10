@@ -599,4 +599,15 @@ export class AuthsService {
       throw error;
     }
   }
+
+  async getProfile(userId: string): Promise<UserDocument> {
+    try {
+      const user = await this.userModel.findById(userId).select('-password');
+      if (!user) throw new NotFoundException('User not found.');
+      return user;
+    } catch (error) {
+      this.logger.error('Get profile failed:', error);
+      throw error;
+    }
+  }
 }

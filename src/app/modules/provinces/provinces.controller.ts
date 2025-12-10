@@ -3,6 +3,7 @@ import { ProvincesService } from './provinces.service';
 import { CreateProvinceDto } from './dto/create-province.dto';
 import { UpdateProvinceDto } from './dto/update-province.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @ApiTags('Provinces')
 @Controller('provinces')
@@ -40,13 +41,9 @@ export class ProvincesController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   async findAllProvinces(
-    @Query('page') page = 1,
-    @Query('limit') limit = 10
+    @Query() paginationDto: PaginationDto
   ) {
-    // Chuyển sang số nguyên để tránh lỗi type
-    const pageNumber = Number(page) || 1;
-    const limitNumber = Number(limit) || 10;
-    return this.provincesService.findAllProvinces(pageNumber, limitNumber);
+    return this.provincesService.findAllProvinces(paginationDto);
   }
 
   @Get(':id')
