@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Req } from '@nestjs/common';
 import { GroupsService } from './groups.service';
 import {
   ApiTags,
@@ -13,6 +13,11 @@ import { CreateGroupDto } from './dto/create-group.dto';
 import { GroupType, GroupVisibility } from './schema/group.schema';
 import { Body, Param, Post, Query, Put, Delete, Get } from '@nestjs/common';
 import { UpdateGroupDto } from './dto/update-group.dto';
+import { PaginationDto } from '../pagination/pagination.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { Roles } from '../../common/decorators/role.decorator';
+import { UserRole } from '../users/schema/user.schema';
+import { UseGuards } from '@nestjs/common';
 
 @ApiTags('Groups')
 @ApiBearerAuth()
@@ -21,6 +26,8 @@ export class GroupsController {
   constructor(private readonly groupsService: GroupsService) { }
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
+  @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
   @ApiOperation({ summary: 'Create a new group' })
   @ApiBody({
     type: CreateGroupDto,
@@ -58,6 +65,7 @@ export class GroupsController {
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get a group by id' })
   @ApiParam({ name: 'id', description: 'The id of the group', type: String })
   @ApiResponse({ status: 200, description: 'Group found successfully' })
@@ -71,6 +79,8 @@ export class GroupsController {
   }
 
   @Get()
+  @UseGuards(AuthGuard('jwt'))
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all groups' })
   @ApiQuery({ name: 'page', description: 'The page number', type: Number })
   @ApiQuery({
@@ -83,14 +93,12 @@ export class GroupsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  findAllGroups(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
-  ) {
-    return this.groupsService.findAllGroups(page, limit);
+  findAllGroups(@Query() paginationDto: PaginationDto) {
+    return this.groupsService.findAllGroups(paginationDto);
   }
 
   @Put(':id')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update a group by id' })
   @ApiParam({ name: 'id', description: 'The id of the group', type: String })
   @ApiBody({
@@ -130,6 +138,7 @@ export class GroupsController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Delete a group by id' })
   @ApiParam({ name: 'id', description: 'The id of the group', type: String })
   @ApiResponse({ status: 200, description: 'Group deleted successfully' })
@@ -143,6 +152,7 @@ export class GroupsController {
   }
 
   @Post(':groupId/join')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Join a group' })
   @ApiParam({
     name: 'groupId',
@@ -156,14 +166,13 @@ export class GroupsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Group not found' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  joinGroup(
-    @Param('groupId') groupId: string,
-    @Param('userId') userId: string,
-  ) {
+  joinGroup(@Param('groupId') groupId: string, @Req() req: Request) {
+    const userId = (req as any).user.userId;
     return this.groupsService.joinGroup(groupId, userId);
   }
 
   @Post(':groupId/leave')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Leave a group' })
   @ApiParam({
     name: 'groupId',
@@ -177,14 +186,13 @@ export class GroupsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Group not found' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  leaveGroup(
-    @Param('groupId') groupId: string,
-    @Param('userId') userId: string,
-  ) {
+  leaveGroup(@Param('groupId') groupId: string, @Req() req: Request) {
+    const userId = (req as any).user.userId;
     return this.groupsService.leaveGroup(groupId, userId);
   }
 
   @Post(':groupId/restore')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Restore a group' })
   @ApiParam({
     name: 'groupId',
@@ -202,6 +210,7 @@ export class GroupsController {
   }
 
   @Post(':groupId/change-visibility')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Change the visibility of a group' })
   @ApiParam({
     name: 'groupId',
@@ -225,8 +234,9 @@ export class GroupsController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   changeGroupVisibility(
     @Param('groupId') groupId: string,
-    @Param('visibility') visibility: GroupVisibility,
+    @Req() req: Request,
   ) {
+    const visibility = (req as any).user.visibility;
     return this.groupsService.changeGroupVisibility(groupId, visibility);
   }
 }

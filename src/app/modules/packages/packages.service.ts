@@ -5,6 +5,7 @@ import { Package, PackageDocument } from './schema/package.schema';
 import { UsersService } from '../users/users.service';
 import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @Injectable()
 export class PackagesService {
@@ -40,8 +41,7 @@ export class PackagesService {
   }
 
   async findAllPackages(
-    page: number,
-    limit: number,
+    paginationDto: PaginationDto,
   ): Promise<{
     data: PackageDocument[];
     total: number;
@@ -49,24 +49,24 @@ export class PackagesService {
     nextPage: number;
     prevPage: number;
   }> {
-    const skip = (page - 1) * limit;
+    const skip = (paginationDto.page - 1) * paginationDto.limit;
     const packages = await this.packageRepository
       .find({ isActive: true })
       .skip(skip)
-      .limit(limit)
+      .limit(paginationDto.limit)
       .exec();
     const total = await this.packageRepository.countDocuments({
       isActive: true,
     });
-    const totalPages = Math.ceil(total / limit);
-    const nextPage = page < totalPages ? page + 1 : null;
-    const prevPage = page > 1 ? page - 1 : null;
+    const totalPages = Math.ceil(total / paginationDto.limit);
+    const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+    const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
     return {
       data: packages as PackageDocument[],
       total,
       totalPages,
-      nextPage: nextPage ?? page,
-      prevPage: prevPage ?? page,
+      nextPage: nextPage ?? paginationDto.page,
+      prevPage: prevPage ?? paginationDto.page,
     };
   }
 

@@ -1,6 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Progress, ProgressDocument, ProgressStatus, ProgressType } from './schema/progress.schema';
+import {
+  Progress,
+  ProgressDocument,
+  ProgressStatus,
+  ProgressType,
+} from './schema/progress.schema';
 import { Model } from 'mongoose';
 import { CreateProgressDto } from './dto/create-progress.dto';
 import { UpdateProgressDto } from './dto/update-progress.dto';
@@ -18,7 +23,9 @@ export class ProgressesService {
     private readonly usersService: UsersService,
   ) { }
 
-  async createProgress(createProgressDto: CreateProgressDto): Promise<ProgressDocument> {
+  async createProgress(
+    createProgressDto: CreateProgressDto,
+  ): Promise<ProgressDocument> {
     try {
       const existingProgress = await this.progressModel.findOne({
         userId: createProgressDto.userId,
@@ -31,19 +38,25 @@ export class ProgressesService {
         throw new BadRequestException('Progress already exists');
       }
       if (createProgressDto.type === ProgressType.LESSON) {
-        const lesson = await this.lessonsService.findLessonById(createProgressDto.lessonId as string);
+        const lesson = await this.lessonsService.findLessonById(
+          createProgressDto.lessonId as string,
+        );
         if (!lesson) {
           throw new BadRequestException('Lesson not found');
         }
       }
       if (createProgressDto.type === ProgressType.ASSIGNMENT) {
-        const assignment = await this.assignmentsService.getAssignmentById(createProgressDto.assignmentId as string);
+        const assignment = await this.assignmentsService.getAssignmentById(
+          createProgressDto.assignmentId as string,
+        );
         if (!assignment) {
           throw new BadRequestException('Assignment not found');
         }
       }
 
-      const user = await this.usersService.findUserById(createProgressDto.userId as string);
+      const user = await this.usersService.findUserById(
+        createProgressDto.userId as string,
+      );
       if (!user) {
         throw new BadRequestException('User not found');
       }
@@ -54,7 +67,9 @@ export class ProgressesService {
     }
   }
 
-  async updateProgress(updateProgressDto: UpdateProgressDto): Promise<ProgressDocument> {
+  async updateProgress(
+    updateProgressDto: UpdateProgressDto,
+  ): Promise<ProgressDocument> {
     try {
       const progress = await this.progressModel.findOneAndUpdate(
         {
@@ -76,7 +91,9 @@ export class ProgressesService {
     }
   }
 
-  async deleteProgress(deleteProgressDto: UpdateProgressDto): Promise<ProgressDocument> {
+  async deleteProgress(
+    deleteProgressDto: UpdateProgressDto,
+  ): Promise<ProgressDocument> {
     try {
       const progress = await this.progressModel.findOneAndDelete({
         userId: deleteProgressDto.userId,
@@ -95,7 +112,10 @@ export class ProgressesService {
     }
   }
 
-  async getProgressByUserId(userId: string, paginationDto: PaginationDto): Promise<{
+  async getProgressByUserId(
+    userId: string,
+    paginationDto: PaginationDto,
+  ): Promise<{
     data: ProgressDocument[];
     total: number;
     totalPages: number;
@@ -105,7 +125,10 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
-      const progress = await this.progressModel.find({ userId: userId }).skip((paginationDto.page - 1) * paginationDto.limit).limit(paginationDto.limit);
+      const progress = await this.progressModel
+        .find({ userId: userId })
+        .skip((paginationDto.page - 1) * paginationDto.limit)
+        .limit(paginationDto.limit);
       const total = await this.progressModel.countDocuments({ userId: userId });
       const totalPages = Math.ceil(total / paginationDto.limit);
       const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
@@ -123,7 +146,10 @@ export class ProgressesService {
     }
   }
 
-  async getProgressByCourseId(courseId: string, paginationDto: PaginationDto): Promise<{
+  async getProgressByCourseId(
+    courseId: string,
+    paginationDto: PaginationDto,
+  ): Promise<{
     data: ProgressDocument[];
     total: number;
     totalPages: number;
@@ -133,8 +159,13 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
-      const progress = await this.progressModel.find({ courseId: courseId }).skip((paginationDto.page - 1) * paginationDto.limit).limit(paginationDto.limit);
-      const total = await this.progressModel.countDocuments({ courseId: courseId });
+      const progress = await this.progressModel
+        .find({ courseId: courseId })
+        .skip((paginationDto.page - 1) * paginationDto.limit)
+        .limit(paginationDto.limit);
+      const total = await this.progressModel.countDocuments({
+        courseId: courseId,
+      });
       const totalPages = Math.ceil(total / paginationDto.limit);
       const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
       return {
@@ -151,7 +182,10 @@ export class ProgressesService {
     }
   }
 
-  async getProgressByLessonId(lessonId: string, paginationDto: PaginationDto): Promise<{
+  async getProgressByLessonId(
+    lessonId: string,
+    paginationDto: PaginationDto,
+  ): Promise<{
     data: ProgressDocument[];
     total: number;
     totalPages: number;
@@ -161,8 +195,13 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
-      const progress = await this.progressModel.find({ lessonId: lessonId }).skip((paginationDto.page - 1) * paginationDto.limit).limit(paginationDto.limit);
-      const total = await this.progressModel.countDocuments({ lessonId: lessonId });
+      const progress = await this.progressModel
+        .find({ lessonId: lessonId })
+        .skip((paginationDto.page - 1) * paginationDto.limit)
+        .limit(paginationDto.limit);
+      const total = await this.progressModel.countDocuments({
+        lessonId: lessonId,
+      });
       const totalPages = Math.ceil(total / paginationDto.limit);
       const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
       return {
@@ -179,7 +218,10 @@ export class ProgressesService {
     }
   }
 
-  async getProgressByAssignmentId(assignmentId: string, paginationDto: PaginationDto): Promise<{
+  async getProgressByAssignmentId(
+    assignmentId: string,
+    paginationDto: PaginationDto,
+  ): Promise<{
     data: ProgressDocument[];
     total: number;
     totalPages: number;
@@ -189,8 +231,13 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
-      const progress = await this.progressModel.find({ assignmentId: assignmentId }).skip((paginationDto.page - 1) * paginationDto.limit).limit(paginationDto.limit);
-      const total = await this.progressModel.countDocuments({ assignmentId: assignmentId });
+      const progress = await this.progressModel
+        .find({ assignmentId: assignmentId })
+        .skip((paginationDto.page - 1) * paginationDto.limit)
+        .limit(paginationDto.limit);
+      const total = await this.progressModel.countDocuments({
+        assignmentId: assignmentId,
+      });
       const totalPages = Math.ceil(total / paginationDto.limit);
       const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
       return {
@@ -207,7 +254,11 @@ export class ProgressesService {
     }
   }
 
-  async getProgressByUserIdAndCourseId(userId: string, courseId: string, paginationDto: PaginationDto): Promise<{
+  async getProgressByUserIdAndCourseId(
+    userId: string,
+    courseId: string,
+    paginationDto: PaginationDto,
+  ): Promise<{
     data: ProgressDocument[];
     total: number;
     totalPages: number;
@@ -217,8 +268,14 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
-      const progress = await this.progressModel.find({ userId: userId, courseId: courseId }).skip((paginationDto.page - 1) * paginationDto.limit).limit(paginationDto.limit);
-      const total = await this.progressModel.countDocuments({ userId: userId, courseId: courseId });
+      const progress = await this.progressModel
+        .find({ userId: userId, courseId: courseId })
+        .skip((paginationDto.page - 1) * paginationDto.limit)
+        .limit(paginationDto.limit);
+      const total = await this.progressModel.countDocuments({
+        userId: userId,
+        courseId: courseId,
+      });
       const totalPages = Math.ceil(total / paginationDto.limit);
       const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
       return {
@@ -245,7 +302,10 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
-      const progress = await this.progressModel.find().skip((paginationDto.page - 1) * paginationDto.limit).limit(paginationDto.limit);
+      const progress = await this.progressModel
+        .find()
+        .skip((paginationDto.page - 1) * paginationDto.limit)
+        .limit(paginationDto.limit);
       const total = await this.progressModel.countDocuments();
       const totalPages = Math.ceil(total / paginationDto.limit);
       const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));

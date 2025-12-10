@@ -6,6 +6,7 @@ import { CreateGroupDto } from './dto/create-group.dto';
 import { UsersService } from '../users/users.service';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { PackageType } from '../packages/schema/package.schema';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @Injectable()
 export class GroupsService {
@@ -98,8 +99,7 @@ export class GroupsService {
   }
 
   async findAllGroups(
-    page: number = 1,
-    limit: number = 10,
+    paginationDto: PaginationDto,
   ): Promise<{
     data: GroupDocument[];
     total: number;
@@ -110,18 +110,18 @@ export class GroupsService {
     try {
       const groups = await this.groupRepository
         .find()
-        .skip((page - 1) * limit)
-        .limit(limit);
+        .skip((paginationDto.page - 1) * paginationDto.limit)
+        .limit(paginationDto.limit);
       const total = await this.groupRepository.countDocuments();
-      const totalPages = Math.ceil(total / limit);
-      const nextPage = page < totalPages ? page + 1 : null;
-      const prevPage = page > 1 ? page - 1 : null;
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+      const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
       return {
         data: groups as GroupDocument[],
         total,
         totalPages,
-        nextPage: nextPage ?? page,
-        prevPage: prevPage ?? page,
+        nextPage: nextPage ?? paginationDto.page,
+        prevPage: prevPage ?? paginationDto.page,
       };
     } catch (error) {
       throw new Error('Failed to find all groups: ' + error.message);
