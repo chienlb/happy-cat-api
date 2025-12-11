@@ -3,6 +3,7 @@ import { LiteraturesService } from './literatures.service';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiBody, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { CreateLiteratureDto } from './dto/create-literature.dto';
 import { UpdateLiteratureDto } from './dto/update-literature.dto';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 
 @ApiTags('Literatures')
@@ -66,8 +67,8 @@ export class LiteraturesController {
     }
   })
   @ApiResponse({ status: 400, description: 'Bad Request', type: HttpException })
-  async getLiteratures(@Query() query: any): Promise<any> {
-    return this.literaturesService.getLiteratures(query.page, query.limit);
+  async getLiteratures(@Query() paginationDto: PaginationDto): Promise<any> {
+    return this.literaturesService.getLiteratures(paginationDto);
   }
 
   @Get(':id')

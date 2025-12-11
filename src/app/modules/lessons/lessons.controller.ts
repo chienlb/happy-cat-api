@@ -29,6 +29,7 @@ import {
   LessonSkill,
   LessonType,
 } from './schema/lesson.schema';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @ApiTags('Lessons')
 @ApiBearerAuth()
@@ -124,8 +125,8 @@ export class LessonsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  getAllLessons(@Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.lessonsService.findAllLessons();
+  getAllLessons(@Query() paginationDto: PaginationDto) {
+    return this.lessonsService.findAllLessons(paginationDto);
   }
 
   @Get(':id/unit')
