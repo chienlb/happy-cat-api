@@ -5,12 +5,17 @@ import { School, SchoolDocument } from './schema/school.schema';
 import { CreateSchoolDto } from './dto/create-school.dto';
 import { UpdateSchoolDto } from './dto/update-school.dto';
 import { NotFoundException } from '@nestjs/common';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @Injectable()
 export class SchoolsService {
-  constructor(@InjectModel(School.name) private schoolModel: Model<SchoolDocument>) { }
+  constructor(
+    @InjectModel(School.name) private schoolModel: Model<SchoolDocument>,
+  ) { }
 
-  async createSchool(createSchoolDto: CreateSchoolDto): Promise<SchoolDocument> {
+  async createSchool(
+    createSchoolDto: CreateSchoolDto,
+  ): Promise<SchoolDocument> {
     const session = await this.schoolModel.startSession();
     session.startTransaction();
     try {
@@ -24,19 +29,33 @@ export class SchoolsService {
     }
   }
 
-  async findAllSchools(page: number, limit: number): Promise<{ data: SchoolDocument[], total: number, totalPages: number, nextPage: number, prevPage: number }> {
-    const skip = (page - 1) * limit;
-    const schools = await this.schoolModel.find().skip(skip).limit(limit).exec();
-    const total = await this.schoolModel.countDocuments();
-    const totalPages = Math.ceil(total / limit);
-    const nextPage = page < totalPages ? page + 1 : null;
-    const prevPage = page > 1 ? page - 1 : null;
+  async findAllSchools(
+    paginationDto: PaginationDto,
+  ): Promise<{
+    data: SchoolDocument[];
+    total: number;
+    totalPages: number;
+    nextPage: number;
+    prevPage: number;
+  }> {
+    const skip = (paginationDto.page - 1) * paginationDto.limit;
+    const schools = await this.schoolModel
+      .find({ isActive: true })
+      .skip(skip)
+      .limit(paginationDto.limit)
+      .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 })
+      .exec();
+    const total = await this.schoolModel.countDocuments({ isActive: true });
+    const totalPages = Math.ceil(total / paginationDto.limit);
+    const nextPage =
+      paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+    const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
     return {
       data: schools,
       total,
       totalPages,
-      nextPage: nextPage ?? page,
-      prevPage: prevPage ?? page,
+      nextPage: nextPage ?? paginationDto.page,
+      prevPage: prevPage ?? paginationDto.page,
     };
   }
 
@@ -48,7 +67,10 @@ export class SchoolsService {
     return school;
   }
 
-  async updateSchool(id: string, updateSchoolDto: UpdateSchoolDto): Promise<SchoolDocument> {
+  async updateSchool(
+    id: string,
+    updateSchoolDto: UpdateSchoolDto,
+  ): Promise<SchoolDocument> {
     const session = await this.schoolModel.startSession();
     session.startTransaction();
     try {
@@ -59,7 +81,7 @@ export class SchoolsService {
       const updatedSchool = await this.schoolModel.findOneAndUpdate(
         { schoolId: id },
         updateSchoolDto,
-        { new: true, session }
+        { new: true, session },
       );
 
       if (!updatedSchool) {
@@ -81,7 +103,10 @@ export class SchoolsService {
       if (!school) {
         throw new NotFoundException('School not found');
       }
-      const deletedSchool = await this.schoolModel.findOneAndDelete({ schoolId: id }, { session });
+      const deletedSchool = await this.schoolModel.findOneAndDelete(
+        { schoolId: id },
+        { session },
+      );
       if (!deletedSchool) {
         throw new NotFoundException('School not found');
       }

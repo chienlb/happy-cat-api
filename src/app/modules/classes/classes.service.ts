@@ -5,10 +5,13 @@ import { Class, ClassDocument } from './schema/class.schema';
 import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
 import { NotFoundException } from '@nestjs/common';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @Injectable()
 export class ClassesService {
-  constructor(@InjectModel(Class.name) private classModel: Model<ClassDocument>) { }
+  constructor(
+    @InjectModel(Class.name) private classModel: Model<ClassDocument>,
+  ) { }
 
   async createClass(createClassDto: CreateClassDto): Promise<ClassDocument> {
     try {
@@ -20,14 +23,34 @@ export class ClassesService {
     }
   }
 
-  async findAllClasses(page: number, limit: number): Promise<{ data: ClassDocument[], total: number, totalPages: number, nextPage: number, prevPage: number }> {
-    const skip = (page - 1) * limit;
-    const classes = await this.classModel.find().skip(skip).limit(limit).exec();
-    const total = await this.classModel.countDocuments();
-    const totalPages = Math.ceil(total / limit);
-    const nextPage = page < totalPages ? page + 1 : null;
-    const prevPage = page > 1 ? page - 1 : null;
-    return { data: classes, total, totalPages, nextPage: nextPage ?? page, prevPage: prevPage ?? page };
+  async findAllClasses(
+    paginationDto: PaginationDto,
+  ): Promise<{
+    data: ClassDocument[];
+    total: number;
+    totalPages: number;
+    nextPage: number;
+    prevPage: number;
+  }> {
+    const skip = (paginationDto.page - 1) * paginationDto.limit;
+    const classes = await this.classModel
+      .find({ isActive: true })
+      .skip(skip)
+      .limit(paginationDto.limit)
+      .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 })
+      .exec();
+    const total = await this.classModel.countDocuments({ isActive: true });
+    const totalPages = Math.ceil(total / paginationDto.limit);
+    const nextPage =
+      paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+    const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
+    return {
+      data: classes,
+      total,
+      totalPages,
+      nextPage: nextPage ?? paginationDto.page,
+      prevPage: prevPage ?? paginationDto.page,
+    };
   }
 
   async findClassById(id: string): Promise<ClassDocument> {
@@ -38,7 +61,10 @@ export class ClassesService {
     return classResult;
   }
 
-  async updateClass(id: string, updateClassDto: UpdateClassDto): Promise<ClassDocument> {
+  async updateClass(
+    id: string,
+    updateClassDto: UpdateClassDto,
+  ): Promise<ClassDocument> {
     try {
       const classResult = await this.findClassById(id);
       if (!classResult) {
@@ -47,7 +73,7 @@ export class ClassesService {
       const updatedClass = await this.classModel.findOneAndUpdate(
         { classId: id },
         updateClassDto,
-        { new: true }
+        { new: true },
       );
       if (!updatedClass) {
         throw new NotFoundException('Class not found');
@@ -64,13 +90,14 @@ export class ClassesService {
       if (!classResult) {
         throw new NotFoundException('Class not found');
       }
-      const deletedClass = await this.classModel.findOneAndDelete({ classId: id });
+      const deletedClass = await this.classModel.findOneAndDelete({
+        classId: id,
+      });
       if (!deletedClass) {
         throw new NotFoundException('Class not found');
       }
       return deletedClass;
-    }
-    catch (error) {
+    } catch (error) {
       throw new Error('Failed to delete class: ' + error.message);
     }
   }

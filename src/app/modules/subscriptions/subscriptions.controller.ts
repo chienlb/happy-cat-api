@@ -19,6 +19,7 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
@@ -73,19 +74,9 @@ export class SubscriptionsController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   findAll(
     @Query()
-    query: {
-      page: number;
-      limit: number;
-      sort: string;
-      order: 'asc' | 'desc';
-    },
+    paginationDto: PaginationDto,
   ) {
-    return this.subscriptionsService.findAllSubscriptions(
-      query.page,
-      query.limit,
-      query.sort,
-      query.order,
-    );
+    return this.subscriptionsService.findAllSubscriptions(paginationDto);
   }
 
   @Get(':id')

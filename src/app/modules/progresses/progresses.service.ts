@@ -128,7 +128,8 @@ export class ProgressesService {
       const progress = await this.progressModel
         .find({ userId: userId })
         .skip((paginationDto.page - 1) * paginationDto.limit)
-        .limit(paginationDto.limit);
+        .limit(paginationDto.limit)
+        .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 });
       const total = await this.progressModel.countDocuments({ userId: userId });
       const totalPages = Math.ceil(total / paginationDto.limit);
       const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));

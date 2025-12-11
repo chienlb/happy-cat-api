@@ -32,11 +32,12 @@ export class ProvincesService {
     try {
       const skip = (paginationDto.page - 1) * paginationDto.limit;
       const provinces = await this.provinceModel
-        .find()
+        .find({ isActive: true })
         .skip(skip)
         .limit(paginationDto.limit)
+        .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 })
         .exec();
-      const total = await this.provinceModel.countDocuments();
+      const total = await this.provinceModel.countDocuments({ isActive: true });
       const totalPages = Math.ceil(total / paginationDto.limit);
       const nextPage =
         paginationDto.page < totalPages ? paginationDto.page + 1 : null;

@@ -3,6 +3,7 @@ import { ClassesService } from './classes.service';
 import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @ApiTags('Classes')
 @Controller('classes')
@@ -30,8 +31,8 @@ export class ClassesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async findAllClasses(@Query('page') page: number, @Query('limit') limit: number) {
-    return this.classesService.findAllClasses(page, limit);
+  async findAllClasses(@Query() paginationDto: PaginationDto) {
+    return this.classesService.findAllClasses(paginationDto);
   }
 
   @Get(':id')

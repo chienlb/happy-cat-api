@@ -40,9 +40,7 @@ export class PackagesService {
     return packageResult;
   }
 
-  async findAllPackages(
-    paginationDto: PaginationDto,
-  ): Promise<{
+  async findAllPackages(paginationDto: PaginationDto): Promise<{
     data: PackageDocument[];
     total: number;
     totalPages: number;
@@ -54,12 +52,14 @@ export class PackagesService {
       .find({ isActive: true })
       .skip(skip)
       .limit(paginationDto.limit)
+      .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 })
       .exec();
     const total = await this.packageRepository.countDocuments({
       isActive: true,
     });
     const totalPages = Math.ceil(total / paginationDto.limit);
-    const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+    const nextPage =
+      paginationDto.page < totalPages ? paginationDto.page + 1 : null;
     const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
     return {
       data: packages as PackageDocument[],
@@ -98,7 +98,7 @@ export class PackagesService {
     const deletedPackage = await this.packageRepository.findByIdAndUpdate(
       id,
       { isActive: false },
-      { new: true }
+      { new: true },
     );
 
     if (!deletedPackage) {
@@ -116,7 +116,7 @@ export class PackagesService {
     const restoredPackage = await this.packageRepository.findByIdAndUpdate(
       id,
       { isActive: true },
-      { new: true }
+      { new: true },
     );
     if (!restoredPackage) {
       throw new NotFoundException('Package not found');

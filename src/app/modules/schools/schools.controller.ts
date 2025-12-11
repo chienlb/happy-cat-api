@@ -3,6 +3,7 @@ import { SchoolsService } from './schools.service';
 import { CreateSchoolDto } from './dto/create-school.dto';
 import { UpdateSchoolDto } from './dto/update-school.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @Controller('schools')
 @ApiTags('Schools')
@@ -30,8 +31,8 @@ export class SchoolsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async findAllSchools(@Query('page') page: number, @Query('limit') limit: number) {
-    return this.schoolsService.findAllSchools(page, limit);
+  async findAllSchools(@Query() paginationDto: PaginationDto) {
+    return this.schoolsService.findAllSchools(paginationDto);
   }
 
   @Get(':id')

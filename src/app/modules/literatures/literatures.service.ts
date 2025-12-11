@@ -5,6 +5,7 @@ import { Literature, LiteratureDocument } from './schema/literature.schema';
 import { CreateLiteratureDto } from './dto/create-literature.dto';
 import { UpdateLiteratureDto } from './dto/update-literature.dto';
 import { UsersService } from '../users/users.service';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @Injectable()
 export class LiteraturesService {
@@ -42,8 +43,7 @@ export class LiteraturesService {
   }
 
   async getLiteratures(
-    page: number,
-    limit: number,
+    paginationDto: PaginationDto,
   ): Promise<{
     literatures: LiteratureDocument[];
     total: number;
@@ -52,20 +52,21 @@ export class LiteraturesService {
     hasNextPage: boolean;
     hasPreviousPage: boolean;
     nextPage: number | null;
-    previousPage: number | null;
+    prevPage: number | null;
   }> {
     try {
       const literatures = await this.literatureModel
-        .find()
-        .skip((page - 1) * limit)
-        .limit(limit);
-      const total = await this.literatureModel.countDocuments();
-      const totalPages = Math.ceil(total / limit);
-      const currentPage = page;
+        .find({ isActive: true })
+        .skip((paginationDto.page - 1) * paginationDto.limit)
+        .limit(paginationDto.limit)
+        .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 });
+      const total = await this.literatureModel.countDocuments({ isActive: true });
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const currentPage = paginationDto.page;
       const hasNextPage = currentPage < totalPages;
       const hasPreviousPage = currentPage > 1;
-      const nextPage = hasNextPage ? currentPage + 1 : null;
-      const previousPage = hasPreviousPage ? currentPage - 1 : null;
+      const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+      const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
       return {
         literatures,
         total,
@@ -74,7 +75,7 @@ export class LiteraturesService {
         hasNextPage,
         hasPreviousPage,
         nextPage,
-        previousPage,
+        prevPage,
       };
     } catch (error) {
       throw new BadRequestException(error.message);

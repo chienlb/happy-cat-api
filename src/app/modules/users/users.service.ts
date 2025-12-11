@@ -98,12 +98,13 @@ export class UsersService {
         .find({ isDeleted: false })
         .skip(skip)
         .limit(paginationDto.limit)
+        .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 })
         .session(session || null);
       const total = await this.userModel.countDocuments({ isDeleted: false });
       const totalPages = Math.ceil(total / paginationDto.limit);
       const nextPage = paginationDto.page ? (paginationDto.page < totalPages ? paginationDto.page + 1 : null) : null;
       const prevPage = paginationDto.page ? (paginationDto.page > 1 ? paginationDto.page - 1 : null) : null;
-      return { data: users, total, totalPages, nextPage, prevPage, page: paginationDto.page, limit: paginationDto.limit };
+      return { data: users as UserDocument[], total, totalPages, nextPage, prevPage, page: paginationDto.page, limit: paginationDto.limit };
     } catch (error) {
       throw new Error('Failed to find all users: ' + error.message);
     }

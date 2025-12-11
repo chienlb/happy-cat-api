@@ -3,6 +3,7 @@ import { DistrictsService } from './districts.service';
 import { CreateDistrictDto } from './dto/create-district.dto';
 import { UpdateDistrictDto } from './dto/update-district.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @ApiTags('Districts')
 @Controller('districts')
@@ -30,8 +31,8 @@ export class DistrictsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async findAllDistricts(@Query('page') page: number, @Query('limit') limit: number) {
-    return this.districtsService.findAllDistricts(page, limit);
+  async findAllDistricts(@Query() paginationDto: PaginationDto) {
+    return this.districtsService.findAllDistricts(paginationDto);
   }
 
   @Get(':id')

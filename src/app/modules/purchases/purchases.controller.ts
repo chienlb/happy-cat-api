@@ -4,6 +4,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery, ApiBea
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { UpdatePurchaseDto } from './dto/update-purchase.dto';
 import { PurchaseStatus } from './schema/purchase.schema';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @ApiTags('Purchases')
 @ApiBearerAuth()
@@ -45,8 +46,8 @@ export class PurchasesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async findAllPurchases(@Query('page') page: number, @Query('limit') limit: number) {
-    return this.purchasesService.findAllPurchases(page, limit);
+  async findAllPurchases(@Query() paginationDto: PaginationDto) {
+    return this.purchasesService.findAllPurchases(paginationDto);
   }
 
   @Get('user/:userId')

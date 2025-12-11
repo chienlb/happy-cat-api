@@ -12,6 +12,7 @@ import { UsersService } from '../users/users.service';
 import { PackagesService } from '../packages/packages.service';
 import { PaymentsService } from '../payments/payments.service';
 import { NotFoundException } from '@nestjs/common';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @Injectable()
 export class PurchasesService {
@@ -61,8 +62,7 @@ export class PurchasesService {
   }
 
   async findAllPurchases(
-    page: number,
-    limit: number,
+    paginationDto: PaginationDto,
   ): Promise<{
     data: PurchaseDocument[];
     total: number;
@@ -71,22 +71,23 @@ export class PurchasesService {
     prevPage: number;
   }> {
     try {
-      const skip = (page - 1) * limit;
+      const skip = (paginationDto.page - 1) * paginationDto.limit;
       const purchases = await this.purchaseRepository
-        .find()
+        .find({ isActive: true })
         .skip(skip)
-        .limit(limit)
+        .limit(paginationDto.limit)
+        .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 })
         .exec();
-      const total = await this.purchaseRepository.countDocuments();
-      const totalPages = Math.ceil(total / limit);
-      const nextPage = page < totalPages ? page + 1 : null;
-      const prevPage = page > 1 ? page - 1 : null;
+      const total = await this.purchaseRepository.countDocuments({ isActive: true });
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+      const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
       return {
         data: purchases,
         total,
         totalPages,
-        nextPage: nextPage ?? page,
-        prevPage: prevPage ?? page,
+        nextPage: nextPage ?? paginationDto.page,
+        prevPage: prevPage ?? paginationDto.page,
       };
     } catch (error) {
       throw new Error(

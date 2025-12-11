@@ -10,6 +10,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { UsersService } from '../users/users.service';
 import { PackagesService } from '../packages/packages.service';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @Injectable()
 export class SubscriptionsService {
@@ -52,10 +53,7 @@ export class SubscriptionsService {
 
   async findSubscriptionByUserId(
     userId: string,
-    page: number = 1,
-    limit: number = 10,
-    sort: string = 'createdAt',
-    order: 'asc' | 'desc' = 'desc',
+    paginationDto: PaginationDto,
   ): Promise<{
     data: SubscriptionDocument[];
     total: number;
@@ -66,22 +64,21 @@ export class SubscriptionsService {
     try {
       const subscriptions = await this.subscriptionRepository
         .find({ userId })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .sort({ [sort]: order === 'asc' ? 1 : -1 })
+        .skip((paginationDto.page - 1) * paginationDto.limit)
+        .limit(paginationDto.limit)
         .exec();
       const total = await this.subscriptionRepository.countDocuments({
         userId,
       });
-      const totalPages = Math.ceil(total / limit);
-      const nextPage = page < totalPages ? page + 1 : null;
-      const prevPage = page > 1 ? page - 1 : null;
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+      const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
       return {
         data: subscriptions as SubscriptionDocument[],
         total,
         totalPages,
-        nextPage: nextPage ?? page,
-        prevPage: prevPage ?? page,
+        nextPage: nextPage ?? paginationDto.page,
+        prevPage: prevPage ?? paginationDto.page,
       };
     } catch (error) {
       throw new Error(
@@ -144,10 +141,7 @@ export class SubscriptionsService {
   }
 
   async findAllSubscriptions(
-    page: number = 1,
-    limit: number = 10,
-    sort: string = 'createdAt',
-    order: 'asc' | 'desc' = 'desc',
+    paginationDto: PaginationDto,
   ): Promise<{
     data: SubscriptionDocument[];
     total: number;
@@ -158,20 +152,20 @@ export class SubscriptionsService {
     try {
       const subscriptions = await this.subscriptionRepository
         .find({ isDeleted: false })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .sort({ [sort]: order === 'asc' ? 1 : -1 })
+        .skip((paginationDto.page - 1) * paginationDto.limit)
+        .limit(paginationDto.limit)
+        .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 })
         .exec();
       const total = await this.subscriptionRepository.countDocuments();
-      const totalPages = Math.ceil(total / limit);
-      const nextPage = page < totalPages ? page + 1 : null;
-      const prevPage = page > 1 ? page - 1 : null;
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+      const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
       return {
         data: subscriptions as SubscriptionDocument[],
         total,
         totalPages,
-        nextPage: nextPage ?? page,
-        prevPage: prevPage ?? page,
+        nextPage: nextPage ?? paginationDto.page,
+        prevPage: prevPage ?? paginationDto.page,
       };
     } catch (error) {
       throw new Error(

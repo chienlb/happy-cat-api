@@ -109,10 +109,11 @@ export class GroupsService {
   }> {
     try {
       const groups = await this.groupRepository
-        .find()
+        .find({ isActive: true })
         .skip((paginationDto.page - 1) * paginationDto.limit)
-        .limit(paginationDto.limit);
-      const total = await this.groupRepository.countDocuments();
+        .limit(paginationDto.limit)
+        .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 });
+      const total = await this.groupRepository.countDocuments({ isActive: true });
       const totalPages = Math.ceil(total / paginationDto.limit);
       const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
       const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;

@@ -9,6 +9,7 @@ import { Model, Types } from 'mongoose';
 import { UsersService } from '../users/users.service';
 import { CreateCompetitionDto } from './dto/create-competition.dto';
 import { UpdateCompetitionDto } from './dto/update-competition.dto';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @Injectable()
 export class CompetitionsService {
@@ -16,7 +17,7 @@ export class CompetitionsService {
     @InjectModel(Competition.name)
     private competitionRepository: Model<CompetitionDocument>,
     private usersService: UsersService,
-  ) {}
+  ) { }
 
   async createCompetition(
     createCompetitionDto: CreateCompetitionDto,
@@ -56,8 +57,7 @@ export class CompetitionsService {
   }
 
   async findAllCompetitions(
-    page: number = 1,
-    limit: number = 10,
+    paginationDto: PaginationDto,
   ): Promise<{
     data: CompetitionDocument[];
     total: number;
@@ -68,12 +68,13 @@ export class CompetitionsService {
   }> {
     try {
       const competitions = await this.competitionRepository
-        .find()
-        .skip((page - 1) * limit)
-        .limit(limit);
-      const total = await this.competitionRepository.countDocuments();
-      const totalPages = Math.ceil(total / limit);
-      const currentPage = Math.max(1, Math.min(page, totalPages));
+        .find({ isActive: true })
+        .skip((paginationDto.page - 1) * paginationDto.limit)
+        .limit(paginationDto.limit)
+        .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 });
+      const total = await this.competitionRepository.countDocuments({ isActive: true });
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
       return {
         data: competitions,
         total: total,
@@ -86,7 +87,7 @@ export class CompetitionsService {
               : totalPages,
         prevPage:
           currentPage > 1 ? currentPage - 1 : currentPage === 1 ? null : 1,
-        limit: limit,
+        limit: paginationDto.limit,
       };
     } catch (error) {
       throw new BadRequestException(error);

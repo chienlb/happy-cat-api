@@ -6,6 +6,7 @@ import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { UsersService } from '../users/users.service';
 import { UnitsService } from '../units/units.service';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @Injectable()
 export class LessonsService {
@@ -142,21 +143,22 @@ export class LessonsService {
     }
   }
 
-  async findAllLessons(page?: number, limit?: number): Promise<{ data: LessonDocument[], page: number, limit: number, total: number, totalPages: number, nextPage: number, prevPage: number }> {
+  async findAllLessons(paginationDto: PaginationDto): Promise<{ data: LessonDocument[], page: number, limit: number, total: number, totalPages: number, nextPage: number, prevPage: number }> {
     try {
       const lessons = await this.lessonModel.find({ isActive: LessonStatus.ACTIVE })
-        .skip((page || 1) - 1 * (limit || 10))
-        .limit(limit || 10)
+        .skip((paginationDto.page - 1) * paginationDto.limit)
+        .limit(paginationDto.limit)
+        .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 })
         .exec();
       const totalLessons = await this.lessonModel.countDocuments({ isActive: LessonStatus.ACTIVE });
       return {
         data: lessons as LessonDocument[],
-        page: page || 1,
-        limit: limit || 10,
+        page: paginationDto.page,
+        limit: paginationDto.limit,
         total: totalLessons,
-        totalPages: Math.ceil(totalLessons / (limit || 10)),
-        nextPage: page ? page + 1 : 2,
-        prevPage: page ? page - 1 : 1,
+        totalPages: Math.ceil(totalLessons / paginationDto.limit),
+        nextPage: paginationDto.page < Math.ceil(totalLessons / paginationDto.limit) ? paginationDto.page + 1 : paginationDto.page,
+        prevPage: paginationDto.page > 1 ? paginationDto.page - 1 : paginationDto.page,
       };
     } catch (error) {
       throw new Error('Failed to find all lessons: ' + error.message);

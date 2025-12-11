@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional } from "class-validator";
+import { IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class PaginationDto {
     @IsOptional()
@@ -8,4 +8,12 @@ export class PaginationDto {
     @IsOptional()
     @IsNumber()
     limit: number = 10;
+
+    @IsOptional()
+    @IsString()
+    sort: string = 'createdAt';
+
+    @IsOptional()
+    @IsEnum(['asc', 'desc'])
+    order: 'asc' | 'desc' = 'desc';
 }
