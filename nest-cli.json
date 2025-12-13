@@ -8,6 +8,10 @@
       {
         "include": "app/templates/**/*",
         "outDir": "dist"
+      },
+      {
+        "include": "app/assets/**/*",
+        "outDir": "dist"
       }
     ],
     "watchAssets": true

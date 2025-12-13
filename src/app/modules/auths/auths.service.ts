@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection } from 'mongoose';
@@ -29,7 +30,7 @@ import { LoginAuthDto } from './dto/login-auth.dto';
 import * as jwt from 'jsonwebtoken';
 import { TokensService } from '../tokens/tokens.service';
 import { sendEmail } from 'src/app/common/utils/mail.util';
-import { randomUUID } from 'crypto';
+import { randomInt, randomUUID } from 'crypto';
 import { Token, TokenDocument } from '../tokens/schema/token.schema';
 import {
   LogoutDeviceAuthDto,
@@ -43,13 +44,43 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResendVerificationEmailDto } from './dto/resend-verification-email.dto';
 import { RedisService } from 'src/app/configs/redis/redis.service';
+import { verifyEmailQueue } from 'src/app/jobs/queues/verify-email.queue';
+import { initializeVerifyEmailWorker } from 'src/app/jobs/workers/verify-email.worker';
 
 @Injectable()
-export class AuthsService {
+export class AuthsService implements OnModuleInit {
   private readonly logger = new Logger(AuthsService.name);
   private readonly oauth2Client = new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID as string,
   );
+
+  /**
+   * Generate a 6-digit verification code
+   */
+  private generateVerificationCode(): string {
+    return String(randomInt(100000, 999999));
+  }
+  /**
+   * Split verification code into individual digits for email template
+   */
+  private splitCodeToDigits(code: string): {
+    digit1: string;
+    digit2: string;
+    digit3: string;
+    digit4: string;
+    digit5: string;
+    digit6: string;
+  } {
+    const paddedCode = code.padStart(6, '0');
+    return {
+      digit1: paddedCode[0] || '0',
+      digit2: paddedCode[1] || '0',
+      digit3: paddedCode[2] || '0',
+      digit4: paddedCode[3] || '0',
+      digit5: paddedCode[4] || '0',
+      digit6: paddedCode[5] || '0',
+    };
+  }
 
   constructor(
     @InjectModel(User.name)
@@ -70,6 +101,12 @@ export class AuthsService {
 
     private readonly redisService: RedisService,
   ) { }
+
+  async onModuleInit() {
+    await initializeVerifyEmailWorker();
+    this.logger.log('Verify email worker initialized');
+  }
+
 
   async register(registerAuthDto: RegisterAuthDto): Promise<Partial<User>> {
     if (this.connection.readyState !== 1) {
@@ -188,7 +225,7 @@ export class AuthsService {
       }
 
       // 6. Email verify code
-      savedUser.codeVerify = randomUUID().substring(0, 6);
+      savedUser.codeVerify = this.generateVerificationCode();
       await savedUser.save({ session });
 
       // Commit transaction
@@ -207,19 +244,21 @@ export class AuthsService {
       }
 
       // 8. Send verify email
-      sendEmail(
-        savedUser.email,
-        'Mã xác minh tài khoản EnglishOne',
-        'account-verification-email',
-        {
-          brandName: 'EnglishOne',
-          userName: savedUser.username,
-          verificationCode: savedUser.codeVerify,
-          userEmail: savedUser.email,
-          supportEmail: 'support@englishone.com',
-          year: new Date().getFullYear(),
-        },
-      ).catch((e) => this.logger.error('Email send error:', e));
+      const codeDigits = this.splitCodeToDigits(savedUser.codeVerify);
+
+      await verifyEmailQueue.add('verify-email', {
+        email: savedUser.email,
+        codeDigits: codeDigits,
+        fullname: savedUser.fullname,
+        username: savedUser.username,
+        year: new Date().getFullYear(),
+        telegramUrl: 'https://t.me/oteacher',
+        instagramUrl: 'https://instagram.com/oteacher',
+        twitterUrl: 'https://twitter.com/oteacher',
+        linkedinUrl: 'https://linkedin.com/company/oteacher',
+      });
+
+      this.logger.log('Verify email job added:', savedUser.email);
 
       const obj = savedUser.toObject();
       delete (obj as any).password;
@@ -232,9 +271,6 @@ export class AuthsService {
       throw error;
     }
   }
-  // ============================================================
-  // LOGIN
-  // ============================================================
 
   async login(loginAuthDto: LoginAuthDto) {
     const env = envSchema.parse(process.env);
@@ -335,18 +371,20 @@ export class AuthsService {
       const user = await this.userModel.findOne({ email: resendVerificationEmailDto.email });
       if (!user) throw new NotFoundException('User not found.');
 
-      const code = randomUUID().substring(0, 6);
+      const code = this.generateVerificationCode();
       user.codeVerify = code;
       await user.save();
 
-      sendEmail(user.email, 'Xác minh email', 'account-verification-email', {
-        brandName: 'Fit.io',
-        userName: user.username,
-        verificationCode: code,
-        userEmail: user.email,
-        supportEmail: 'support@fit.io.vn',
+      const codeDigits = this.splitCodeToDigits(code);
+      sendEmail(user.email, 'Mã xác minh tài khoản HAPPY CAT', 'verify-email', {
+        ...codeDigits,
+        username: user.fullname || user.username || 'Bạn',
         year: new Date().getFullYear(),
-      });
+        telegramUrl: 'https://t.me/oteacher',
+        instagramUrl: 'https://instagram.com/oteacher',
+        twitterUrl: 'https://twitter.com/oteacher',
+        linkedinUrl: 'https://linkedin.com/company/oteacher',
+      }).catch((e) => this.logger.error('Email send error:', e));
 
       return { email: user.email, codeVerify: code };
     } catch (error) {
@@ -360,17 +398,20 @@ export class AuthsService {
       const user = await this.userModel.findOne({ email: forgotPasswordDto.email });
       if (!user) throw new NotFoundException('User not found.');
 
-      const code = randomUUID().substring(0, 6);
+      const code = this.generateVerificationCode();
       user.codeVerify = code;
       await user.save();
 
-      sendEmail(user.email, 'Đặt lại mật khẩu', 'reset-password-email', {
-        brandName: 'Fit.io',
-        userName: user.username,
-        resetCode: code,
-        supportEmail: 'support@fit.io.vn',
+      const codeDigits = this.splitCodeToDigits(code);
+      sendEmail(user.email, 'Đặt lại mật khẩu HAPPY CAT', 'verify-email', {
+        ...codeDigits,
+        username: user.fullname || user.username || 'Bạn',
         year: new Date().getFullYear(),
-      });
+        telegramUrl: 'https://t.me/oteacher',
+        instagramUrl: 'https://instagram.com/oteacher',
+        twitterUrl: 'https://twitter.com/oteacher',
+        linkedinUrl: 'https://linkedin.com/company/oteacher',
+      }).catch((e) => this.logger.error('Email send error:', e));
 
       return { email: user.email, codeVerify: code };
     } catch (error) {
