@@ -10,6 +10,7 @@ import { UsersModule } from '../users/users.module';
 import { GroupsModule } from '../groups/groups.module';
 import { RedisModule } from 'src/app/configs/redis/redis.module';
 import { RedisService } from 'src/app/configs/redis/redis.service';
+import { GroupMessagesGateway } from './group-messages.gateway';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { RedisService } from 'src/app/configs/redis/redis.service';
     RedisModule,
   ],
   controllers: [GroupMessagesController],
-  providers: [GroupMessagesService, RedisService],
+  providers: [GroupMessagesService, RedisService, GroupMessagesGateway],
   exports: [GroupMessagesService],
 })
 export class GroupMessagesModule { }

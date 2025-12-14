@@ -14,6 +14,9 @@ import { UsersService } from '../users/users.service';
 import { GroupsService } from '../groups/groups.service';
 import { UpdateGroupMessageDto } from './dto/update-group-message.dto';
 import { RedisService } from 'src/app/configs/redis/redis.service';
+import { GroupMessagesGateway } from './group-messages.gateway';
+import { PaginationDto } from '../pagination/pagination.dto';
+
 @Injectable()
 export class GroupMessagesService {
   constructor(
@@ -22,6 +25,7 @@ export class GroupMessagesService {
     private usersService: UsersService,
     private groupsService: GroupsService,
     private readonly redisService: RedisService,
+    private readonly groupMessagesGateway: GroupMessagesGateway,
   ) { }
 
   async createMessage(
@@ -69,7 +73,12 @@ export class GroupMessagesService {
         senderId: user._id,
         groupId: group._id,
       });
-      return await groupMessage.save();
+      const savedMessage = await groupMessage.save();
+      this.groupMessagesGateway.emitNewMessage(
+        group._id.toString(),
+        savedMessage,
+      );
+      return savedMessage;
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to create group message: ' + error.message,
@@ -78,12 +87,17 @@ export class GroupMessagesService {
     }
   }
 
-  async findMessagesByGroupId(groupId: string): Promise<{
+  async findMessagesByGroupId(
+    groupId: string,
+    paginationDto: PaginationDto,
+  ): Promise<{
     data: GroupMessageDocument[];
     total: number;
     totalPages: number;
-    nextPage: number | null;
-    prevPage: number | null;
+    currentPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    limit: number;
   }> {
     try {
       const cacheKey = `group-messages:group-id=${groupId}`;
@@ -97,16 +111,21 @@ export class GroupMessagesService {
       }
       const messages = await this.groupMessageRepository
         .find({ groupId: group._id })
-        .sort({ createdAt: -1 });
+        .skip((paginationDto.page - 1) * paginationDto.limit)
+        .limit(paginationDto.limit)
+        .sort({ createdAt: paginationDto.order === 'asc' ? 1 : -1 });
       if (!messages) {
         throw new NotFoundException('Messages not found');
       }
       const result = {
         data: messages,
         total: messages.length,
-        totalPages: Math.ceil(messages.length / 10),
-        nextPage: null,
-        prevPage: null,
+        totalPages: Math.ceil(messages.length / paginationDto.limit),
+        currentPage: paginationDto.page,
+        hasNextPage:
+          paginationDto.page < Math.ceil(messages.length / paginationDto.limit),
+        hasPreviousPage: paginationDto.page > 1,
+        limit: paginationDto.limit,
       };
       await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
@@ -120,10 +139,6 @@ export class GroupMessagesService {
 
   async findMessageById(id: string): Promise<{
     data: GroupMessageDocument;
-    total: number;
-    totalPages: number;
-    nextPage: number | null;
-    prevPage: number | null;
   }> {
     try {
       const cacheKey = `group-message:id=${id}`;
@@ -137,10 +152,6 @@ export class GroupMessagesService {
       }
       const result = {
         data: message,
-        total: 1,
-        totalPages: 1,
-        nextPage: null,
-        prevPage: null,
       };
       await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
@@ -157,10 +168,6 @@ export class GroupMessagesService {
     updateGroupMessageDto: UpdateGroupMessageDto,
   ): Promise<{
     data: GroupMessageDocument;
-    total: number;
-    totalPages: number;
-    nextPage: number | null;
-    prevPage: number | null;
   }> {
     try {
       const cacheKey = `group-message:id=${id}`;
@@ -183,12 +190,12 @@ export class GroupMessagesService {
       }
       const result = {
         data: updatedMessage,
-        total: 1,
-        totalPages: 1,
-        nextPage: null,
-        prevPage: null,
       };
       await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      this.groupMessagesGateway.emitEditMessage(
+        message.data.groupId.toString(),
+        updatedMessage,
+      );
       return result;
     } catch (error) {
       throw new InternalServerErrorException(
@@ -198,7 +205,9 @@ export class GroupMessagesService {
     }
   }
 
-  async deleteMessage(id: string): Promise<void> {
+  async deleteMessage(id: string): Promise<{
+    data: GroupMessageDocument;
+  }> {
     try {
       const message = await this.findMessageById(id);
       if (!message) {
@@ -209,6 +218,13 @@ export class GroupMessagesService {
         { deletedAt: new Date() },
         { new: true },
       );
+      this.groupMessagesGateway.emitDeleteMessage(
+        message.data.groupId.toString(),
+        id,
+      );
+      return {
+        data: message.data,
+      };
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to delete message: ' + error.message,
@@ -217,7 +233,9 @@ export class GroupMessagesService {
     }
   }
 
-  async markMessageAsRead(id: string): Promise<void> {
+  async markMessageAsRead(id: string): Promise<{
+    data: GroupMessageDocument;
+  }> {
     try {
       const message = await this.findMessageById(id);
       if (!message) {
@@ -228,6 +246,14 @@ export class GroupMessagesService {
         { readBy: [message.data.senderId] },
         { new: true },
       );
+      this.groupMessagesGateway.emitReadReceipt(
+        message.data.groupId.toString(),
+        id,
+        message.data.senderId.toString(),
+      );
+      return {
+        data: message.data,
+      };
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to mark message as read: ' + error.message,
@@ -236,7 +262,9 @@ export class GroupMessagesService {
     }
   }
 
-  async markMessageAsUnread(id: string): Promise<void> {
+  async markMessageAsUnread(id: string): Promise<{
+    data: GroupMessageDocument;
+  }> {
     try {
       const message = await this.findMessageById(id);
       if (!message) {
@@ -247,6 +275,14 @@ export class GroupMessagesService {
         { readBy: [] },
         { new: true },
       );
+      this.groupMessagesGateway.emitReadReceipt(
+        message.data.groupId.toString(),
+        id,
+        message.data.senderId.toString(),
+      );
+      return {
+        data: message.data,
+      };
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to mark message as unread: ' + error.message,
@@ -279,7 +315,12 @@ export class GroupMessagesService {
         throw new NotFoundException('Message not found');
       }
       replyToMessageDto.replyTo = message.data._id;
-      return await this.createMessage(replyToMessageDto);
+      const savedMessage = await this.createMessage(replyToMessageDto);
+      this.groupMessagesGateway.emitNewMessage(
+        group._id.toString(),
+        savedMessage,
+      );
+      return savedMessage;
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to reply to message: ' + error.message,
@@ -288,15 +329,53 @@ export class GroupMessagesService {
     }
   }
 
-  async getMessageReplies(id: string): Promise<GroupMessageDocument[]> {
+  async getMessageReplies(
+    id: string,
+    paginationDto: PaginationDto,
+  ): Promise<{
+    data: GroupMessageDocument[];
+    total: number;
+    totalPages: number;
+    currentPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    limit: number;
+  }> {
     try {
+      const cacheKey = `group-message:id=${id}:replies:page=${paginationDto.page}:limit=${paginationDto.limit}:order=${paginationDto.order}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const message = await this.findMessageById(id);
       if (!message) {
         throw new NotFoundException('Message not found');
       }
-      return await this.groupMessageRepository.find({
+      const replies = await this.groupMessageRepository
+        .find({
+          replyTo: message.data._id,
+        })
+        .skip((paginationDto.page - 1) * paginationDto.limit)
+        .limit(paginationDto.limit)
+        .sort({ createdAt: paginationDto.order === 'asc' ? 1 : -1 });
+      const total = await this.groupMessageRepository.countDocuments({
         replyTo: message.data._id,
       });
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const currentPage = paginationDto.page;
+      const hasNextPage = currentPage < totalPages;
+      const hasPreviousPage = currentPage > 1;
+      const result = {
+        data: replies,
+        total: total,
+        totalPages: totalPages,
+        currentPage: currentPage,
+        hasNextPage: hasNextPage,
+        hasPreviousPage: hasPreviousPage,
+        limit: paginationDto.limit,
+      };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to get message replies: ' + error.message,
@@ -307,13 +386,23 @@ export class GroupMessagesService {
 
   async getMessageRepliesCount(id: string): Promise<number> {
     try {
+      const cacheKey = `group-message:id=${id}:replies-count`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const message = await this.findMessageById(id);
       if (!message) {
         throw new NotFoundException('Message not found');
       }
-      return await this.groupMessageRepository.countDocuments({
+      const count = await this.groupMessageRepository.countDocuments({
         replyTo: message.data._id,
       });
+      const result = {
+        data: count,
+      };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result.data;
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to get message replies count: ' + error.message,
@@ -324,14 +413,24 @@ export class GroupMessagesService {
 
   async getMessageGroupCount(groupId: string): Promise<number> {
     try {
+      const cacheKey = `group-message:groupId=${groupId}:count`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const group = await this.groupsService.findGroupById(groupId);
       if (!group) {
         throw new NotFoundException('Group not found');
       }
-      return await this.groupMessageRepository.countDocuments({
+      const count = await this.groupMessageRepository.countDocuments({
         groupId: group._id,
         deletedAt: null,
       });
+      const result = {
+        data: count,
+      };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result.data;
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to get message group count: ' + error.message,
