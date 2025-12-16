@@ -7,6 +7,8 @@ import {
   UseGuards,
   Req,
   Res,
+  BadRequestException,
+  HttpException,
 } from '@nestjs/common';
 import { AuthsService } from './auths.service';
 import { RegisterAuthDto } from './dto/register-auth.dto';
@@ -22,6 +24,7 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationEmailDto } from './dto/resend-verification-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import mongoose, { ClientSession } from 'mongoose';
 
 @ApiTags('Auths')
 @ApiBearerAuth()
@@ -56,17 +59,65 @@ export class AuthsController {
   @ApiResponse({ status: 201, description: 'User registered successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async register(@Body() registerAuthDto: RegisterAuthDto) {
-    if (
-      !registerAuthDto.username ||
-      !registerAuthDto.email ||
-      !registerAuthDto.password
-    ) {
-      throw new Error('Missing required fields: username, email, or password');
+    let session: ClientSession | null = null;
+
+    try {
+      session = await mongoose.startSession();
+      session.startTransaction();
+
+      const {
+        fullname,
+        username,
+        email,
+        password,
+        birthDate,
+        role,
+        phone,
+        gender,
+        typeAccount,
+      } = registerAuthDto;
+
+      if (!fullname || !username || !email || !password) {
+        throw new BadRequestException(
+          'Missing required fields: fullname, username, email, or password',
+        );
+      }
+
+      const result = await this.authsService.register(
+        {
+          fullname,
+          username,
+          email,
+          password,
+          birthDate,
+          role,
+          phone,
+          gender,
+          typeAccount,
+        },
+        session,
+      );
+
+      await session.commitTransaction();
+
+      return ok(result, 'User registered successfully', 200);
+    } catch (error) {
+      if (session) {
+        await session.abortTransaction();
+      }
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new BadRequestException(error.message);
+    } finally {
+      if (session) {
+        await session.endSession();
+      }
     }
-    this.logger.log(`Registering user: ${registerAuthDto.username}`);
-    const result = await this.authsService.register(registerAuthDto);
-    return ok(result, 'User registered successfully', 201);
   }
+
 
   @Post('login')
   @ApiOperation({ summary: 'Login a user' })
@@ -89,8 +140,27 @@ export class AuthsController {
   @ApiResponse({ status: 200, description: 'User logged in successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async login(@Body() loginAuthDto: LoginAuthDto) {
-    const result = await this.authsService.login(loginAuthDto);
-    return ok(result, 'User logged in successfully', 200);
+    let session: ClientSession | null = null;
+    try {
+      session = await mongoose.startSession();
+      session.startTransaction();
+      const result = await this.authsService.login(loginAuthDto, session);
+      await session.commitTransaction();
+      await session.endSession();
+      return ok(result, 'User logged in successfully', 200);
+    } catch (error) {
+      if (session) {
+        await session.abortTransaction();
+      }
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new BadRequestException(error.message);
+    } finally {
+      if (session) {
+        await session.endSession();
+      }
+    }
   }
 
   @Post('verify-email')
@@ -133,8 +203,12 @@ export class AuthsController {
     description: 'Verification email resent successfully',
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async resendVerificationEmail(@Body() resendVerificationEmailDto: ResendVerificationEmailDto) {
-    const result = await this.authsService.resendVerificationEmail(resendVerificationEmailDto);
+  async resendVerificationEmail(
+    @Body() resendVerificationEmailDto: ResendVerificationEmailDto,
+  ) {
+    const result = await this.authsService.resendVerificationEmail(
+      resendVerificationEmailDto,
+    );
     return ok(result, 'Verification email resent successfully', 200);
   }
 
@@ -206,7 +280,10 @@ export class AuthsController {
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
     const userId = (req as any).user.userId;
-    const result = await this.authsService.changePassword(userId, changePasswordDto);
+    const result = await this.authsService.changePassword(
+      userId,
+      changePasswordDto,
+    );
     return ok(result, 'Password changed successfully', 200);
   }
 
@@ -219,13 +296,9 @@ export class AuthsController {
   })
   @ApiResponse({ status: 200, description: 'Logout all devices successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async logoutAllDevices(
-    @Req() req: Request,
-  ) {
+  async logoutAllDevices(@Req() req: Request) {
     const userId = (req as any).user.userId;
-    const result = await this.authsService.logoutAllDevices(
-      userId,
-    );
+    const result = await this.authsService.logoutAllDevices(userId);
     return ok(result, 'Logout all devices successfully', 200);
   }
 
@@ -246,9 +319,15 @@ export class AuthsController {
   })
   @ApiResponse({ status: 200, description: 'Logout device successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async logoutDevice(@Req() req: Request, @Body() logoutDeviceDto: LogoutDeviceAuthDto) {
+  async logoutDevice(
+    @Req() req: Request,
+    @Body() logoutDeviceDto: LogoutDeviceAuthDto,
+  ) {
     const userId = (req as any).user.userId;
-    const result = await this.authsService.logoutDevice(userId, logoutDeviceDto);
+    const result = await this.authsService.logoutDevice(
+      userId,
+      logoutDeviceDto,
+    );
     return ok(result, 'Logout device successfully', 200);
   }
 
@@ -274,7 +353,10 @@ export class AuthsController {
     @Body() logoutDeviceDto: LogoutDeviceAuthDto,
   ) {
     const userId = (req as any).user.userId;
-    const result = await this.authsService.logoutNotDevice(userId, logoutDeviceDto);
+    const result = await this.authsService.logoutNotDevice(
+      userId,
+      logoutDeviceDto,
+    );
     return ok(result, 'Logout not device successfully', 200);
   }
 

@@ -9,6 +9,8 @@ import {
   UseGuards,
   NotFoundException,
   Query,
+  Session,
+  BadRequestException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -30,11 +32,13 @@ import { RolesGuard } from '../../common/guards/role.guard';
 import { Roles } from '../../common/decorators/role.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { PaginationDto } from '../pagination/pagination.dto';
+import mongoose, { ClientSession } from 'mongoose';
 
 @Controller('users')
 @ApiTags('Users')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'), RolesGuard)
+@Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
@@ -51,8 +55,25 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto) {
+    let session: ClientSession | null = null;
+    try {
+      session = await mongoose.startSession();
+      session.startTransaction();
+      const result = await this.usersService.createUser(createUserDto, session);
+      await session.commitTransaction();
+      await session.endSession();
+      return ok(result, 'User created successfully', 200);
+    } catch (error) {
+      if (session) {
+        await session.abortTransaction();
+      }
+      throw new BadRequestException(error.message);
+    } finally {
+      if (session) {
+        await session.endSession();
+      }
+    }
   }
 
   @Get()
@@ -67,7 +88,7 @@ export class UsersController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async findAll(@Query() paginationDto: PaginationDto) {
-    const users = await this.usersService.findAll(paginationDto);
+    const users = await this.usersService.findAllUsers(paginationDto);
     return ok(users, 'Users retrieved successfully');
   }
 
@@ -118,7 +139,7 @@ export class UsersController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async deleteUserById(@Param('id') id: string) {
-    const user = await this.usersService.remove(id);
+    const user = await this.usersService.removeUserById(id);
     if (!user) throw new NotFoundException('User not found.');
     return ok(user, 'User deleted successfully');
   }

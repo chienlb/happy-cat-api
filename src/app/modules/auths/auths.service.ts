@@ -7,7 +7,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
-import { Model, Connection } from 'mongoose';
+import { Model, Connection, ClientSession } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import {
   User,
@@ -108,13 +108,15 @@ export class AuthsService implements OnModuleInit {
   }
 
 
-  async register(registerAuthDto: RegisterAuthDto): Promise<Partial<User>> {
+  async register(registerAuthDto: RegisterAuthDto, session: ClientSession): Promise<Partial<User>> {
     if (this.connection.readyState !== 1) {
       throw new BadRequestException('Database not ready.');
     }
 
-    const session = await this.connection.startSession();
-    session.startTransaction();
+    const mongooseSession = await this.connection.startSession();
+    if (!session) {
+      mongooseSession.startTransaction();
+    }
 
     let savedUser!: UserDocument;
     let createInvitePayload: CreateInvitationCodeDto | null = null;
@@ -272,12 +274,21 @@ export class AuthsService implements OnModuleInit {
     }
   }
 
-  async login(loginAuthDto: LoginAuthDto) {
+  async login(loginAuthDto: LoginAuthDto, session: ClientSession) {
+    if (this.connection.readyState !== 1) {
+      throw new BadRequestException('Database not ready.');
+    }
+
+    const mongooseSession = await this.connection.startSession();
+    if (!session) {
+      mongooseSession.startTransaction();
+    }
+
     const env = envSchema.parse(process.env);
     try {
       const user = await this.userModel.findOne({
         $or: [{ email: loginAuthDto.email }, { username: loginAuthDto.email }],
-      });
+      }).session(session);
 
       if (!user) throw new NotFoundException('User not found.');
 
@@ -288,9 +299,6 @@ export class AuthsService implements OnModuleInit {
       const valid = await bcrypt.compare(loginAuthDto.password, user.password);
       if (!valid) throw new BadRequestException('Invalid password.');
 
-      // ==========================
-      // FIX SECRET + EXPIRESIN
-      // ==========================
       const accessSecret = env.JWT_ACCESS_TOKEN_SECRET ?? 'access_token_secret';
 
       const refreshSecret =
@@ -300,21 +308,19 @@ export class AuthsService implements OnModuleInit {
 
       const refreshExpiresIn = env.JWT_REFRESH_TOKEN_EXPIRATION ?? '7d';
 
-      // ==========================
-      // GENERATE TOKENS (NO ERRORS)
-      // ==========================
       const accessToken = jwt.sign(
         { userId: user._id, role: user.role },
         accessSecret,
         { expiresIn: accessExpiresIn } as SignOptions,
-      );
+      )
 
       const refreshToken = jwt.sign(
         { userId: user._id, role: user.role },
         refreshSecret,
         { expiresIn: refreshExpiresIn } as SignOptions,
-      );
+      )
 
+      // Tạo token nếu chưa tồn tại
       await this.tokenModel.findOneAndUpdate(
         {
           userId: user._id.toString(),
@@ -329,7 +335,7 @@ export class AuthsService implements OnModuleInit {
           },
         },
         { upsert: true },
-      );
+      ).session(session);
 
       const obj = user.toObject();
       delete (obj as any).password;
@@ -343,11 +349,9 @@ export class AuthsService implements OnModuleInit {
       this.logger.error('Login failed:', error);
       throw error;
     }
+
   }
 
-  // ============================================================
-  // EMAIL VERIFY / RESEND / FORGOT / RESET / CHANGE PASSWORD
-  // ============================================================
   async verifyEmail(verifyEmailDto: VerifyEmailDto) {
     try {
       const user = await this.userModel.findOne({ codeVerify: verifyEmailDto.codeVerify, email: verifyEmailDto.email });

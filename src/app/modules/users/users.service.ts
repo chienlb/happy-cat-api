@@ -13,8 +13,8 @@ import {
   UserRole,
   UserTypeAccount,
 } from './schema/user.schema';
-import mongoose, { ClientSession, Model } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
+import mongoose, { ClientSession, Connection, Model } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { InvitationCodeType } from '../invitation-codes/schema/invitation-code.schema';
 import { InvitationCodesService } from '../invitation-codes/invitation-codes.service';
@@ -30,10 +30,17 @@ export class UsersService {
     @Inject(forwardRef(() => InvitationCodesService))
     private readonly invitationCodesService: InvitationCodesService,
     private readonly redisService: RedisService,
+    @InjectConnection() private readonly connection: Connection,
   ) { }
-  async create(createUserDto: CreateUserDto): Promise<UserDocument> {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+  async createUser(createUserDto: CreateUserDto, session: ClientSession): Promise<UserDocument> {
+    if (this.connection.readyState !== 1) {
+      throw new BadRequestException('Database not ready.');
+    }
+
+    const mongooseSession = await this.connection.startSession();
+    if (!session) {
+      mongooseSession.startTransaction();
+    }
     try {
       const existingUser = await this.userModel.findOne({
         $or: [
@@ -49,7 +56,7 @@ export class UsersService {
         ...createUserDto,
         password: hashedPassword,
       });
-      await newUser.save({ session });
+      await newUser.save({ session: mongooseSession });
 
       if (
         createUserDto.role !== UserRole.STUDENT &&
@@ -71,19 +78,19 @@ export class UsersService {
         if (!invitationCode.data) {
           throw new BadRequestException('Failed to create invitation code');
         }
-        await session.commitTransaction();
+        await mongooseSession.commitTransaction();
         session.endSession();
         return newUser;
       }
       return newUser;
     } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
+      await mongooseSession.abortTransaction();
+      mongooseSession.endSession();
       throw new Error('Failed to create user: ' + error.message);
     }
   }
 
-  async findAll(
+  async findAllUsers(
     paginationDto: PaginationDto,
     session?: ClientSession,
   ): Promise<{
@@ -170,7 +177,7 @@ export class UsersService {
     }
   }
 
-  async remove(
+  async removeUserById(
     id: string,
     session?: ClientSession,
   ): Promise<UserDocument | null> {
