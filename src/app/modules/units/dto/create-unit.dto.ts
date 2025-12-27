@@ -41,6 +41,10 @@ export class CreateUnitDto {
 
     @IsNumber()
     @Min(1)
+    orderIndex: number;
+
+    @IsNumber()
+    @Min(1)
     totalLessons: number;
 
     @IsArray()

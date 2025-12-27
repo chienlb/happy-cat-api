@@ -8,6 +8,7 @@ import { UsersService } from '../users/users.service';
 import { UnitsService } from '../units/units.service';
 import { PaginationDto } from '../pagination/pagination.dto';
 import { RedisService } from 'src/app/configs/redis/redis.service';
+import { LessonProgressService } from '../lesson-progress/lesson-progress.service';
 
 @Injectable()
 export class LessonsService {
@@ -16,6 +17,7 @@ export class LessonsService {
     private readonly usersService: UsersService,
     private readonly unitsService: UnitsService,
     private readonly redisService: RedisService,
+    private readonly lessonProgressService: LessonProgressService,
   ) { }
 
   async createLesson(
@@ -245,6 +247,38 @@ export class LessonsService {
       return result;
     } catch (error) {
       throw new Error('Failed to find all lessons: ' + error.message);
+    }
+  }
+
+  async getLessonByOrderIndex(userId: string, orderIndex: number): Promise<LessonDocument> {
+    try {
+      const lesson = await this.lessonModel.findOne({ orderIndex: orderIndex }).exec();
+      if (!lesson) {
+        throw new NotFoundException('Lesson not found');
+      }
+      return lesson as LessonDocument;
+    } catch (error) {
+      throw new Error('Failed to get lesson by order index: ' + error.message);
+    }
+  }
+
+  async getLessonByOrderIndexAndUnitId(userId: string, orderIndex: number, unitId: string): Promise<LessonDocument> {
+    try {
+      const unit = await this.unitsService.findUnitById(unitId);
+      if (!unit) {
+        throw new NotFoundException('Unit not found');
+      }
+      const lessonProgress = await this.lessonProgressService.getLessonByUserId(userId, unitId, orderIndex - 1);
+      if (!lessonProgress) {
+        throw new NotFoundException('Lesson progress not found');
+      }
+      const lesson = await this.lessonModel.findOne({ orderIndex: orderIndex, unit: unitId }).exec();
+      if (!lesson) {
+        throw new NotFoundException('Lesson not found');
+      }
+      return lesson as LessonDocument;
+    } catch (error) {
+      throw new Error('Failed to get lesson by order index and unit id: ' + error.message);
     }
   }
 }

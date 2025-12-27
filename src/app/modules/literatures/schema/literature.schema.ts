@@ -9,6 +9,7 @@ export enum LiteratureType {
   DIALOGUE = 'dialogue',
   SONG = 'song',
   ARTICLE = 'article',
+  COMIC = 'comic',
 }
 
 export enum LiteratureLevel {
@@ -24,12 +25,16 @@ export interface ILiterature {
   type: LiteratureType; // Loại nội dung
   level: LiteratureLevel; // Trình độ tiếng Anh
   topic?: string; // Chủ đề: animals, friendship, nature, school,...
-  contentEnglish: string; // Nội dung tiếng Anh
+  contentEnglish?: string; // Nội dung tiếng Anh không cần nếu là truyện tranh
   contentVietnamese?: string; // Bản dịch tiếng Việt (nếu có)
   vocabulary?: string[]; // Danh sách từ vựng chính
   grammarPoints?: string[]; // Cấu trúc ngữ pháp liên quan
   audioUrl?: string; // Đường dẫn file âm thanh
   imageUrl?: string; // Ảnh minh họa (bìa hoặc hình nội dung)
+  images?: {
+    pageIndex: number;
+    image: string;
+  }[]; // Ảnh minh họa (bìa hoặc hình nội dung)
   comprehensionQuestions?: string[]; // Câu hỏi đọc hiểu
   isPublished: boolean; // Có công khai trên website không
   createdBy?: Types.ObjectId; // Người tạo (giáo viên / admin)
@@ -79,6 +84,9 @@ export class Literature {
 
   @Prop()
   imageUrl?: string;
+
+  @Prop({ type: [{ pageIndex: Number, image: String }], default: [] })
+  images?: { pageIndex: number; image: string }[];
 
   @Prop({ type: [String], default: [] })
   comprehensionQuestions?: string[];

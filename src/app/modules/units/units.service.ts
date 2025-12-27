@@ -11,6 +11,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { UsersService } from '../users/users.service';
 import { PaginationDto } from '../pagination/pagination.dto';
 import { RedisService } from 'src/app/configs/redis/redis.service';
+import { UnitProgressService } from '../unit-progress/unit-progress.service';
 
 
 @Injectable()
@@ -19,6 +20,7 @@ export class UnitsService {
     @InjectModel(Unit.name) private readonly unitModel: Model<UnitDocument>,
     private readonly usersService: UsersService,
     private readonly redisService: RedisService,
+    private readonly unitProgressService: UnitProgressService,
   ) { }
   async createUnit(createUnitDto: CreateUnitDto, session?: ClientSession) {
     try {
@@ -118,6 +120,26 @@ export class UnitsService {
       return unit;
     } catch (error) {
       throw new Error('Failed to restore unit: ' + error.message);
+    }
+  }
+
+  async getUnitByUserId(userId: string, orderIndex: number, session?: ClientSession) {
+    try {
+      const user = await this.usersService.findUserById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      const unitProgress = await this.unitProgressService.findUnitByUserId(userId, orderIndex - 1);
+      if (!unitProgress) {
+        throw new NotFoundException('Unit progress not found');
+      }
+      const unit = await this.unitModel.findById(unitProgress.unitId).session(session || null);
+      if (!unit) {
+        throw new NotFoundException('Unit not found');
+      }
+      return unit;
+    } catch (error) {
+      throw new Error('Failed to get unit by user id: ' + error.message);
     }
   }
 }

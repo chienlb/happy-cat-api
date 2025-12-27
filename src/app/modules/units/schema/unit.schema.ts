@@ -37,6 +37,7 @@ export interface IUnit {
   objectives: string[]; // Mục tiêu học tập chính
   keyVocabulary: string[]; // Từ vựng chính
   grammarFocus: string[]; // Trọng tâm ngữ pháp
+  orderIndex: number; // Thứ tự của Unit
   keyExpressions: string[]; // Cụm từ quan trọng
   materials: {
     textLessons?: string[]; // Đường dẫn file PDF, DOC...
@@ -89,6 +90,9 @@ export class Unit implements IUnit {
 
   @Prop({ default: UnitDifficulty.EASY, enum: UnitDifficulty })
   difficulty: UnitDifficulty;
+
+  @Prop({ required: true, default: 0 })
+  orderIndex: number;
 
   @Prop({ required: true })
   totalLessons: number;
@@ -150,6 +154,9 @@ export class Unit implements IUnit {
 
   @Prop({ default: UnitStatus.ACTIVE, enum: UnitStatus })
   isActive: UnitStatus;
+
+  @Prop({ default: false })
+  isLocked: boolean;
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   createdBy: Types.ObjectId;
