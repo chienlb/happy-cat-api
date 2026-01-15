@@ -1,19 +1,12 @@
-import { Controller, Get, Req } from '@nestjs/common';
-import { Request } from 'express';
+import { Controller, Get, Ip } from '@nestjs/common';
 
 @Controller()
 export class AppController {
   @Get()
-  getHello(@Req() req: Request) {
-    const ip =
-      req.headers['x-forwarded-for']?.toString().split(',')[0] ||
-      req.headers['cf-connecting-ip'] ||
-      req.socket.remoteAddress;
-
+  getHello(@Ip() ip: string) {
     return {
       message: 'Hello',
       ip,
     };
   }
 }
-
