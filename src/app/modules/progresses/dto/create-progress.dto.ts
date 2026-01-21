@@ -1,4 +1,12 @@
-import { IsEnum, IsMongoId, IsNumber, IsOptional, IsDate, Min, Max } from 'class-validator';
+import {
+  IsEnum,
+  IsMongoId,
+  IsNumber,
+  IsOptional,
+  IsDate,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProgressType, ProgressStatus } from '../schema/progress.schema';
 

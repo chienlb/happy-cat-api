@@ -23,4 +23,4 @@ import { UnitProgressModule } from '../unit-progress/unit-progress.module';
   providers: [UnitsService, RedisService],
   exports: [UnitsService, MongooseModule],
 })
-export class UnitsModule { }
+export class UnitsModule {}

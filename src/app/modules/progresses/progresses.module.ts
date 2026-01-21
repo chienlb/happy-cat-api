@@ -11,7 +11,9 @@ import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Progress.name, schema: ProgressSchema }]),
+    MongooseModule.forFeature([
+      { name: Progress.name, schema: ProgressSchema },
+    ]),
     LessonsModule,
     AssignmentsModule,
     UsersModule,
@@ -21,4 +23,4 @@ import { RedisService } from 'src/app/configs/redis/redis.service';
   providers: [ProgressesService, RedisService],
   exports: [ProgressesService, MongooseModule],
 })
-export class ProgressesModule { }
+export class ProgressesModule {}

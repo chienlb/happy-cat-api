@@ -34,7 +34,7 @@ import { UpdatePronunciationExerciseDto } from './dto/update-pronunciation-exerc
 @UseGuards(AuthGuard('jwt'))
 @Controller('pronunciation')
 export class PronunciationController {
-  constructor(private readonly service: PronunciationService) { }
+  constructor(private readonly service: PronunciationService) {}
 
   @Post('assess')
   @UseInterceptors(FileInterceptor('audio'))
@@ -114,7 +114,8 @@ export class PronunciationController {
   })
   @ApiResponse({
     status: 500,
-    description: 'Internal server error - Azure Speech API error or missing configuration',
+    description:
+      'Internal server error - Azure Speech API error or missing configuration',
   })
   async assess(
     @UploadedFile() file: any,
@@ -129,11 +130,15 @@ export class PronunciationController {
       throw new BadRequestException('Missing referenceText');
     }
 
-    return this.service.assessShortAudio({
-      audioBuffer: file.buffer,
-      referenceText: assessDto.referenceText.trim(),
-      language: assessDto.language || 'en-US',
-    }, req.user.userId, exerciseId);
+    return this.service.assessShortAudio(
+      {
+        audioBuffer: file.buffer,
+        referenceText: assessDto.referenceText.trim(),
+        language: assessDto.language || 'en-US',
+      },
+      req.user.userId,
+      exerciseId,
+    );
   }
 
   @Post('create')
@@ -169,8 +174,14 @@ export class PronunciationController {
       },
     },
   })
-  async create(@Body() createPronunciationExerciseDto: CreatePronunciationExerciseDto, @Req() req: any) {
-    return this.service.createPronunciationExercise(createPronunciationExerciseDto, req.user.userId);
+  async create(
+    @Body() createPronunciationExerciseDto: CreatePronunciationExerciseDto,
+    @Req() req: any,
+  ) {
+    return this.service.createPronunciationExercise(
+      createPronunciationExerciseDto,
+      req.user.userId,
+    );
   }
 
   @Get('get-all')
@@ -190,8 +201,11 @@ export class PronunciationController {
     description: 'The id of the unit',
     example: '1234567890',
   })
-  async getAll(@Query('lessonId') lessonId: string, @Query('unitId') unitId: string) {
-    return this.service.getPronunciationExercises(lessonId as string, unitId as string);
+  async getAll(
+    @Query('lessonId') lessonId: string,
+    @Query('unitId') unitId: string,
+  ) {
+    return this.service.getPronunciationExercises(lessonId, unitId);
   }
 
   @Get('get-by-id')
@@ -206,7 +220,7 @@ export class PronunciationController {
     example: '1234567890',
   })
   async getById(@Query('id') id: string) {
-    return this.service.getPronunciationExerciseById(id as string);
+    return this.service.getPronunciationExerciseById(id);
   }
 
   @Put('update')
@@ -242,8 +256,16 @@ export class PronunciationController {
       },
     },
   })
-  async update(@Param('id') id: string, @Body() updatePronunciationExerciseDto: UpdatePronunciationExerciseDto, @Req() req: any) {
-    return this.service.updatePronunciationExercise(id, updatePronunciationExerciseDto, req.user.userId);
+  async update(
+    @Param('id') id: string,
+    @Body() updatePronunciationExerciseDto: UpdatePronunciationExerciseDto,
+    @Req() req: any,
+  ) {
+    return this.service.updatePronunciationExercise(
+      id,
+      updatePronunciationExerciseDto,
+      req.user.userId,
+    );
   }
 
   @Delete('delete')
@@ -258,6 +280,6 @@ export class PronunciationController {
     example: '1234567890',
   })
   async delete(@Query('id') id: string) {
-    return this.service.deletePronunciationExercise(id as string);
+    return this.service.deletePronunciationExercise(id);
   }
 }

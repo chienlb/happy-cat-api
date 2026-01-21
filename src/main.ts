@@ -78,7 +78,6 @@ async function bootstrap(): Promise<void> {
     urlencoded({ limit: env.BODY_LIMIT_URLENCODED ?? '1mb', extended: true }),
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   app.use(cookieParser());
 
   app.use(compression());

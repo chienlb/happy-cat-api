@@ -17,7 +17,7 @@ export class UserBadgesService {
     private usersService: UsersService,
     private badgesService: BadgesService,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async createUserBadge(
     createUserBadgeDto: CreateUserBadgeDto,

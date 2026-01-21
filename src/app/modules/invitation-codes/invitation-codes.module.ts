@@ -22,4 +22,4 @@ import { RedisService } from '../../configs/redis/redis.service';
   providers: [InvitationCodesService, RedisService],
   exports: [InvitationCodesService],
 })
-export class InvitationCodesModule { }
+export class InvitationCodesModule {}

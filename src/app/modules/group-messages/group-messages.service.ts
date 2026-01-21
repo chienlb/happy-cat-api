@@ -26,7 +26,7 @@ export class GroupMessagesService {
     private groupsService: GroupsService,
     private readonly redisService: RedisService,
     private readonly groupMessagesGateway: GroupMessagesGateway,
-  ) { }
+  ) {}
 
   async createMessage(
     createGroupMessageDto: CreateGroupMessageDto,

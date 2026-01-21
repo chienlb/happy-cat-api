@@ -21,4 +21,4 @@ import { RedisService } from 'src/app/configs/redis/redis.service';
   providers: [UserBadgesService, RedisService],
   exports: [UserBadgesService],
 })
-export class UserBadgesModule { }
+export class UserBadgesModule {}

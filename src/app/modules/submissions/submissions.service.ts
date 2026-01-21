@@ -25,7 +25,7 @@ export class SubmissionsService {
     private assignmentsService: AssignmentsService,
     private usersService: UsersService,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async createSubmission(
     createSubmissionDto: CreateSubmissionDto,
@@ -194,14 +194,19 @@ export class SubmissionsService {
     }
   }
 
-  async studentViewSubmission(id: string, studentId: string): Promise<SubmissionDocument> {
+  async studentViewSubmission(
+    id: string,
+    studentId: string,
+  ): Promise<SubmissionDocument> {
     try {
       const submission = await this.submissionModel.findById(id);
       if (!submission) {
         throw new NotFoundException('Submission not found');
       }
       if (submission.studentId.toString() !== studentId) {
-        throw new ForbiddenException('You are not allowed to view this submission');
+        throw new ForbiddenException(
+          'You are not allowed to view this submission',
+        );
       }
       return submission;
     } catch (error) {

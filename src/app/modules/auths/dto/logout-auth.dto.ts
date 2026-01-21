@@ -1,7 +1,7 @@
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class LogoutDeviceAuthDto {
-    @IsString()
-    @IsNotEmpty()
-    deviceId: string;
+  @IsString()
+  @IsNotEmpty()
+  deviceId: string;
 }

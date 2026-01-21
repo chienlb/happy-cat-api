@@ -16,4 +16,4 @@ import { UsersModule } from '../users/users.module';
   providers: [FeatureFlagsService],
   exports: [FeatureFlagsService, MongooseModule],
 })
-export class FeatureFlagsModule { }
+export class FeatureFlagsModule {}

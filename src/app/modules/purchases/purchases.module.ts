@@ -23,4 +23,4 @@ import { RedisService } from 'src/app/configs/redis/redis.service';
   providers: [PurchasesService, RedisService],
   exports: [PurchasesService, MongooseModule],
 })
-export class PurchasesModule { }
+export class PurchasesModule {}

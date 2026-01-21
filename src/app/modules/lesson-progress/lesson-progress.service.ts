@@ -1,4 +1,9 @@
-import { Injectable, Inject, NotFoundException, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   LessonProgress,
@@ -20,9 +25,10 @@ export class LessonProgressService {
     @InjectModel(LessonProgress.name)
     private lessonProgressModel: Model<LessonProgressDocument>,
     private readonly usersService: UsersService,
-    @Inject(forwardRef(() => LessonsService)) private readonly lessonsService: LessonsService,
+    @Inject(forwardRef(() => LessonsService))
+    private readonly lessonsService: LessonsService,
     private readonly unitsService: UnitsService,
-  ) { }
+  ) {}
 
   async createLessonPrgress(
     createLessonProgressDto: CreateLessonProgressDto,
@@ -41,11 +47,13 @@ export class LessonProgressService {
         throw new NotFoundException('Lesson not found');
       }
       user.exp = user.exp
-        ? (user.exp as number) + createLessonProgressDto.progress * 10
+        ? user.exp + createLessonProgressDto.progress * 10
         : createLessonProgressDto.progress * 10;
       user.streakDays = user.streakDays ? user.streakDays + 1 : 1;
       await user.save();
-      const lessonProgress = new this.lessonProgressModel(createLessonProgressDto);
+      const lessonProgress = new this.lessonProgressModel(
+        createLessonProgressDto,
+      );
       return lessonProgress.save();
     } catch (error) {
       throw new Error('Failed to create lesson progress: ' + error.message);
@@ -179,7 +187,11 @@ export class LessonProgressService {
     }
   }
 
-  async getLessonByUserId(userId: string, unitId: string, orderIndex: number): Promise<LessonProgressDocument> {
+  async getLessonByUserId(
+    userId: string,
+    unitId: string,
+    orderIndex: number,
+  ): Promise<LessonProgressDocument> {
     try {
       const user = await this.usersService.findUserById(userId);
       if (!user) {
@@ -189,7 +201,11 @@ export class LessonProgressService {
       if (!unit) {
         throw new NotFoundException('Unit not found');
       }
-      const lessonProgress = await this.lessonProgressModel.findOne({ userId: new Types.ObjectId(userId), unitId: new Types.ObjectId(unitId), orderIndex: orderIndex });
+      const lessonProgress = await this.lessonProgressModel.findOne({
+        userId: new Types.ObjectId(userId),
+        unitId: new Types.ObjectId(unitId),
+        orderIndex: orderIndex,
+      });
       if (!lessonProgress) {
         throw new NotFoundException('Lesson progress not found');
       }

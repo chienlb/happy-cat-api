@@ -10,9 +10,7 @@ import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Support.name, schema: SupportSchema },
-    ]),
+    MongooseModule.forFeature([{ name: Support.name, schema: SupportSchema }]),
     UsersModule,
     CloudflareModule,
     RedisModule,
@@ -21,4 +19,4 @@ import { RedisService } from 'src/app/configs/redis/redis.service';
   providers: [SupportsService, RedisService],
   exports: [SupportsService, MongooseModule],
 })
-export class SupportsModule { }
+export class SupportsModule {}

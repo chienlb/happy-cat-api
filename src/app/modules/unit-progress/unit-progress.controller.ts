@@ -1,5 +1,20 @@
-import { Body, Controller, Param, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { UnitProgressService } from './unit-progress.service';
 import { UnitProgressDocument } from './schema/unit-progress.schema';
@@ -10,7 +25,7 @@ import { CreateUnitProgressDto } from './dto/create-unit-progress.dto';
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 export class UnitProgressController {
-  constructor(private readonly unitProgressService: UnitProgressService) { }
+  constructor(private readonly unitProgressService: UnitProgressService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new unit progress' })
@@ -32,11 +47,16 @@ export class UnitProgressController {
       },
     },
   })
-  @ApiResponse({ status: 201, description: 'Unit progress created successfully' })
+  @ApiResponse({
+    status: 201,
+    description: 'Unit progress created successfully',
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async createUnitProgress(
     @Body() createUnitProgressDto: CreateUnitProgressDto,
   ): Promise<UnitProgressDocument> {
-    return await this.unitProgressService.createUnitProgress(createUnitProgressDto);
+    return await this.unitProgressService.createUnitProgress(
+      createUnitProgressDto,
+    );
   }
 }

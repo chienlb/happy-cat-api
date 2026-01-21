@@ -207,19 +207,23 @@ export class Lesson implements ILesson {
     type: {
       vocabulary: {
         description: { type: String },
-        words: [{
-          word: { type: String },
-          definition: { type: String },
-        }],
+        words: [
+          {
+            word: { type: String },
+            definition: { type: String },
+          },
+        ],
         tags: { type: [String], default: [] },
       },
       grammar: {
         description: { type: String },
         rule: { type: String },
-        examples: [{
-          example: { type: String },
-          translation: { type: String },
-        }],
+        examples: [
+          {
+            example: { type: String },
+            translation: { type: String },
+          },
+        ],
         tags: { type: [String], default: [] },
       },
       dialogue: {
@@ -232,51 +236,63 @@ export class Lesson implements ILesson {
       reading: {
         description: { type: String },
         passage: { type: String },
-        questionsAndAnswers: [{
-          question: { type: String },
-          answer: { type: String },
-        }],
+        questionsAndAnswers: [
+          {
+            question: { type: String },
+            answer: { type: String },
+          },
+        ],
         tags: { type: [String], default: [] },
       },
       exercises: {
         description: { type: String },
         type: { type: String },
-        questionsAndAnswers: [{
-          question: { type: String },
-          answer: { type: String },
-        }],
+        questionsAndAnswers: [
+          {
+            question: { type: String },
+            answer: { type: String },
+          },
+        ],
         tags: { type: [String], default: [] },
       },
       quizzes: {
         description: { type: String },
-        questionsAndAnswers: [{
-          question: { type: String },
-          answer: { type: String },
-        }],
+        questionsAndAnswers: [
+          {
+            question: { type: String },
+            answer: { type: String },
+          },
+        ],
         tags: { type: [String], default: [] },
       },
       reviews: {
         description: { type: String },
-        questionsAndAnswers: [{
-          question: { type: String },
-          answer: { type: String },
-        }],
+        questionsAndAnswers: [
+          {
+            question: { type: String },
+            answer: { type: String },
+          },
+        ],
         tags: { type: [String], default: [] },
       },
       summaries: {
         description: { type: String },
-        questionsAndAnswers: [{
-          question: { type: String },
-          answer: { type: String },
-        }],
+        questionsAndAnswers: [
+          {
+            question: { type: String },
+            answer: { type: String },
+          },
+        ],
         tags: { type: [String], default: [] },
       },
       games: {
         description: { type: String },
-        questionsAndAnswers: [{
-          question: { type: String },
-          answer: { type: String },
-        }],
+        questionsAndAnswers: [
+          {
+            question: { type: String },
+            answer: { type: String },
+          },
+        ],
         tags: { type: [String], default: [] },
       },
       songs: {
@@ -285,17 +301,21 @@ export class Lesson implements ILesson {
         translation: { type: String },
         audio: { type: String },
         video: { type: String },
-        vocabulary: [{
-          word: { type: String },
-          definition: { type: String },
-          ipa: { type: String },
-          image: { type: String },
-          audio: { type: String },
-        }],
-        questionsAndAnswers: [{
-          question: { type: String },
-          answer: { type: String },
-        }],
+        vocabulary: [
+          {
+            word: { type: String },
+            definition: { type: String },
+            ipa: { type: String },
+            image: { type: String },
+            audio: { type: String },
+          },
+        ],
+        questionsAndAnswers: [
+          {
+            question: { type: String },
+            answer: { type: String },
+          },
+        ],
         tags: { type: [String], default: [] },
       },
     },

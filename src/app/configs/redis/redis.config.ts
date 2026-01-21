@@ -1,6 +1,6 @@
-import { RedisOptions } from "ioredis";
+import { RedisOptions } from 'ioredis';
 
 export const redisConnection: RedisOptions = {
-    maxRetriesPerRequest: null,
-    tls: {},
+  maxRetriesPerRequest: null,
+  tls: {},
 };

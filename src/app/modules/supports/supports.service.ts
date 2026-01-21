@@ -20,7 +20,7 @@ export class SupportsService {
     private readonly usersService: UsersService,
     private readonly cloudflareService: CloudflareService,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async createSupport(
     createSupportDto: CreateSupportDto,

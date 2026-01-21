@@ -1,7 +1,17 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Group, GroupDocument, GroupType, GroupVisibility } from './schema/group.schema';
+import {
+  Group,
+  GroupDocument,
+  GroupType,
+  GroupVisibility,
+} from './schema/group.schema';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UsersService } from '../users/users.service';
 import { UpdateGroupDto } from './dto/update-group.dto';
@@ -16,7 +26,7 @@ export class GroupsService {
     private groupRepository: Model<Group>,
     private usersService: UsersService,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async createGroup(createGroupDto: CreateGroupDto): Promise<GroupDocument> {
     try {
@@ -100,9 +110,7 @@ export class GroupsService {
     return groups;
   }
 
-  async findAllGroups(
-    paginationDto: PaginationDto,
-  ): Promise<{
+  async findAllGroups(paginationDto: PaginationDto): Promise<{
     data: GroupDocument[];
     total: number;
     totalPages: number;
@@ -120,12 +128,15 @@ export class GroupsService {
         .skip((paginationDto.page - 1) * paginationDto.limit)
         .limit(paginationDto.limit)
         .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 });
-      const total = await this.groupRepository.countDocuments({ isActive: true });
+      const total = await this.groupRepository.countDocuments({
+        isActive: true,
+      });
       const totalPages = Math.ceil(total / paginationDto.limit);
-      const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+      const nextPage =
+        paginationDto.page < totalPages ? paginationDto.page + 1 : null;
       const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
       const result = {
-        data: groups as GroupDocument[],
+        data: groups,
         total,
         totalPages,
         nextPage: nextPage ?? paginationDto.page,
@@ -138,12 +149,15 @@ export class GroupsService {
     }
   }
 
-  async updateGroup(id: string, updateGroupDto: UpdateGroupDto): Promise<GroupDocument> {
+  async updateGroup(
+    id: string,
+    updateGroupDto: UpdateGroupDto,
+  ): Promise<GroupDocument> {
     try {
       const updatedGroup = await this.groupRepository.findByIdAndUpdate(
         new Types.ObjectId(id),
         updateGroupDto,
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       );
 
       if (!updatedGroup) {
@@ -165,7 +179,7 @@ export class GroupsService {
       const deletedGroup = await this.groupRepository.findByIdAndUpdate(
         new Types.ObjectId(id),
         { isActive: false },
-        { new: true }
+        { new: true },
       );
 
       if (!deletedGroup) {
@@ -181,7 +195,6 @@ export class GroupsService {
       throw new InternalServerErrorException('Failed to delete group');
     }
   }
-
 
   async joinGroup(groupId: string, userId: string): Promise<GroupDocument> {
     try {
@@ -236,7 +249,10 @@ export class GroupsService {
     }
   }
 
-  async changeGroupVisibility(groupId: string, visibility: GroupVisibility): Promise<GroupDocument> {
+  async changeGroupVisibility(
+    groupId: string,
+    visibility: GroupVisibility,
+  ): Promise<GroupDocument> {
     try {
       const group = await this.findGroupById(groupId);
       if (!group) {

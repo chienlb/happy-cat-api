@@ -13,7 +13,7 @@ export class DistrictsService {
   constructor(
     @InjectModel(District.name) private districtModel: Model<DistrictDocument>,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async createDistrict(
     createDistrictDto: CreateDistrictDto,
@@ -22,9 +22,7 @@ export class DistrictsService {
     return await newDistrict.save();
   }
 
-  async findAllDistricts(
-    paginationDto: PaginationDto,
-  ): Promise<{
+  async findAllDistricts(paginationDto: PaginationDto): Promise<{
     data: DistrictDocument[];
     total: number;
     totalPages: number;

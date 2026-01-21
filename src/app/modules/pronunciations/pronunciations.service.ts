@@ -20,7 +20,11 @@ import { LessonsService } from '../lessons/lessons.service';
 import { UnitsService } from '../units/units.service';
 import { UpdatePronunciationExerciseDto } from './dto/update-pronunciation-exercise.dto';
 import { SubmitPronunciationAttemptDto } from './dto/submit-pronunciation-attempt.dto';
-import { PronunciationAttempt, PronunciationAttemptDocument, PronunciationAttemptStatus } from './schema/pronunciation-attempt.schema';
+import {
+  PronunciationAttempt,
+  PronunciationAttemptDocument,
+  PronunciationAttemptStatus,
+} from './schema/pronunciation-attempt.schema';
 
 const env = envSchema.parse(process.env);
 
@@ -41,9 +45,13 @@ export class PronunciationService {
     private usersService: UsersService,
     private lessonService: LessonsService,
     private unitsService: UnitsService,
-  ) { }
+  ) {}
 
-  async assessShortAudio(input: AssessInput, userId: string, exerciseId: string) {
+  async assessShortAudio(
+    input: AssessInput,
+    userId: string,
+    exerciseId: string,
+  ) {
     console.log('env');
     console.log(env.AZURE_SPEECH_REGION);
     console.log(env.AZURE_SPEECH_KEY);
@@ -137,20 +145,23 @@ export class PronunciationService {
       recognizedText: best?.Display ?? json?.DisplayText ?? '',
       scores: best
         ? {
-          pronScore: best.PronScore,
-          accuracy: best.AccuracyScore,
-          fluency: best.FluencyScore,
-          prosody: best.ProsodyScore,
-          completeness: best.CompletenessScore,
-          confidence: best.Confidence,
-        }
+            pronScore: best.PronScore,
+            accuracy: best.AccuracyScore,
+            fluency: best.FluencyScore,
+            prosody: best.ProsodyScore,
+            completeness: best.CompletenessScore,
+            confidence: best.Confidence,
+          }
         : null,
       words: best?.Words ?? [],
       raw: json,
     };
   }
 
-  async createPronunciationExercise(input: CreatePronunciationExerciseDto, userId: string) {
+  async createPronunciationExercise(
+    input: CreatePronunciationExerciseDto,
+    userId: string,
+  ) {
     try {
       const {
         text,
@@ -172,7 +183,9 @@ export class PronunciationService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      const lesson = await this.lessonService.findLessonById(lessonId as string);
+      const lesson = await this.lessonService.findLessonById(
+        lessonId as string,
+      );
       if (!lesson) {
         throw new NotFoundException('Lesson not found');
       }
@@ -207,7 +220,9 @@ export class PronunciationService {
 
   async getPronunciationExercises(lessonId: string, unitId: string) {
     try {
-      const pronunciationExercises = await this.pronunciationExerciseModel.find({ lessonId, unitId });
+      const pronunciationExercises = await this.pronunciationExerciseModel.find(
+        { lessonId, unitId },
+      );
       return pronunciationExercises;
     } catch (error) {
       throw new InternalServerErrorException(error);
@@ -216,20 +231,28 @@ export class PronunciationService {
 
   async getPronunciationExerciseById(id: string) {
     try {
-      const pronunciationExercise = await this.pronunciationExerciseModel.findById(id);
+      const pronunciationExercise =
+        await this.pronunciationExerciseModel.findById(id);
       return pronunciationExercise;
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
-  async updatePronunciationExercise(id: string, input: UpdatePronunciationExerciseDto, userId: string) {
+  async updatePronunciationExercise(
+    id: string,
+    input: UpdatePronunciationExerciseDto,
+    userId: string,
+  ) {
     try {
       const user = await this.usersService.findUserById(userId);
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      const pronunciationExercise = await this.pronunciationExerciseModel.findByIdAndUpdate(id, input, { new: true });
+      const pronunciationExercise =
+        await this.pronunciationExerciseModel.findByIdAndUpdate(id, input, {
+          new: true,
+        });
       if (!pronunciationExercise) {
         throw new NotFoundException('Pronunciation exercise not found');
       }
@@ -243,7 +266,8 @@ export class PronunciationService {
 
   async deletePronunciationExercise(id: string) {
     try {
-      const pronunciationExercise = await this.pronunciationExerciseModel.findByIdAndDelete(id);
+      const pronunciationExercise =
+        await this.pronunciationExerciseModel.findByIdAndDelete(id);
       return pronunciationExercise;
     } catch (error) {
       throw new InternalServerErrorException(error);

@@ -1,14 +1,22 @@
 import { z } from 'zod';
 
 export const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
   PORT: z.coerce.number().min(1024).max(65535).default(3000),
   MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
-  JWT_ACCESS_TOKEN_SECRET: z.string().min(1, 'JWT_ACCESS_TOKEN_SECRET is required'),
+  JWT_ACCESS_TOKEN_SECRET: z
+    .string()
+    .min(1, 'JWT_ACCESS_TOKEN_SECRET is required'),
   JWT_ACCESS_TOKEN_EXPIRATION: z.string().default('1h'),
-  JWT_REFRESH_TOKEN_SECRET: z.string().min(1, 'JWT_REFRESH_TOKEN_SECRET is required'),
+  JWT_REFRESH_TOKEN_SECRET: z
+    .string()
+    .min(1, 'JWT_REFRESH_TOKEN_SECRET is required'),
   JWT_REFRESH_TOKEN_EXPIRATION: z.string().default('7d'),
-  JWT_VERIFICATION_TOKEN_SECRET: z.string().min(1, 'JWT_VERIFICATION_TOKEN_SECRET is required'),
+  JWT_VERIFICATION_TOKEN_SECRET: z
+    .string()
+    .min(1, 'JWT_VERIFICATION_TOKEN_SECRET is required'),
   JWT_VERIFICATION_TOKEN_EXPIRATION: z.string().default('5m'),
   EMAIL_SERVICE: z.string().min(1, 'EMAIL_SERVICE is required'),
   EMAIL_HOST: z.string().optional(),
@@ -26,8 +34,8 @@ export const envSchema = z.object({
     .transform((v) => v.split(',').map((x) => x.trim())),
   CORS_CREDENTIALS: z
     .preprocess(
-      (v) => typeof v === 'string' ? v === 'true' : Boolean(v),
-      z.boolean()
+      (v) => (typeof v === 'string' ? v === 'true' : Boolean(v)),
+      z.boolean(),
     )
     .default(true),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().min(1000).default(60_000),
@@ -41,7 +49,9 @@ export const envSchema = z.object({
   API_VERSION: z.string().default('v1'),
   API_PREFIX: z.string().default('/api'),
   SWAGGER_TITLE: z.string().default('English Learning API'),
-  SWAGGER_DESCRIPTION: z.string().default('API documentation for English Learning Platform'),
+  SWAGGER_DESCRIPTION: z
+    .string()
+    .default('API documentation for English Learning Platform'),
   SWAGGER_VERSION: z.string().default('1.0.0'),
   SWAGGER_TAG: z.string().default('education,english,learning'),
   SWAGGER_PATH: z.string().default('docs'),

@@ -25,7 +25,7 @@ import { PaginationDto } from '../pagination/pagination.dto';
 @Roles(UserRole.ADMIN, UserRole.TEACHER)
 @Controller('units')
 export class UnitsController {
-  constructor(private readonly unitsService: UnitsService) { }
+  constructor(private readonly unitsService: UnitsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new unit' })
@@ -45,7 +45,10 @@ export class UnitsController {
           difficulty: 'easy',
           orderIndex: 1,
           totalLessons: 10,
-          objectives: ['Understand basic greetings', 'Learn introduction phrases'],
+          objectives: [
+            'Understand basic greetings',
+            'Learn introduction phrases',
+          ],
           materials: {
             textLessons: ['https://example.com/text-lesson-1.pdf'],
             videos: ['https://example.com/video-1.mp4'],
@@ -131,7 +134,11 @@ export class UnitsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  getUnitByUserId(@Param('userId') userId: string, @Query('orderIndex') orderIndex: number, @Query('unitId') unitId: string) {
+  getUnitByUserId(
+    @Param('userId') userId: string,
+    @Query('orderIndex') orderIndex: number,
+    @Query('unitId') unitId: string,
+  ) {
     return this.unitsService.getUnitByUserId(userId, orderIndex, unitId);
   }
 }

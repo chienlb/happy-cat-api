@@ -7,7 +7,9 @@ import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Competition.name, schema: CompetitionSchema }]),
+    MongooseModule.forFeature([
+      { name: Competition.name, schema: CompetitionSchema },
+    ]),
     UsersModule,
   ],
   controllers: [CompetitionsController],

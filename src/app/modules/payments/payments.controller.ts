@@ -1,9 +1,25 @@
-import { Controller, Get, Post, Body, Query, Req, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Query,
+  Req,
+  BadRequestException,
+} from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import type { Request } from 'express';
 import mongoose, { ClientSession } from 'mongoose';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiBody, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOperation,
+  ApiBody,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../../common/guards/role.guard';
 import { Roles } from '../../common/decorators/role.decorator';
@@ -17,7 +33,7 @@ import { ok } from 'assert';
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) { }
+  constructor(private readonly paymentsService: PaymentsService) {}
 
   @Post('create')
   @ApiOperation({ summary: 'Create a new payment' })
@@ -59,7 +75,10 @@ export class PaymentsController {
   @Post('webhook')
   @ApiOperation({ summary: 'Handle webhook payment' })
   @ApiQuery({ name: 'query', type: Object })
-  @ApiResponse({ status: 200, description: 'Payment webhook returned successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Payment webhook returned successfully',
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })

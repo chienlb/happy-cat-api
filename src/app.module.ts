@@ -86,4 +86,4 @@ import { UnitProgressModule } from './app/modules/unit-progress/unit-progress.mo
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

@@ -15,15 +15,15 @@ import { PaginationDto } from '../pagination/pagination.dto';
 import { RedisService } from 'src/app/configs/redis/redis.service';
 import { UnitProgressService } from '../unit-progress/unit-progress.service';
 
-
 @Injectable()
 export class UnitsService {
   constructor(
     @InjectModel(Unit.name) private readonly unitModel: Model<UnitDocument>,
     private readonly usersService: UsersService,
     private readonly redisService: RedisService,
-    @Inject(forwardRef(() => UnitProgressService)) private readonly unitProgressService: UnitProgressService,
-  ) { }
+    @Inject(forwardRef(() => UnitProgressService))
+    private readonly unitProgressService: UnitProgressService,
+  ) {}
   async createUnit(createUnitDto: CreateUnitDto, session?: ClientSession) {
     try {
       const user = await this.usersService.findUserById(
@@ -68,7 +68,10 @@ export class UnitsService {
         limit: paginationDto.limit,
         total: units.length,
         totalPages: Math.ceil(units.length / paginationDto.limit),
-        nextPage: paginationDto.page < Math.ceil(units.length / paginationDto.limit) ? paginationDto.page + 1 : null,
+        nextPage:
+          paginationDto.page < Math.ceil(units.length / paginationDto.limit)
+            ? paginationDto.page + 1
+            : null,
         prevPage: paginationDto.page > 1 ? paginationDto.page - 1 : null,
       };
       await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
@@ -125,17 +128,28 @@ export class UnitsService {
     }
   }
 
-  async getUnitByUserId(userId: string, orderIndex: number, unitId: string, session?: ClientSession) {
+  async getUnitByUserId(
+    userId: string,
+    orderIndex: number,
+    unitId: string,
+    session?: ClientSession,
+  ) {
     try {
       const user = await this.usersService.findUserById(userId);
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      const unitProgress = await this.unitProgressService.findUnitByUserId(userId, orderIndex - 1, unitId);
+      const unitProgress = await this.unitProgressService.findUnitByUserId(
+        userId,
+        orderIndex - 1,
+        unitId,
+      );
       if (!unitProgress) {
         throw new NotFoundException('Unit progress not found');
       }
-      const unit = await this.unitModel.findById(unitProgress.unitId).session(session || null);
+      const unit = await this.unitModel
+        .findById(unitProgress.unitId)
+        .session(session || null);
       if (!unit) {
         throw new NotFoundException('Unit not found');
       }

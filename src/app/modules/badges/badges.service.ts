@@ -15,7 +15,7 @@ export class BadgesService {
     private usersService: UsersService,
     private readonly redisService: RedisService,
     private readonly cloudflareService: CloudflareService,
-  ) { }
+  ) {}
 
   async createBadge(
     createBadgeDto: CreateBadgeDto,
@@ -29,30 +29,30 @@ export class BadgesService {
         );
         createBadgeDto.iconUrl = uploadResult.fileUrl;
       }
-  
+
       const existingBadge = await this.badgeModel.findOne({
         name: createBadgeDto.name,
       });
       if (existingBadge) {
         throw new BadRequestException('Badge already exists');
       }
-  
+
       const user = await this.usersService.findUserById(
         createBadgeDto.createdBy?.toString() || '',
       );
       if (!user) {
         throw new BadRequestException('User not found');
       }
-  
+
       createBadgeDto.createdBy = user._id;
       createBadgeDto.updatedBy = user._id;
-  
+
       return await this.badgeModel.create(createBadgeDto);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
   }
-  
+
   async findAllBadges(
     page: number,
     limit: number,

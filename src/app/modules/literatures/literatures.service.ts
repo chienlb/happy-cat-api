@@ -15,7 +15,7 @@ export class LiteraturesService {
     private literatureModel: Model<LiteratureDocument>,
     private usersService: UsersService,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async createLiterature(
     createLiteratureDto: CreateLiteratureDto,
@@ -44,9 +44,7 @@ export class LiteraturesService {
     }
   }
 
-  async getLiteratures(
-    paginationDto: PaginationDto,
-  ): Promise<{
+  async getLiteratures(paginationDto: PaginationDto): Promise<{
     literatures: LiteratureDocument[];
     total: number;
     totalPages: number;
@@ -67,12 +65,15 @@ export class LiteraturesService {
         .skip((paginationDto.page - 1) * paginationDto.limit)
         .limit(paginationDto.limit)
         .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 });
-      const total = await this.literatureModel.countDocuments({ isActive: true });
+      const total = await this.literatureModel.countDocuments({
+        isActive: true,
+      });
       const totalPages = Math.ceil(total / paginationDto.limit);
       const currentPage = paginationDto.page;
       const hasNextPage = currentPage < totalPages;
       const hasPreviousPage = currentPage > 1;
-      const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+      const nextPage =
+        paginationDto.page < totalPages ? paginationDto.page + 1 : null;
       const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
       const result = {
         literatures,

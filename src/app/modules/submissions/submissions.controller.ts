@@ -16,7 +16,7 @@ import { UpdateSubmissionDto } from './dto/update-submission.dto';
 @ApiTags('Submissions')
 @Controller('submissions')
 export class SubmissionsController {
-  constructor(private readonly submissionsService: SubmissionsService) { }
+  constructor(private readonly submissionsService: SubmissionsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a submission' })

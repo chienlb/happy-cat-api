@@ -40,7 +40,7 @@ import mongoose, { ClientSession } from 'mongoose';
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Post()
   @UseGuards(AuthGuard('jwt'))
@@ -67,8 +67,18 @@ export class UsersController {
   @UseGuards(AuthGuard('jwt'))
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all users' })
-  @ApiQuery({ name: 'page', type: Number, description: 'The page number', required: false })
-  @ApiQuery({ name: 'limit', type: Number, description: 'The number of users per page', required: false })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    description: 'The page number',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'limit',
+    type: Number,
+    description: 'The number of users per page',
+    required: false,
+  })
   @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -106,10 +116,7 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async updateUserById(
-    @Param('id') id: string,
-    @Body() dto: UpdateUserDto,
-  ) {
+  async updateUserById(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     const user = await this.usersService.updateUserById(id, dto);
     if (!user) throw new NotFoundException('User not found.');
     return ok(user, 'User updated successfully');

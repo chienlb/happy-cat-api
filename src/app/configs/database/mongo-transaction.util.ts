@@ -10,10 +10,9 @@ export async function withMongoTransaction<T>(
     await session.withTransaction(async () => {
       result = await handler(session);
     });
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
     return result!;
   } finally {
     await session.endSession();
   }
 }
-

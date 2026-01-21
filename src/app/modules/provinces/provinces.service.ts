@@ -13,7 +13,7 @@ export class ProvincesService {
   constructor(
     @InjectModel(Province.name) private provinceModel: Model<ProvinceDocument>,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async createProvince(
     createProvinceDto: CreateProvinceDto,
@@ -22,9 +22,7 @@ export class ProvincesService {
     return await newProvince.save();
   }
 
-  async findAllProvinces(
-    paginationDto: PaginationDto,
-  ): Promise<{
+  async findAllProvinces(paginationDto: PaginationDto): Promise<{
     data: ProvinceDocument[];
     total: number;
     totalPages: number;

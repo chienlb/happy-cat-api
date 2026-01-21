@@ -17,7 +17,7 @@ export class CompetitionsService {
     @InjectModel(Competition.name)
     private competitionRepository: Model<CompetitionDocument>,
     private usersService: UsersService,
-  ) { }
+  ) {}
 
   async createCompetition(
     createCompetitionDto: CreateCompetitionDto,
@@ -56,9 +56,7 @@ export class CompetitionsService {
     }
   }
 
-  async findAllCompetitions(
-    paginationDto: PaginationDto,
-  ): Promise<{
+  async findAllCompetitions(paginationDto: PaginationDto): Promise<{
     data: CompetitionDocument[];
     total: number;
     totalPages: number;
@@ -72,7 +70,9 @@ export class CompetitionsService {
         .skip((paginationDto.page - 1) * paginationDto.limit)
         .limit(paginationDto.limit)
         .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 });
-      const total = await this.competitionRepository.countDocuments({ isActive: true });
+      const total = await this.competitionRepository.countDocuments({
+        isActive: true,
+      });
       const totalPages = Math.ceil(total / paginationDto.limit);
       const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
       return {
@@ -142,22 +142,43 @@ export class CompetitionsService {
     }
   }
 
-  async findCompetitionsByUserId(userId: string, page: number = 1, limit: number = 10): Promise<{ data: CompetitionDocument[]; total: number; totalPages: number; nextPage: number | null; prevPage: number | null; limit: number }> {
+  async findCompetitionsByUserId(
+    userId: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{
+    data: CompetitionDocument[];
+    total: number;
+    totalPages: number;
+    nextPage: number | null;
+    prevPage: number | null;
+    limit: number;
+  }> {
     try {
-      const competitions = await this.competitionRepository.find({ createdBy: new Types.ObjectId(userId) }).skip((page - 1) * limit).limit(limit);
-      const total = await this.competitionRepository.countDocuments({ createdBy: new Types.ObjectId(userId) });
+      const competitions = await this.competitionRepository
+        .find({ createdBy: new Types.ObjectId(userId) })
+        .skip((page - 1) * limit)
+        .limit(limit);
+      const total = await this.competitionRepository.countDocuments({
+        createdBy: new Types.ObjectId(userId),
+      });
       const totalPages = Math.ceil(total / limit);
       const currentPage = Math.max(1, Math.min(page, totalPages));
       return {
         data: competitions,
         total: total,
         totalPages: totalPages,
-        nextPage: currentPage < totalPages ? currentPage + 1 : currentPage === totalPages ? null : totalPages,
-        prevPage: currentPage > 1 ? currentPage - 1 : currentPage === 1 ? null : 1,
+        nextPage:
+          currentPage < totalPages
+            ? currentPage + 1
+            : currentPage === totalPages
+              ? null
+              : totalPages,
+        prevPage:
+          currentPage > 1 ? currentPage - 1 : currentPage === 1 ? null : 1,
         limit: limit,
       };
-    }
-    catch (error) {
+    } catch (error) {
       throw new BadRequestException(error);
     }
   }

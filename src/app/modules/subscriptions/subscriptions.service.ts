@@ -21,7 +21,7 @@ export class SubscriptionsService {
     private usersService: UsersService,
     private packagesService: PackagesService,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async createSubscription(
     createSubscriptionDto: CreateSubscriptionDto,
@@ -78,7 +78,8 @@ export class SubscriptionsService {
         userId,
       });
       const totalPages = Math.ceil(total / paginationDto.limit);
-      const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+      const nextPage =
+        paginationDto.page < totalPages ? paginationDto.page + 1 : null;
       const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
       const result = {
         data: subscriptions as SubscriptionDocument[],
@@ -158,9 +159,7 @@ export class SubscriptionsService {
     }
   }
 
-  async findAllSubscriptions(
-    paginationDto: PaginationDto,
-  ): Promise<{
+  async findAllSubscriptions(paginationDto: PaginationDto): Promise<{
     data: SubscriptionDocument[];
     total: number;
     totalPages: number;
@@ -181,7 +180,8 @@ export class SubscriptionsService {
         .exec();
       const total = await this.subscriptionRepository.countDocuments();
       const totalPages = Math.ceil(total / paginationDto.limit);
-      const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+      const nextPage =
+        paginationDto.page < totalPages ? paginationDto.page + 1 : null;
       const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
       const result = {
         data: subscriptions as SubscriptionDocument[],

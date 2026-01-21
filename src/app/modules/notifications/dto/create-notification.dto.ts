@@ -1,4 +1,11 @@
-import { IsString, IsEnum, IsMongoId, IsOptional, IsBoolean, IsDate } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsMongoId,
+  IsOptional,
+  IsBoolean,
+  IsDate,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { NotificationType } from '../schema/notification.schema';
 

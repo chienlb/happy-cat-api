@@ -13,7 +13,7 @@ export class SchoolsService {
   constructor(
     @InjectModel(School.name) private schoolModel: Model<SchoolDocument>,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async createSchool(
     createSchoolDto: CreateSchoolDto,
@@ -46,9 +46,7 @@ export class SchoolsService {
     }
   }
 
-  async findAllSchools(
-    paginationDto: PaginationDto,
-  ): Promise<{
+  async findAllSchools(paginationDto: PaginationDto): Promise<{
     data: SchoolDocument[];
     total: number;
     totalPages: number;
@@ -142,7 +140,10 @@ export class SchoolsService {
     }
   }
 
-  async deleteSchool(id: string, session?: ClientSession): Promise<SchoolDocument> {
+  async deleteSchool(
+    id: string,
+    session?: ClientSession,
+  ): Promise<SchoolDocument> {
     const mongooseSession = session ?? (await this.schoolModel.startSession());
     const isNewSession = !session;
 

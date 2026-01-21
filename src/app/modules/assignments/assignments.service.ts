@@ -18,7 +18,7 @@ export class AssignmentsService {
     private assignmentModel: Model<AssignmentDocument>,
     private usersService: UsersService,
     private cloudflareService: CloudflareService,
-  ) { }
+  ) {}
 
   async create(createAssignmentDto: CreateAssignmentDto, file?: any) {
     const user = await this.usersService.findUserById(

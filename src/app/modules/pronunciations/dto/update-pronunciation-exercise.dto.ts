@@ -3,4 +3,4 @@ import { CreatePronunciationExerciseDto } from './create-pronunciation-exercise.
 
 export class UpdatePronunciationExerciseDto extends PartialType(
   CreatePronunciationExerciseDto,
-) { }
+) {}

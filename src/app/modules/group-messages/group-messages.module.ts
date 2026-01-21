@@ -25,4 +25,4 @@ import { GroupMessagesGateway } from './group-messages.gateway';
   providers: [GroupMessagesService, RedisService, GroupMessagesGateway],
   exports: [GroupMessagesService],
 })
-export class GroupMessagesModule { }
+export class GroupMessagesModule {}

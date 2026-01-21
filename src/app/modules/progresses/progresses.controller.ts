@@ -30,7 +30,7 @@ import { PaginationDto } from '../pagination/pagination.dto';
 @ApiTags('Progresses')
 @UseGuards(AuthGuard('jwt'))
 export class ProgressesController {
-  constructor(private readonly progressesService: ProgressesService) { }
+  constructor(private readonly progressesService: ProgressesService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new progress' })
@@ -168,10 +168,13 @@ export class ProgressesController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   async getProgressByUserId(
     @Req() req: Request,
-    @Query() paginationDto: PaginationDto
+    @Query() paginationDto: PaginationDto,
   ) {
     const userId = (req as any).user.userId;
-    return await this.progressesService.getProgressByUserId(userId, paginationDto);
+    return await this.progressesService.getProgressByUserId(
+      userId,
+      paginationDto,
+    );
   }
 
   @Get('course/:courseId')
@@ -222,7 +225,7 @@ export class ProgressesController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   async getProgressByCourseId(
     @Param('courseId') courseId: string,
-    @Query() paginationDto: PaginationDto
+    @Query() paginationDto: PaginationDto,
   ): Promise<{
     data: ProgressDocument[];
     total: number;
@@ -286,7 +289,7 @@ export class ProgressesController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   async getProgressByLessonId(
     @Param('lessonId') lessonId: string,
-    @Query() paginationDto: PaginationDto
+    @Query() paginationDto: PaginationDto,
   ): Promise<{
     data: ProgressDocument[];
     total: number;
@@ -350,7 +353,7 @@ export class ProgressesController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   async getProgressByAssignmentId(
     @Param('assignmentId') assignmentId: string,
-    @Query() paginationDto: PaginationDto
+    @Query() paginationDto: PaginationDto,
   ): Promise<{
     data: ProgressDocument[];
     total: number;
@@ -415,7 +418,7 @@ export class ProgressesController {
   async getProgressByUserIdAndCourseId(
     @Req() req: Request,
     @Param('courseId') courseId: string,
-    @Query() paginationDto: PaginationDto
+    @Query() paginationDto: PaginationDto,
   ): Promise<{
     data: ProgressDocument[];
     total: number;
@@ -479,9 +482,7 @@ export class ProgressesController {
     },
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async getAllProgress(
-    @Query() paginationDto: PaginationDto
-  ): Promise<{
+  async getAllProgress(@Query() paginationDto: PaginationDto): Promise<{
     data: ProgressDocument[];
     total: number;
     totalPages: number;

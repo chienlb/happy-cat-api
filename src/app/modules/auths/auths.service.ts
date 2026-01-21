@@ -32,9 +32,7 @@ import { TokensService } from '../tokens/tokens.service';
 import { sendEmail } from 'src/app/common/utils/mail.util';
 import { randomInt, randomUUID } from 'crypto';
 import { Token, TokenDocument } from '../tokens/schema/token.schema';
-import {
-  LogoutDeviceAuthDto,
-} from './dto/logout-auth.dto';
+import { LogoutDeviceAuthDto } from './dto/logout-auth.dto';
 import { OAuth2Client } from 'google-auth-library';
 import { Secret, SignOptions } from 'jsonwebtoken';
 import { envSchema } from 'src/app/configs/env/env.config';
@@ -100,13 +98,12 @@ export class AuthsService implements OnModuleInit {
     private readonly connection: Connection,
 
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async onModuleInit() {
     await initializeVerifyEmailWorker();
     this.logger.log('Verify email worker initialized');
   }
-
 
   async register(
     registerAuthDto: RegisterAuthDto,
@@ -212,7 +209,6 @@ export class AuthsService implements OnModuleInit {
     }
   }
 
-
   async login(loginAuthDto: LoginAuthDto, session?: ClientSession) {
     if (this.connection.readyState !== 1) {
       throw new BadRequestException('Database not ready.');
@@ -227,9 +223,14 @@ export class AuthsService implements OnModuleInit {
 
     const env = envSchema.parse(process.env);
     try {
-      const user = await this.userModel.findOne({
-        $or: [{ email: loginAuthDto.email }, { username: loginAuthDto.email }],
-      }).session(mongooseSession);
+      const user = await this.userModel
+        .findOne({
+          $or: [
+            { email: loginAuthDto.email },
+            { username: loginAuthDto.email },
+          ],
+        })
+        .session(mongooseSession);
 
       if (!user) throw new NotFoundException('User not found.');
 
@@ -259,19 +260,21 @@ export class AuthsService implements OnModuleInit {
       );
 
       // Tạo token nếu chưa tồn tại
-      await this.tokenModel.findOneAndUpdate(
-        {
-          userId: user._id.toString(),
-          deviceId: loginAuthDto.deviceId,
-        },
-        {
-          $set: {
-            token: accessToken,
+      await this.tokenModel
+        .findOneAndUpdate(
+          {
+            userId: user._id.toString(),
             deviceId: loginAuthDto.deviceId,
           },
-        },
-        { upsert: true },
-      ).session(mongooseSession);
+          {
+            $set: {
+              token: accessToken,
+              deviceId: loginAuthDto.deviceId,
+            },
+          },
+          { upsert: true },
+        )
+        .session(mongooseSession);
 
       const obj = user.toObject();
       delete (obj as any).password;
@@ -301,12 +304,14 @@ export class AuthsService implements OnModuleInit {
       }
       throw error;
     }
-
   }
 
   async verifyEmail(verifyEmailDto: VerifyEmailDto) {
     try {
-      const user = await this.userModel.findOne({ codeVerify: verifyEmailDto.codeVerify, email: verifyEmailDto.email });
+      const user = await this.userModel.findOne({
+        codeVerify: verifyEmailDto.codeVerify,
+        email: verifyEmailDto.email,
+      });
       if (!user) throw new NotFoundException('Invalid code or email.');
 
       user.isVerify = true;
@@ -322,9 +327,13 @@ export class AuthsService implements OnModuleInit {
     }
   }
 
-  async resendVerificationEmail(resendVerificationEmailDto: ResendVerificationEmailDto) {
+  async resendVerificationEmail(
+    resendVerificationEmailDto: ResendVerificationEmailDto,
+  ) {
     try {
-      const user = await this.userModel.findOne({ email: resendVerificationEmailDto.email });
+      const user = await this.userModel.findOne({
+        email: resendVerificationEmailDto.email,
+      });
       if (!user) throw new NotFoundException('User not found.');
 
       const code = this.generateVerificationCode();
@@ -351,7 +360,9 @@ export class AuthsService implements OnModuleInit {
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     try {
-      const user = await this.userModel.findOne({ email: forgotPasswordDto.email });
+      const user = await this.userModel.findOne({
+        email: forgotPasswordDto.email,
+      });
       if (!user) throw new NotFoundException('User not found.');
 
       const code = this.generateVerificationCode();
@@ -379,7 +390,10 @@ export class AuthsService implements OnModuleInit {
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
     try {
-      const user = await this.userModel.findOne({ codeVerify: resetPasswordDto.codeVerify, email: resetPasswordDto.email });
+      const user = await this.userModel.findOne({
+        codeVerify: resetPasswordDto.codeVerify,
+        email: resetPasswordDto.email,
+      });
       if (!user) throw new NotFoundException('User not found.');
 
       user.password = await bcrypt.hash(resetPasswordDto.password, 10);
@@ -401,15 +415,15 @@ export class AuthsService implements OnModuleInit {
     }
   }
 
-  async changePassword(
-    userId: string,
-    changePasswordDto: ChangePasswordDto,
-  ) {
+  async changePassword(userId: string, changePasswordDto: ChangePasswordDto) {
     try {
       const user = await this.userModel.findById(userId);
       if (!user) throw new NotFoundException('User not found.');
 
-      const valid = await bcrypt.compare(changePasswordDto.oldPassword, user.password);
+      const valid = await bcrypt.compare(
+        changePasswordDto.oldPassword,
+        user.password,
+      );
       if (!valid) throw new BadRequestException('Invalid old password.');
 
       user.password = await bcrypt.hash(changePasswordDto.newPassword, 10);
@@ -445,7 +459,11 @@ export class AuthsService implements OnModuleInit {
   async logoutDevice(userId: string, logoutDeviceDto: LogoutDeviceAuthDto) {
     try {
       const result = await this.tokenModel.updateOne(
-        { userId: userId, deviceId: logoutDeviceDto.deviceId, isDeleted: false },
+        {
+          userId: userId,
+          deviceId: logoutDeviceDto.deviceId,
+          isDeleted: false,
+        },
         { isDeleted: true },
       );
 
@@ -553,13 +571,13 @@ export class AuthsService implements OnModuleInit {
       const user = await this.userModel.findOne({ email: result.email });
       if (!user) throw new NotFoundException('User not found.');
       const accessToken = jwt.sign(
-        { userId: user._id.toString(), role: user.role as UserRole },
-        env.JWT_ACCESS_TOKEN_SECRET as string,
+        { userId: user._id.toString(), role: user.role },
+        env.JWT_ACCESS_TOKEN_SECRET,
         { expiresIn: '1h' },
       );
       const refreshToken = jwt.sign(
-        { userId: user._id.toString(), role: user.role as UserRole },
-        env.JWT_REFRESH_TOKEN_SECRET as string,
+        { userId: user._id.toString(), role: user.role },
+        env.JWT_REFRESH_TOKEN_SECRET,
         { expiresIn: '7d' },
       );
       return { accessToken, refreshToken };

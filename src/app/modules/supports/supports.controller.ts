@@ -2,18 +2,38 @@ import { Controller, Param } from '@nestjs/common';
 import { SupportsService } from './supports.service';
 import { CreateSupportDto } from './dto/create-support.dto';
 import { Body, Get, Post, Put } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { SupportStatus } from './schema/support.schema';
 import { UpdateSupportDto } from './dto/update-support.dto';
 
 @ApiTags('Supports')
 @Controller('supports')
 export class SupportsController {
-  constructor(private readonly supportsService: SupportsService) { }
+  constructor(private readonly supportsService: SupportsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new support' })
-  @ApiBody({ type: CreateSupportDto, description: 'The support to create', examples: { example1: { value: { userId: '1234567890', subject: 'Support subject', message: 'Support message', attachments: ['attachment1', 'attachment2'] } } } })
+  @ApiBody({
+    type: CreateSupportDto,
+    description: 'The support to create',
+    examples: {
+      example1: {
+        value: {
+          userId: '1234567890',
+          subject: 'Support subject',
+          message: 'Support message',
+          attachments: ['attachment1', 'attachment2'],
+        },
+      },
+    },
+  })
   @ApiResponse({ status: 201, description: 'Support created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -84,7 +104,10 @@ export class SupportsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  updateSupport(@Param('id') id: string, @Body() updateSupportDto: UpdateSupportDto) {
+  updateSupport(
+    @Param('id') id: string,
+    @Body() updateSupportDto: UpdateSupportDto,
+  ) {
     return this.supportsService.updateSupport(id, updateSupportDto);
   }
 }

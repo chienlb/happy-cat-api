@@ -33,7 +33,7 @@ import { PaginationDto } from '../pagination/pagination.dto';
 @ApiTags('Competitions')
 @UseGuards(AuthGuard('jwt'))
 export class CompetitionsController {
-  constructor(private readonly competitionsService: CompetitionsService) { }
+  constructor(private readonly competitionsService: CompetitionsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new competition' })
@@ -222,9 +222,7 @@ export class CompetitionsController {
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getAllCompetitions(
-    @Query() paginationDto: PaginationDto,
-  ): Promise<{
+  async getAllCompetitions(@Query() paginationDto: PaginationDto): Promise<{
     data: CompetitionDocument[];
     total: number;
     totalPages: number;

@@ -50,9 +50,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
 
     if (!tokenRecord) {
-      this.logger.warn(
-        `JWT revoked or not found for user ${payload.userId}.`,
-      );
+      this.logger.warn(`JWT revoked or not found for user ${payload.userId}.`);
       throw new UnauthorizedException('Token has been revoked');
     }
 

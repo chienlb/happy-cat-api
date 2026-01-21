@@ -1,29 +1,35 @@
-import { IsNotEmpty, IsOptional, IsString, IsEnum, IsArray } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsEnum,
+  IsArray,
+} from 'class-validator';
 import { Types } from 'mongoose';
 import { MessageType } from '../schema/group-message.schema';
 
 export class CreateGroupMessageDto {
-    @IsNotEmpty()
-    groupId: Types.ObjectId;
+  @IsNotEmpty()
+  groupId: Types.ObjectId;
 
-    @IsNotEmpty()
-    senderId: Types.ObjectId;
+  @IsNotEmpty()
+  senderId: Types.ObjectId;
 
-    @IsNotEmpty()
-    @IsString()
-    content: string;
+  @IsNotEmpty()
+  @IsString()
+  content: string;
 
-    @IsEnum(MessageType)
-    type: MessageType;
+  @IsEnum(MessageType)
+  type: MessageType;
 
-    @IsOptional()
-    @IsArray()
-    attachments?: string[];
+  @IsOptional()
+  @IsArray()
+  attachments?: string[];
 
-    @IsOptional()
-    @IsArray()
-    mentions?: Types.ObjectId[];
+  @IsOptional()
+  @IsArray()
+  mentions?: Types.ObjectId[];
 
-    @IsOptional()
-    replyTo?: Types.ObjectId;
+  @IsOptional()
+  replyTo?: Types.ObjectId;
 }

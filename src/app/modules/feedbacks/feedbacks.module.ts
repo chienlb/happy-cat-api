@@ -15,4 +15,4 @@ import { UsersModule } from '../users/users.module';
   controllers: [FeedbacksController],
   providers: [FeedbacksService],
 })
-export class FeedbacksModule { }
+export class FeedbacksModule {}

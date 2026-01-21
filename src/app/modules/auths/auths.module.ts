@@ -48,4 +48,4 @@ import { RedisModule } from 'src/app/configs/redis/redis.module';
     JwtStrategy,
   ],
 })
-export class AuthsModule { }
+export class AuthsModule {}

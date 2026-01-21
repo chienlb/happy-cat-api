@@ -1,9 +1,27 @@
-import { Controller, Post, Body, Logger, Param, Delete, Get, Put, Query } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Logger,
+  Param,
+  Delete,
+  Get,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { HistoryInvitationsService } from './history-invitations.service';
 import { CreateHistoryInvitationDto } from './dto/create-history-invitation.dto';
 import mongoose from 'mongoose';
 import { ok } from 'src/app/common/response/api-response';
-import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBody,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { UseGuards } from '@nestjs/common';
 import { PaginationDto } from '../pagination/pagination.dto';
@@ -18,7 +36,7 @@ export class HistoryInvitationsController {
 
   constructor(
     private readonly historyInvitationsService: HistoryInvitationsService,
-  ) { }
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new history invitation' })
@@ -38,7 +56,10 @@ export class HistoryInvitationsController {
       },
     },
   })
-  @ApiResponse({ status: 200, description: 'History invitation created successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'History invitation created successfully',
+  })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -55,43 +76,65 @@ export class HistoryInvitationsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all history invitations' })
-  @ApiResponse({ status: 200, description: 'History invitations fetched successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'History invitations fetched successfully',
+  })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   async findAll(@Query() paginationDto: PaginationDto) {
-    const result = await this.historyInvitationsService.findAllHistoryInvitations(paginationDto);
+    const result =
+      await this.historyInvitationsService.findAllHistoryInvitations(
+        paginationDto,
+      );
     return ok(result, 'History invitations fetched successfully', 200);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a history invitation by id' })
-  @ApiResponse({ status: 200, description: 'History invitation fetched successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'History invitation fetched successfully',
+  })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   async findOne(@Param('id') id: string) {
-    const result = await this.historyInvitationsService.findOneHistoryInvitation(id);
+    const result =
+      await this.historyInvitationsService.findOneHistoryInvitation(id);
     return ok(result, 'History invitation fetched successfully', 200);
   }
 
   @Put(':id')
   @ApiOperation({ summary: 'Update a history invitation by id' })
-  @ApiResponse({ status: 200, description: 'History invitation updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'History invitation updated successfully',
+  })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async update(@Param('id') id: string, @Body() updateHistoryInvitationDto: UpdateHistoryInvitationDto) {
-    const result = await this.historyInvitationsService.updateHistoryInvitation(id, updateHistoryInvitationDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateHistoryInvitationDto: UpdateHistoryInvitationDto,
+  ) {
+    const result = await this.historyInvitationsService.updateHistoryInvitation(
+      id,
+      updateHistoryInvitationDto,
+    );
     return ok(result, 'History invitation updated successfully', 200);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a history invitation by id' })
-  @ApiResponse({ status: 200, description: 'History invitation deleted successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'History invitation deleted successfully',
+  })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })

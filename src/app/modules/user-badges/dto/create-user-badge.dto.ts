@@ -1,32 +1,32 @@
 import { IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateUserBadgeDto {
-    @IsMongoId()
-    @IsNotEmpty()
-    userId: string;
+  @IsMongoId()
+  @IsNotEmpty()
+  userId: string;
 
-    @IsMongoId()
-    @IsNotEmpty()
-    badgeId: string;
+  @IsMongoId()
+  @IsNotEmpty()
+  badgeId: string;
 
-    @IsNotEmpty()
-    awardedAt: Date;
+  @IsNotEmpty()
+  awardedAt: Date;
 
-    @IsString()
-    @IsOptional()
-    reason?: string;
+  @IsString()
+  @IsOptional()
+  reason?: string;
 
-    @IsMongoId()
-    @IsOptional()
-    awardedBy?: string;
+  @IsMongoId()
+  @IsOptional()
+  awardedBy?: string;
 
-    @IsOptional()
-    isRevoked?: boolean;
+  @IsOptional()
+  isRevoked?: boolean;
 
-    @IsOptional()
-    revokedAt?: Date;
+  @IsOptional()
+  revokedAt?: Date;
 
-    @IsString()
-    @IsOptional()
-    note?: string;
+  @IsString()
+  @IsOptional()
+  note?: string;
 }

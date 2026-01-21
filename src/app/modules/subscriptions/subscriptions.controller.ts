@@ -24,7 +24,7 @@ import { PaginationDto } from '../pagination/pagination.dto';
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
 export class SubscriptionsController {
-  constructor(private readonly subscriptionsService: SubscriptionsService) { }
+  constructor(private readonly subscriptionsService: SubscriptionsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a subscription' })

@@ -19,4 +19,4 @@ import { RedisService } from 'src/app/configs/redis/redis.service';
   providers: [LiteraturesService, RedisService],
   exports: [LiteraturesService],
 })
-export class LiteraturesModule { }
+export class LiteraturesModule {}

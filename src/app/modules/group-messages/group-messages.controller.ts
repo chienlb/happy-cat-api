@@ -27,7 +27,7 @@ import { PaginationDto } from '../pagination/pagination.dto';
 @ApiBearerAuth()
 @Controller('group-messages')
 export class GroupMessagesController {
-  constructor(private readonly groupMessagesService: GroupMessagesService) { }
+  constructor(private readonly groupMessagesService: GroupMessagesService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new group message' })

@@ -37,7 +37,7 @@ import { PaginationDto } from '../pagination/pagination.dto';
 @Roles(UserRole.ADMIN, UserRole.TEACHER)
 @Controller('lessons')
 export class LessonsController {
-  constructor(private readonly lessonsService: LessonsService) { }
+  constructor(private readonly lessonsService: LessonsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new lesson' })
@@ -69,7 +69,10 @@ export class LessonsController {
               description: 'Present simple tense',
               rule: 'Subject + Verb (s/es) + Object',
               examples: [
-                { example: 'I play football.', translation: 'Tôi chơi bóng đá.' },
+                {
+                  example: 'I play football.',
+                  translation: 'Tôi chơi bóng đá.',
+                },
                 { example: 'She reads books.', translation: 'Cô ấy đọc sách.' },
               ],
               tags: ['grammar', 'tenses'],

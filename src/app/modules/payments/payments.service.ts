@@ -1,15 +1,32 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Connection, Model } from 'mongoose';
-import { Payment, PaymentDocument, PaymentStatus } from './schema/payment.schema';
+import {
+  Payment,
+  PaymentDocument,
+  PaymentStatus,
+} from './schema/payment.schema';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { getClientIp } from 'request-ip';
 import { Request } from 'express';
 import { envSchema } from 'src/app/configs/env/env.config';
 import * as crypto from 'crypto';
 import * as qs from 'qs';
-import { Subscription, SubscriptionDocument, SubscriptionStatus } from '../subscriptions/schema/subscription.schema';
-import { Purchase, PurchaseDocument, PurchaseStatus } from '../purchases/schema/purchase.schema';
+import {
+  Subscription,
+  SubscriptionDocument,
+  SubscriptionStatus,
+} from '../subscriptions/schema/subscription.schema';
+import {
+  Purchase,
+  PurchaseDocument,
+  PurchaseStatus,
+} from '../purchases/schema/purchase.schema';
 import { User, UserDocument } from '../users/schema/user.schema';
 import { Package, PackageDocument } from '../packages/schema/package.schema';
 
@@ -19,36 +36,42 @@ export class PaymentsService {
 
   constructor(
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
-    @InjectModel(Subscription.name) private subscriptionModel: Model<SubscriptionDocument>,
+    @InjectModel(Subscription.name)
+    private subscriptionModel: Model<SubscriptionDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Purchase.name) private purchaseModel: Model<PurchaseDocument>,
     @InjectModel(Package.name) private packageModel: Model<PackageDocument>,
     @InjectConnection() private readonly connection: Connection,
-  ) { }
-
+  ) {}
 
   private sortParams(params: Record<string, any>) {
-    return Object.keys(params).sort().reduce((acc, key) => {
-      acc[key] = params[key];
-      return acc;
-    }, {});
+    return Object.keys(params)
+      .sort()
+      .reduce((acc, key) => {
+        acc[key] = params[key];
+        return acc;
+      }, {});
   }
 
   private signData(secret: string, params: any): string {
     const signData = qs.stringify(params, { encode: false });
-    return crypto.createHmac('sha512', secret).update(Buffer.from(signData)).digest('hex');
+    return crypto
+      .createHmac('sha512', secret)
+      .update(Buffer.from(signData))
+      .digest('hex');
   }
 
   private formatDate(date: Date) {
     const pad = (n: number) => (n < 10 ? '0' + n : n);
-    return date.getFullYear().toString()
-      + pad(date.getMonth() + 1)
-      + pad(date.getDate())
-      + pad(date.getHours())
-      + pad(date.getMinutes())
-      + pad(date.getSeconds());
+    return (
+      date.getFullYear().toString() +
+      pad(date.getMonth() + 1) +
+      pad(date.getDate()) +
+      pad(date.getHours()) +
+      pad(date.getMinutes()) +
+      pad(date.getSeconds())
+    );
   }
-
 
   async createPayment(dto: CreatePaymentDto, req: Request) {
     const env = envSchema.parse(process.env);
@@ -93,11 +116,12 @@ export class PaymentsService {
       status: PaymentStatus.PENDING,
     });
 
-    this.logger.log(`[DEBUG] Payment created successfully for transaction ID: ${orderId}`);
+    this.logger.log(
+      `[DEBUG] Payment created successfully for transaction ID: ${orderId}`,
+    );
 
     return { paymentUrl };
   }
-
 
   private verifyChecksum(query: any, env: any) {
     const secureHash = query.vnp_SecureHash;
@@ -111,8 +135,10 @@ export class PaymentsService {
     return secureHash === signed;
   }
 
-
-  private async activateServices(transactionId: string, session: ClientSession) {
+  private async activateServices(
+    transactionId: string,
+    session: ClientSession,
+  ) {
     if (this.connection.readyState !== 1) {
       throw new BadRequestException('Database not ready.');
     }
@@ -125,23 +151,31 @@ export class PaymentsService {
     }
     try {
       // Find purchase
-      const purchase = await this.purchaseModel.findOne({ paymentId: transactionId }).session(mongooseSession);
+      const purchase = await this.purchaseModel
+        .findOne({ paymentId: transactionId })
+        .session(mongooseSession);
       if (!purchase) throw new NotFoundException('Purchase not found');
 
       // Update purchase status
       purchase.status = PurchaseStatus.SUCCESS;
       await purchase.save({ session: mongooseSession });
 
-      this.logger.log(`[DEBUG] Purchase updated status to SUCCESS for transaction ID: ${transactionId}`);
+      this.logger.log(
+        `[DEBUG] Purchase updated status to SUCCESS for transaction ID: ${transactionId}`,
+      );
 
       // Find user
-      const user = await this.userModel.findById(purchase.userId).session(mongooseSession);
+      const user = await this.userModel
+        .findById(purchase.userId)
+        .session(mongooseSession);
       if (!user) throw new NotFoundException('User not found');
 
       const packagedId = purchase.packageId.toString();
       if (!packagedId) throw new NotFoundException('Package not found');
 
-      const packageResult = await this.packageModel.findById(packagedId).session(mongooseSession);
+      const packageResult = await this.packageModel
+        .findById(packagedId)
+        .session(mongooseSession);
       if (!packageResult) throw new NotFoundException('Package not found');
 
       // Set user package
@@ -149,14 +183,22 @@ export class PaymentsService {
 
       await user.save({ session: mongooseSession });
 
-      this.logger.log(`[DEBUG] User updated package to ${packageResult.type} for transaction ID: ${transactionId}`);
+      this.logger.log(
+        `[DEBUG] User updated package to ${packageResult.type} for transaction ID: ${transactionId}`,
+      );
 
       // Subscription (optional)
-      const subscription = await this.subscriptionModel.findOne({ paymentId: transactionId }).session(mongooseSession);
+      const subscription = await this.subscriptionModel
+        .findOne({ paymentId: transactionId })
+        .session(mongooseSession);
       if (subscription) {
         subscription.status = SubscriptionStatus.ACTIVE;
         subscription.startDate = new Date();
-        subscription.endDate = new Date(new Date().setDate(new Date().getDate() + packageResult.durationInDays));
+        subscription.endDate = new Date(
+          new Date().setDate(
+            new Date().getDate() + packageResult.durationInDays,
+          ),
+        );
         await subscription.save({ session: mongooseSession });
       }
 
@@ -175,7 +217,6 @@ export class PaymentsService {
       }
     }
   }
-
 
   async handleReturn(query: any, session?: ClientSession) {
     if (this.connection.readyState !== 1) {
@@ -199,12 +240,17 @@ export class PaymentsService {
 
       if (success) {
         await this.activateServices(query.vnp_TxnRef, mongooseSession);
-        this.logger.log(`[DEBUG] Purchase activated successfully for transaction ID: ${query.vnp_TxnRef}`);
+        this.logger.log(
+          `[DEBUG] Purchase activated successfully for transaction ID: ${query.vnp_TxnRef}`,
+        );
       }
 
       const payment = await this.paymentModel.findOneAndUpdate(
         { transactionId: query.vnp_TxnRef },
-        { status: success ? PaymentStatus.SUCCESS : PaymentStatus.FAILED, paidAt: new Date() },
+        {
+          status: success ? PaymentStatus.SUCCESS : PaymentStatus.FAILED,
+          paidAt: new Date(),
+        },
         { new: true, session: mongooseSession },
       );
 
@@ -243,13 +289,20 @@ export class PaymentsService {
 
       if (success) {
         await this.activateServices(query.vnp_TxnRef, mongooseSession);
-        this.logger.log(`[DEBUG] Purchase activated successfully for transaction ID: ${query.vnp_TxnRef}`);
+        this.logger.log(
+          `[DEBUG] Purchase activated successfully for transaction ID: ${query.vnp_TxnRef}`,
+        );
       }
 
-      await this.paymentModel.findOneAndUpdate(
-        { transactionId: query.vnp_TxnRef },
-        { status: success ? PaymentStatus.SUCCESS : PaymentStatus.FAILED, paidAt: new Date() },
-      ).session(mongooseSession);
+      await this.paymentModel
+        .findOneAndUpdate(
+          { transactionId: query.vnp_TxnRef },
+          {
+            status: success ? PaymentStatus.SUCCESS : PaymentStatus.FAILED,
+            paidAt: new Date(),
+          },
+        )
+        .session(mongooseSession);
 
       return { RspCode: '00', Message: 'Confirm Success' };
     } catch (error) {

@@ -1,36 +1,44 @@
-import { IsNotEmpty, IsOptional, IsEnum, IsObject, IsArray, IsNumber, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  IsObject,
+  IsArray,
+  IsNumber,
+  IsString,
+} from 'class-validator';
 import { Types } from 'mongoose';
 import { SubmissionStatus } from '../schema/submission.schema';
 
 export class CreateSubmissionDto {
-    @IsNotEmpty()
-    assignmentId: Types.ObjectId;
+  @IsNotEmpty()
+  assignmentId: Types.ObjectId;
 
-    @IsNotEmpty()
-    studentId: Types.ObjectId;
+  @IsNotEmpty()
+  studentId: Types.ObjectId;
 
-    @IsObject()
-    @IsNotEmpty()
-    studentAnswers: Record<string, any>;
+  @IsObject()
+  @IsNotEmpty()
+  studentAnswers: Record<string, any>;
 
-    @IsOptional()
-    submittedAt?: Date;
+  @IsOptional()
+  submittedAt?: Date;
 
-    @IsOptional()
-    @IsNumber()
-    score?: number;
+  @IsOptional()
+  @IsNumber()
+  score?: number;
 
-    @IsOptional()
-    @IsString()
-    feedback?: string;
+  @IsOptional()
+  @IsString()
+  feedback?: string;
 
-    @IsOptional()
-    @IsArray()
-    attachments?: string[];
+  @IsOptional()
+  @IsArray()
+  attachments?: string[];
 
-    @IsEnum(SubmissionStatus)
-    status: SubmissionStatus;
+  @IsEnum(SubmissionStatus)
+  status: SubmissionStatus;
 
-    @IsOptional()
-    gradedBy?: Types.ObjectId;
+  @IsOptional()
+  gradedBy?: Types.ObjectId;
 }

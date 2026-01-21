@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateHistoryInvitationDto } from './dto/create-history-invitation.dto';
 import { UpdateHistoryInvitationDto } from './dto/update-history-invitation.dto';
 import {
@@ -16,7 +20,7 @@ export class HistoryInvitationsService {
     @InjectModel(HistoryInvitation.name)
     private readonly historyModel: Model<HistoryInvitationDocument>,
     private readonly usersService: UsersService,
-  ) { }
+  ) {}
 
   // ============================================================
   // CREATE HISTORY (inside transaction)
@@ -39,7 +43,10 @@ export class HistoryInvitationsService {
   // ============================================================
   // FIND ALL
   // ============================================================
-  async findAllHistoryInvitations(paginationDto: PaginationDto, session?: ClientSession) {
+  async findAllHistoryInvitations(
+    paginationDto: PaginationDto,
+    session?: ClientSession,
+  ) {
     try {
       const { page, limit, sort, order } = paginationDto;
       const skip = (page - 1) * limit;
@@ -62,9 +69,10 @@ export class HistoryInvitationsService {
         nextPage,
         prevPage,
       };
-    }
-    catch (error) {
-      throw new BadRequestException('Failed to find all history invitations. Please try again later.');
+    } catch (error) {
+      throw new BadRequestException(
+        'Failed to find all history invitations. Please try again later.',
+      );
     }
   }
 

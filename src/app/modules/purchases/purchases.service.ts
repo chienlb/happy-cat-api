@@ -24,7 +24,7 @@ export class PurchasesService {
     private packagesService: PackagesService,
     private paymentsService: PaymentsService,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async createPurchase(
     createPurchaseDto: CreatePurchaseDto,

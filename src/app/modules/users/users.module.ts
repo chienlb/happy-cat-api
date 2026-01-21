@@ -15,7 +15,7 @@ import { RedisModule } from 'src/app/configs/redis/redis.module';
     MongooseModule.forFeature([
       { name: 'User', schema: UserSchema },
       { name: 'HistoryInvitation', schema: HistoryInvitationSchema },
-      { name: 'Token', schema: TokenSchema }
+      { name: 'Token', schema: TokenSchema },
     ]),
     forwardRef(() => InvitationCodesModule),
     RedisModule,
@@ -24,4 +24,4 @@ import { RedisModule } from 'src/app/configs/redis/redis.module';
   providers: [UsersService, RedisService],
   exports: [UsersService, MongooseModule],
 })
-export class UsersModule { }
+export class UsersModule {}

@@ -36,7 +36,7 @@ export class InvitationCodesController {
 
   constructor(
     private readonly invitationCodesService: InvitationCodesService,
-  ) { }
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new invitation code' })

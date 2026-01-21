@@ -23,7 +23,7 @@ export class ProgressesService {
     private readonly assignmentsService: AssignmentsService,
     private readonly usersService: UsersService,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async createProgress(
     createProgressDto: CreateProgressDto,
@@ -57,7 +57,7 @@ export class ProgressesService {
       }
 
       const user = await this.usersService.findUserById(
-        createProgressDto.userId as string,
+        createProgressDto.userId,
       );
       if (!user) {
         throw new BadRequestException('User not found');

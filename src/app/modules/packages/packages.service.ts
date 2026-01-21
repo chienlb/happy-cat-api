@@ -15,7 +15,7 @@ export class PackagesService {
     private packageRepository: Model<PackageDocument>,
     private usersService: UsersService,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async createPackage(
     createPackageDto: CreatePackageDto,

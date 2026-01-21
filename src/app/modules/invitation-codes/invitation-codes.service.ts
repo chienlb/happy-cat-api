@@ -28,7 +28,7 @@ export class InvitationCodesService {
     @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async createInvitationCode(
     dto: CreateInvitationCodeDto,
@@ -125,9 +125,7 @@ export class InvitationCodesService {
     }
   }
 
-  async findAllInvitationCodes(
-    paginationDto: PaginationDto,
-  ): Promise<{
+  async findAllInvitationCodes(paginationDto: PaginationDto): Promise<{
     data: InvitationCodeDocument[];
     total: number;
     totalPages: number;

@@ -1,18 +1,24 @@
-import { IsArray, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsMongoId,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateSupportDto {
-    @IsMongoId()
-    userId: string;
+  @IsMongoId()
+  userId: string;
 
-    @IsString()
-    @IsNotEmpty()
-    subject: string;
+  @IsString()
+  @IsNotEmpty()
+  subject: string;
 
-    @IsString()
-    @IsNotEmpty()
-    message: string;
+  @IsString()
+  @IsNotEmpty()
+  message: string;
 
-    @IsArray()
-    @IsOptional()
-    attachments?: string[];
+  @IsArray()
+  @IsOptional()
+  attachments?: string[];
 }

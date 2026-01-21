@@ -32,7 +32,7 @@ import mongoose, { ClientSession } from 'mongoose';
 export class AuthsController {
   private readonly logger = new Logger(AuthsController.name);
 
-  constructor(private readonly authsService: AuthsService) { }
+  constructor(private readonly authsService: AuthsService) {}
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
@@ -98,7 +98,6 @@ export class AuthsController {
       throw new BadRequestException(error.message);
     }
   }
-
 
   @Post('login')
   @ApiOperation({ summary: 'Login a user' })

@@ -13,4 +13,4 @@ import { UsersModule } from '../users/users.module';
   controllers: [TokensController],
   providers: [TokensService],
 })
-export class TokensModule { }
+export class TokensModule {}

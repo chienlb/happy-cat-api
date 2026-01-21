@@ -11,9 +11,7 @@ import { LessonProgressModule } from '../lesson-progress/lesson-progress.module'
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Lesson.name, schema: LessonSchema },
-    ]),
+    MongooseModule.forFeature([{ name: Lesson.name, schema: LessonSchema }]),
     UsersModule,
     UnitsModule,
     RedisModule,
@@ -23,4 +21,4 @@ import { LessonProgressModule } from '../lesson-progress/lesson-progress.module'
   providers: [LessonsService, RedisService],
   exports: [LessonsService, MongooseModule],
 })
-export class LessonsModule { }
+export class LessonsModule {}

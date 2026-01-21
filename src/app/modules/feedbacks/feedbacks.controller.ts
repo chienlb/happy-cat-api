@@ -28,7 +28,7 @@ import { FeedbackType } from './schema/feedback.schema';
 @ApiBearerAuth()
 @Controller('feedbacks')
 export class FeedbacksController {
-  constructor(private readonly feedbacksService: FeedbacksService) { }
+  constructor(private readonly feedbacksService: FeedbacksService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new feedback' })

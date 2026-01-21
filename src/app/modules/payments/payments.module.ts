@@ -8,7 +8,10 @@ import { PackagesModule } from '../packages/packages.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { PurchasesModule } from '../purchases/purchases.module';
 import { Package, PackageSchema } from '../packages/schema/package.schema';
-import { Subscription, SubscriptionSchema } from '../subscriptions/schema/subscription.schema';
+import {
+  Subscription,
+  SubscriptionSchema,
+} from '../subscriptions/schema/subscription.schema';
 import { Purchase, PurchaseSchema } from '../purchases/schema/purchase.schema';
 
 @Module({
@@ -28,4 +31,4 @@ import { Purchase, PurchaseSchema } from '../purchases/schema/purchase.schema';
   providers: [PaymentsService],
   exports: [PaymentsService, MongooseModule],
 })
-export class PaymentsModule { }
+export class PaymentsModule {}

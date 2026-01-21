@@ -30,4 +30,4 @@ import { UnitsModule } from '../units/units.module';
   providers: [PronunciationService],
   exports: [PronunciationService],
 })
-export class PronunciationsModule { }
+export class PronunciationsModule {}

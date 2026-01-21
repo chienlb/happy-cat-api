@@ -114,8 +114,9 @@ export class PronunciationExercise implements IPronunciationExercise {
   updatedBy?: Types.ObjectId;
 }
 
-export const PronunciationExerciseSchema =
-  SchemaFactory.createForClass(PronunciationExercise);
+export const PronunciationExerciseSchema = SchemaFactory.createForClass(
+  PronunciationExercise,
+);
 
 // Indexes để tối ưu tìm kiếm
 PronunciationExerciseSchema.index({ lessonId: 1, orderIndex: 1 });

@@ -37,7 +37,7 @@ export class UsersService {
     private readonly invitationCodesService: InvitationCodesService,
     private readonly redisService: RedisService,
     @InjectConnection() private readonly connection: Connection,
-  ) { }
+  ) {}
   async createUser(
     createUserDto: CreateUserDto,
     session?: ClientSession,
@@ -165,7 +165,9 @@ export class UsersService {
     };
 
     await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
-    this.logger.debug(`[findAllUsers] Cache set successfully for key: ${cacheKey}`);
+    this.logger.debug(
+      `[findAllUsers] Cache set successfully for key: ${cacheKey}`,
+    );
 
     return result;
   }

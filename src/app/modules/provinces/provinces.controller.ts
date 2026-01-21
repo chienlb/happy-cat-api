@@ -1,14 +1,30 @@
-import { Controller, Param, Query, Post, Body, Get, Put, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Param,
+  Query,
+  Post,
+  Body,
+  Get,
+  Put,
+  Delete,
+} from '@nestjs/common';
 import { ProvincesService } from './provinces.service';
 import { CreateProvinceDto } from './dto/create-province.dto';
 import { UpdateProvinceDto } from './dto/update-province.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { PaginationDto } from '../pagination/pagination.dto';
 
 @ApiTags('Provinces')
 @Controller('provinces')
 export class ProvincesController {
-  constructor(private readonly provincesService: ProvincesService) { }
+  constructor(private readonly provincesService: ProvincesService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new province' })
@@ -18,11 +34,19 @@ export class ProvincesController {
     examples: {
       normal: {
         summary: 'Example of a normal province',
-        value: { provinceId: '1234567890', provinceName: 'Province 1', provinceCode: '1234567890', countryCode: '1234567890' }
-      }
-    }
+        value: {
+          provinceId: '1234567890',
+          provinceName: 'Province 1',
+          provinceCode: '1234567890',
+          countryCode: '1234567890',
+        },
+      },
+    },
   })
-  @ApiResponse({ status: 201, description: 'The province has been successfully created.' })
+  @ApiResponse({
+    status: 201,
+    description: 'The province has been successfully created.',
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -35,21 +59,25 @@ export class ProvincesController {
   @ApiOperation({ summary: 'Get all provinces' })
   @ApiQuery({ name: 'page', type: Number, required: false })
   @ApiQuery({ name: 'limit', type: Number, required: false })
-  @ApiResponse({ status: 200, description: 'The provinces have been successfully retrieved.' })
+  @ApiResponse({
+    status: 200,
+    description: 'The provinces have been successfully retrieved.',
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async findAllProvinces(
-    @Query() paginationDto: PaginationDto
-  ) {
+  async findAllProvinces(@Query() paginationDto: PaginationDto) {
     return this.provincesService.findAllProvinces(paginationDto);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a province by id' })
   @ApiParam({ name: 'id', type: String, description: 'The id of the province' })
-  @ApiResponse({ status: 200, description: 'The province has been successfully retrieved.' })
+  @ApiResponse({
+    status: 200,
+    description: 'The province has been successfully retrieved.',
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -67,18 +95,25 @@ export class ProvincesController {
     examples: {
       normal: {
         summary: 'Example of a normal province',
-        value: { provinceName: 'Province 1', provinceCode: '1234567890', countryCode: '1234567890' }
-      }
-    }
+        value: {
+          provinceName: 'Province 1',
+          provinceCode: '1234567890',
+          countryCode: '1234567890',
+        },
+      },
+    },
   })
-  @ApiResponse({ status: 200, description: 'The province has been successfully updated.' })
+  @ApiResponse({
+    status: 200,
+    description: 'The province has been successfully updated.',
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   async updateProvinceById(
     @Param('id') id: string,
-    @Body() updateProvinceDto: UpdateProvinceDto
+    @Body() updateProvinceDto: UpdateProvinceDto,
   ) {
     return this.provincesService.updateProvince(id, updateProvinceDto);
   }
@@ -86,7 +121,10 @@ export class ProvincesController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a province by id' })
   @ApiParam({ name: 'id', type: String, description: 'The id of the province' })
-  @ApiResponse({ status: 200, description: 'The province has been successfully deleted.' })
+  @ApiResponse({
+    status: 200,
+    description: 'The province has been successfully deleted.',
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })

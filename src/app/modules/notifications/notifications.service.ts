@@ -26,14 +26,14 @@ export class NotificationsService {
   ): Promise<NotificationDocument> {
     try {
       const user = await this.usersService.findUserById(
-        createNotificationDto.userId as string,
+        createNotificationDto.userId,
       );
       if (!user) {
         throw new NotFoundException('User not found');
       }
       if (createNotificationDto.senderId) {
         const sender = await this.usersService.findUserById(
-          createNotificationDto.senderId as string,
+          createNotificationDto.senderId,
         );
         if (!sender) {
           throw new NotFoundException('Sender not found');

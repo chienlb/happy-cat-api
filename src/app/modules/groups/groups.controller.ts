@@ -25,7 +25,7 @@ import { UseGuards } from '@nestjs/common';
 @UseGuards(AuthGuard('jwt'))
 @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
 export class GroupsController {
-  constructor(private readonly groupsService: GroupsService) { }
+  constructor(private readonly groupsService: GroupsService) {}
 
   @Post()
   @UseGuards(AuthGuard('jwt'))

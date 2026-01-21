@@ -8,9 +8,13 @@ import { RedisModule } from 'src/app/configs/redis/redis.module';
 import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Group.name, schema: GroupSchema }]), UsersModule, RedisModule],
+  imports: [
+    MongooseModule.forFeature([{ name: Group.name, schema: GroupSchema }]),
+    UsersModule,
+    RedisModule,
+  ],
   controllers: [GroupsController],
   providers: [GroupsService, RedisService],
   exports: [GroupsService],
 })
-export class GroupsModule { }
+export class GroupsModule {}

@@ -1,6 +1,24 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { LessonProgressService } from './lesson-progress.service';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBody, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiBody,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { LessonProgressDocument } from './schema/lesson-progress.schema';
 import { UpdateLessonProgressDto } from './dto/update-lesson-progress.dto';
@@ -12,7 +30,7 @@ import { CreateLessonProgressDto } from './dto/create-lesson-progress.dto';
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 export class LessonPrgressController {
-  constructor(private readonly lessonProgressService: LessonProgressService) { }
+  constructor(private readonly lessonProgressService: LessonProgressService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new lesson prgress' })
@@ -48,7 +66,9 @@ export class LessonPrgressController {
   async createLessonPrgress(
     @Body() createLessonProgressDto: CreateLessonProgressDto,
   ): Promise<LessonProgressDocument> {
-    return await this.lessonProgressService.createLessonPrgress(createLessonProgressDto);
+    return await this.lessonProgressService.createLessonPrgress(
+      createLessonProgressDto,
+    );
   }
 
   @Get('user/:userId')
@@ -106,7 +126,10 @@ export class LessonPrgressController {
     hasPreviousPage: boolean;
     limit: number;
   }> {
-    return await this.lessonProgressService.findLessonPrgressByUserId(userId, paginationDto);
+    return await this.lessonProgressService.findLessonPrgressByUserId(
+      userId,
+      paginationDto,
+    );
   }
 
   @Get('lesson/:lessonId')
@@ -164,7 +187,10 @@ export class LessonPrgressController {
     hasPreviousPage: boolean;
     limit: number;
   }> {
-    return await this.lessonProgressService.findLessonPrgressByLessonId(lessonId, paginationDto);
+    return await this.lessonProgressService.findLessonPrgressByLessonId(
+      lessonId,
+      paginationDto,
+    );
   }
 
   @Put(':lessonId')
@@ -200,7 +226,10 @@ export class LessonPrgressController {
     @Param('lessonId') lessonId: string,
     @Body() updateLessonProgressDto: UpdateLessonProgressDto,
   ): Promise<LessonProgressDocument> {
-    return await this.lessonProgressService.updateLessonPrgress(lessonId, updateLessonProgressDto);
+    return await this.lessonProgressService.updateLessonPrgress(
+      lessonId,
+      updateLessonProgressDto,
+    );
   }
 
   @Delete(':lessonId')

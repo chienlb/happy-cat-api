@@ -225,7 +225,11 @@ export class User implements IUser {
 export const UserSchema = SchemaFactory.createForClass(User);
 
 UserSchema.pre('validate', async function (next) {
-  if (this.isModified('fullname') || this.isModified('username') || !this.slug) {
+  if (
+    this.isModified('fullname') ||
+    this.isModified('username') ||
+    !this.slug
+  ) {
     const baseSlug = generateSlug(this.fullname || this.username);
     let slug = baseSlug;
     let count = 1;

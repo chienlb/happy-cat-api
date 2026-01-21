@@ -13,7 +13,7 @@ export class ClassesService {
   constructor(
     @InjectModel(Class.name) private classModel: Model<ClassDocument>,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async createClass(createClassDto: CreateClassDto): Promise<ClassDocument> {
     try {
@@ -25,9 +25,7 @@ export class ClassesService {
     }
   }
 
-  async findAllClasses(
-    paginationDto: PaginationDto,
-  ): Promise<{
+  async findAllClasses(paginationDto: PaginationDto): Promise<{
     data: ClassDocument[];
     total: number;
     totalPages: number;

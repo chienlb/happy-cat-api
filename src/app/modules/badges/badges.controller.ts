@@ -66,13 +66,13 @@ export class BadgesController {
     @Body() createBadgeDto: CreateBadgeDto,
     @Req() req: any,
   ) {
-    const user = req.user as any; // hoặc interface JwtPayload
+    const user = req.user; // hoặc interface JwtPayload
     console.log(user);
-  
+
     // if (!user || !user._id) {
     //   throw new BadRequestException('User not found');
     // }
-  
+
     return this.badgesService.createBadge(
       {
         ...createBadgeDto,
