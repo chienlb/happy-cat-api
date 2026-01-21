@@ -48,8 +48,6 @@ export class LessonsService {
         unit: unit._id,
       });
       await newLesson.save({ session: mongooseSession });
-      await unit.lessons.push(newLesson._id);
-      await unit.save({ session: mongooseSession });
 
       if (isNewSession) {
         await mongooseSession.commitTransaction();
@@ -191,20 +189,7 @@ export class LessonsService {
     }
     try {
       const lesson = await this.findLessonById(id, mongooseSession);
-      const unit = await this.unitsService.findUnitById(lesson.unit.toString());
-      if (!unit) {
-        throw new NotFoundException('Unit not found');
-      }
       await lesson.updateOne({ isActive: LessonStatus.INACTIVE }, { session: mongooseSession });
-
-      const lessonIndex = unit.lessons.findIndex(
-        (l) => l.toString() === lesson._id.toString(),
-      );
-      if (lessonIndex !== -1) {
-        unit.lessons.splice(lessonIndex, 1);
-      }
-
-      await unit.save({ session: mongooseSession });
 
       if (isNewSession) {
         await mongooseSession.commitTransaction();
@@ -235,13 +220,7 @@ export class LessonsService {
     }
     try {
       const lesson = await this.findLessonById(id, mongooseSession);
-      const unit = await this.unitsService.findUnitById(lesson.unit.toString());
-      if (!unit) {
-        throw new NotFoundException('Unit not found');
-      }
       await lesson.updateOne({ isActive: LessonStatus.ACTIVE }, { session: mongooseSession });
-      await unit.lessons.push(lesson._id);
-      await unit.save({ session: mongooseSession });
 
       if (isNewSession) {
         await mongooseSession.commitTransaction();

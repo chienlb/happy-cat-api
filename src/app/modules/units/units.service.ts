@@ -33,7 +33,7 @@ export class UnitsService {
         throw new NotFoundException('User not found');
       }
       const existingUnit = await this.unitModel.findOne({
-        slug: createUnitDto.name,
+        slug: createUnitDto.slug,
       });
       if (existingUnit) {
         throw new BadRequestException('Unit already exists');

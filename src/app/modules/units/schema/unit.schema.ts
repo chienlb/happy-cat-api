@@ -29,30 +29,22 @@ export interface IUnit {
   description?: string; // Mô tả ngắn về Unit
   topic: string; // Chủ đề chính của Unit
   slug: string; // Đường dẫn thân thiện với SEO
-  skill: string; // Kỹ năng chính (Nghe, Nói, Đọc, Viết)
   grade: string; // Lớp học phù hợp
   level: UnitLevel; // Cấp độ (A1, A2, B1, B2, C1, C2)
   difficulty: UnitDifficulty; // Mức độ khó (Dễ, Trung bình, Khó)
   totalLessons: number; // Tổng số bài học trong Unit
   objectives: string[]; // Mục tiêu học tập chính
-  keyVocabulary: string[]; // Từ vựng chính
-  grammarFocus: string[]; // Trọng tâm ngữ pháp
   orderIndex: number; // Thứ tự của Unit
-  keyExpressions: string[]; // Cụm từ quan trọng
   materials: {
     textLessons?: string[]; // Đường dẫn file PDF, DOC...
     videos?: string[]; // Video bài giảng
     audios?: string[]; // Audio luyện nghe
     exercises?: string[]; // Bài tập tương tác hoặc link quiz
   };
-  lessons: Types.ObjectId[]; // Danh sách bài học thuộc Unit này
-  relatedUnits?: Types.ObjectId[]; // Gợi ý Unit học tiếp theo
   prerequisites?: Types.ObjectId[]; // Unit cần hoàn thành trước
-  averageProgress?: number; // % trung bình học sinh hoàn thành
   estimatedDuration?: number; // Thời gian học ước tính (phút)
   thumbnail?: string; // Ảnh minh họa
   banner?: string; // Ảnh banner (tùy chọn)
-  image?: string; // Ảnh đại diện của Unit
   tags?: string[]; // Tag: ["greetings", "A1", "self-learning"]
   isActive: UnitStatus; // Có hiển thị không
   createdBy: Types.ObjectId; // Người tạo
@@ -80,9 +72,6 @@ export class Unit implements IUnit {
   slug: string;
 
   @Prop({ required: true })
-  skill: string;
-
-  @Prop({ required: true })
   grade: string;
 
   @Prop({ default: UnitLevel.A1, enum: UnitLevel })
@@ -100,15 +89,6 @@ export class Unit implements IUnit {
   @Prop({ type: [String], default: [] })
   objectives: string[];
 
-  @Prop({ type: [String], default: [] })
-  keyVocabulary: string[];
-
-  @Prop({ type: [String], default: [] })
-  grammarFocus: string[];
-
-  @Prop({ type: [String], default: [] })
-  keyExpressions: string[];
-
   @Prop({
     type: {
       textLessons: { type: [String], default: [] },
@@ -125,17 +105,8 @@ export class Unit implements IUnit {
     exercises?: string[];
   };
 
-  @Prop({ required: true, type: [Types.ObjectId] })
-  lessons: Types.ObjectId[];
-
-  @Prop({ type: [Types.ObjectId], default: [] })
-  relatedUnits?: Types.ObjectId[];
-
   @Prop({ type: [Types.ObjectId], default: [] })
   prerequisites?: Types.ObjectId[];
-
-  @Prop({ default: 0 })
-  averageProgress?: number;
 
   @Prop()
   estimatedDuration?: number;
@@ -146,17 +117,11 @@ export class Unit implements IUnit {
   @Prop()
   banner?: string;
 
-  @Prop()
-  image?: string;
-
   @Prop({ type: [String], default: [] })
   tags?: string[];
 
   @Prop({ default: UnitStatus.ACTIVE, enum: UnitStatus })
   isActive: UnitStatus;
-
-  @Prop({ default: false })
-  isLocked: boolean;
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   createdBy: Types.ObjectId;
