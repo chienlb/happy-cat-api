@@ -10,22 +10,24 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import {
-  User,
-  UserDocument,
-  UserRole,
-  UserTypeAccount,
-  UserStatus,
-} from './schema/user.schema';
-import mongoose, { ClientSession, Connection, Model } from 'mongoose';
+import { User, UserDocument, UserStatus } from './schema/user.schema';
+import { ClientSession, Connection, Model } from 'mongoose';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { InvitationCodeType } from '../invitation-codes/schema/invitation-code.schema';
 import { InvitationCodesService } from '../invitation-codes/invitation-codes.service';
-import { PackageType } from '../packages/schema/package.schema';
 import { PaginationDto } from '../pagination/pagination.dto';
-
 import { RedisService } from 'src/app/configs/redis/redis.service';
+
+type PaginatedUsers = {
+  data: UserDocument[];
+  total: number;
+  totalPages: number;
+  nextPage: number | null;
+  prevPage: number | null;
+  page: number;
+  limit: number;
+};
 
 @Injectable()
 export class UsersService {
@@ -38,20 +40,25 @@ export class UsersService {
     private readonly redisService: RedisService,
     @InjectConnection() private readonly connection: Connection,
   ) {}
+
+  /**
+   * Create a new user. Optional session may be provided by caller.
+   */
   async createUser(
     createUserDto: CreateUserDto,
     session?: ClientSession,
   ): Promise<UserDocument> {
     if (this.connection.readyState !== 1) {
-      throw new BadRequestException('Database not ready.');
+      throw new BadRequestException('Database is not connected.');
     }
 
     const mongooseSession = session ?? (await this.connection.startSession());
-    const isNewSession = !session;
+    const createdLocalSession = !session;
 
-    if (isNewSession) {
+    if (createdLocalSession) {
       mongooseSession.startTransaction();
     }
+
     try {
       const existingUser = await this.userModel
         .findOne({
@@ -61,18 +68,25 @@ export class UsersService {
           ],
         })
         .session(mongooseSession);
+
       if (existingUser) {
-        throw new ConflictException('Email or username already exists');
+        throw new ConflictException('Email or username already exists.');
       }
+
       const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
       const newUser = new this.userModel({
         ...createUserDto,
         password: hashedPassword,
       });
+
       await newUser.save({ session: mongooseSession });
 
-      // Tạo invitation code cho user không phải STUDENT và có package không phải FREE
-      if (createUserDto.role !== UserRole.STUDENT) {
+      // If user role is not STUDENT, create invitation code for them
+      // Normalize role to string to avoid enum-type lint errors
+      const roleStr = String(
+        (createUserDto as unknown as { role?: unknown }).role ?? '',
+      ).toLowerCase();
+      if (roleStr !== 'student') {
         const invitationCode =
           await this.invitationCodesService.createInvitationCode(
             {
@@ -86,48 +100,63 @@ export class UsersService {
             },
             mongooseSession,
           );
-        if (!invitationCode.data) {
-          throw new BadRequestException('Failed to create invitation code');
+
+        if (!invitationCode || !invitationCode.data) {
+          throw new BadRequestException('Failed to create invitation code.');
         }
       }
 
-      if (isNewSession) {
+      if (createdLocalSession) {
         await mongooseSession.commitTransaction();
-        await mongooseSession.endSession();
       }
 
       return newUser;
-    } catch (error) {
-      if (isNewSession) {
-        await mongooseSession.abortTransaction();
-        await mongooseSession.endSession();
+    } catch (err: unknown) {
+      if (createdLocalSession) {
+        try {
+          await mongooseSession.abortTransaction();
+        } catch {
+          // ignore abort errors
+        }
       }
-      // Re-throw NestJS exceptions as-is
+
+      // Re-throw known Nest exceptions
       if (
-        error instanceof BadRequestException ||
-        error instanceof ConflictException
+        err instanceof BadRequestException ||
+        err instanceof ConflictException
       ) {
-        throw error;
+        throw err;
       }
+
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error('createUser failed', message);
       throw new InternalServerErrorException(
-        'Failed to create user: ' + error.message,
+        `Failed to create user: ${message}`,
       );
+    } finally {
+      if (createdLocalSession) {
+        try {
+          await mongooseSession.endSession();
+        } catch {
+          // ignore
+        }
+      }
     }
   }
 
+  /**
+   * Get paginated active users. Results are cached for a short TTL.
+   */
   async findAllUsers(
     paginationDto: PaginationDto,
     session?: ClientSession,
-  ): Promise<{
-    data: UserDocument[];
-    total: number;
-    totalPages: number;
-    nextPage: number | null;
-    prevPage: number | null;
-    page: number;
-    limit: number;
-  }> {
-    const { page, limit, sort, order } = paginationDto;
+  ): Promise<PaginatedUsers> {
+    const {
+      page = 1,
+      limit = 10,
+      sort = 'createdAt',
+      order = 'desc',
+    } = paginationDto;
 
     const cacheKey = `users:page=${page}:limit=${limit}:sort=${sort}:order=${order}`;
     this.logger.debug(`[findAllUsers] Cache key: ${cacheKey}`);
@@ -135,7 +164,7 @@ export class UsersService {
     const cached = await this.redisService.get(cacheKey);
     if (cached) {
       this.logger.debug(`[findAllUsers] Cache hit for key: ${cacheKey}`);
-      return JSON.parse(cached);
+      return JSON.parse(cached) as PaginatedUsers;
     }
     this.logger.debug(`[findAllUsers] Cache miss for key: ${cacheKey}`);
 
@@ -143,9 +172,10 @@ export class UsersService {
     const total = await this.userModel.countDocuments({
       status: UserStatus.ACTIVE,
     });
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = Math.max(1, Math.ceil(total / limit));
     const nextPage = totalPages > page ? page + 1 : null;
     const prevPage = page > 1 ? page - 1 : null;
+
     const query = this.userModel
       .find({ status: UserStatus.ACTIVE })
       .skip(skip)
@@ -154,20 +184,19 @@ export class UsersService {
 
     const users = session ? await query.session(session) : await query;
 
-    const result = {
-      data: users as UserDocument[],
+    const result: PaginatedUsers = {
+      data: users,
       total,
       totalPages,
       nextPage,
       prevPage,
       page,
-      limit: limit,
+      limit,
     };
 
+    // cache for 5 minutes
     await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
-    this.logger.debug(
-      `[findAllUsers] Cache set successfully for key: ${cacheKey}`,
-    );
+    this.logger.debug(`[findAllUsers] Cache set for key: ${cacheKey}`);
 
     return result;
   }
@@ -177,10 +206,14 @@ export class UsersService {
     session?: ClientSession,
   ): Promise<UserDocument | null> {
     try {
-      const user = await this.userModel.findById(id).session(session || null);
+      const q = this.userModel.findById(id);
+      const user = session ? await q.session(session) : await q;
       return user;
-    } catch (error) {
-      throw new Error('Failed to find user by ID: ' + error.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Failed to find user by ID: ${message}`,
+      );
     }
   }
 
@@ -199,15 +232,14 @@ export class UsersService {
         options,
       );
       if (!user) {
-        throw new NotFoundException('User not found');
+        throw new NotFoundException('User not found.');
       }
       return user;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
+    } catch (err: unknown) {
+      if (err instanceof NotFoundException) throw err;
+      const message = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(
-        'Failed to update user by ID: ' + error.message,
+        `Failed to update user by ID: ${message}`,
       );
     }
   }
@@ -224,15 +256,14 @@ export class UsersService {
         options,
       );
       if (!user) {
-        throw new NotFoundException('User not found');
+        throw new NotFoundException('User not found.');
       }
       return user;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
+    } catch (err: unknown) {
+      if (err instanceof NotFoundException) throw err;
+      const message = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(
-        'Failed to delete user by ID: ' + error.message,
+        `Failed to delete user by ID: ${message}`,
       );
     }
   }
@@ -242,12 +273,13 @@ export class UsersService {
     session?: ClientSession,
   ): Promise<UserDocument | null> {
     try {
-      const query = this.userModel.findOne({ slug, status: UserStatus.ACTIVE });
-      const user = session ? await query.session(session) : await query;
+      const q = this.userModel.findOne({ slug, status: UserStatus.ACTIVE });
+      const user = session ? await q.session(session) : await q;
       return user;
-    } catch (error) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(
-        'Failed to get user by slug: ' + error.message,
+        `Failed to get user by slug: ${message}`,
       );
     }
   }
@@ -257,15 +289,13 @@ export class UsersService {
     session?: ClientSession,
   ): Promise<UserDocument | null> {
     try {
-      const query = this.userModel.findOne({
-        email,
-        status: UserStatus.ACTIVE,
-      });
-      const user = session ? await query.session(session) : await query;
+      const q = this.userModel.findOne({ email, status: UserStatus.ACTIVE });
+      const user = session ? await q.session(session) : await q;
       return user;
-    } catch (error) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(
-        'Failed to get user by email: ' + error.message,
+        `Failed to get user by email: ${message}`,
       );
     }
   }
@@ -275,15 +305,13 @@ export class UsersService {
     session?: ClientSession,
   ): Promise<UserDocument | null> {
     try {
-      const query = this.userModel.findOne({
-        username,
-        status: UserStatus.ACTIVE,
-      });
-      const user = session ? await query.session(session) : await query;
+      const q = this.userModel.findOne({ username, status: UserStatus.ACTIVE });
+      const user = session ? await q.session(session) : await q;
       return user;
-    } catch (error) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(
-        'Failed to get user by username: ' + error.message,
+        `Failed to get user by username: ${message}`,
       );
     }
   }

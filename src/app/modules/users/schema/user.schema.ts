@@ -75,20 +75,17 @@ export interface IUser {
   gender: UserGender; // Giới tính của người dùng
   language?: UserLanguage; // Ngôn ngữ của người dùng
   province?: string; // Tỉnh/Thành phố của người dùng
-  district?: Types.ObjectId; // Quận/Huyện của người dùng
-  school?: Types.ObjectId; // Trường học của người dùng
-  className?: Types.ObjectId; // Lớp học của người dùng
   parent?: Types.ObjectId; // Phụ huynh của người dùng
   teacher?: Types.ObjectId; // Giáo viên của người dùng
   typeAccount: UserTypeAccount; // Loại hình tài khoản của người dùng
   accountPackage: PackageType; // Gói tài khoản của người dùng
   isVerify: boolean; // Trạng thái xác thực của người dùng
-  codeVerify: string; // Mã code dùng để xác thực tài khoản
+  codeVerify?: string; // Mã xác minh (OTP) nếu có
+  tokenVerify?: string; // Token xác minh (nếu hệ thống sử dụng)
   exp?: number; // Số kinh nghiệm của người dùng
   streakDays?: number; // Số ngày liên tiếp hoạt động của người dùng
   progressLevel?: number; // Cấp độ tiến bộ của người dùng
   theme?: UserTheme; // Chủ đề giao diện của người dùng
-  font?: UserFont; // Phông chữ giao diện của người dùng
   currency?: string; // Loại tiền tệ ưa thích của người dùng
   enableNotifications?: boolean; // Trạng thái kích hoạt thông báo trên website
   enableNotificationEmails?: boolean; // Trạng thái nhận email thông báo từ hệ thống
@@ -152,15 +149,6 @@ export class User implements IUser {
   @Prop()
   province?: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'District' })
-  district?: Types.ObjectId;
-
-  @Prop({ type: Types.ObjectId, ref: 'School' })
-  school?: Types.ObjectId;
-
-  @Prop({ type: Types.ObjectId, ref: 'Class' })
-  className?: Types.ObjectId;
-
   @Prop({ type: Types.ObjectId, ref: 'User' })
   parent?: Types.ObjectId;
 
@@ -177,7 +165,10 @@ export class User implements IUser {
   isVerify: boolean;
 
   @Prop()
-  codeVerify: string;
+  codeVerify?: string;
+
+  @Prop()
+  tokenVerify?: string;
 
   @Prop()
   refCode?: string;
@@ -196,9 +187,6 @@ export class User implements IUser {
 
   @Prop({ enum: UserTheme, default: UserTheme.LIGHT })
   theme?: UserTheme;
-
-  @Prop({ enum: UserFont, default: UserFont.DEFAULT })
-  font?: UserFont;
 
   @Prop({ enum: UserCurrency, default: UserCurrency.VND })
   currency?: UserCurrency;
@@ -224,23 +212,32 @@ export class User implements IUser {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-UserSchema.pre('validate', async function (next) {
-  if (
-    this.isModified('fullname') ||
-    this.isModified('username') ||
-    !this.slug
-  ) {
-    const baseSlug = generateSlug(this.fullname || this.username);
-    let slug = baseSlug;
-    let count = 1;
+UserSchema.pre(
+  'validate',
+  async function (this: UserDocument, next: (err?: any) => void) {
+    if (
+      this.isModified('fullname') ||
+      this.isModified('username') ||
+      !this.slug
+    ) {
+      const baseSlug = generateSlug(this.fullname || this.username);
+      let slug = baseSlug;
+      let count = 1;
 
-    // Dùng this.constructor thay vì this.model() để tránh lỗi context
-    const UserModel = this.constructor as any;
-    while (await UserModel.exists({ slug })) {
-      slug = `${baseSlug}-${count++}`;
+      // Use the constructor to avoid context issues and provide a narrow type for `exists`
+      type ModelWithExists = {
+        exists(filter: Record<string, unknown>): Promise<boolean | null>;
+      };
+      const UserModel = this.constructor as unknown as ModelWithExists;
+
+      // `exists` may return `true`, `false` or `null` depending on the driver/version.
+      // Treat any truthy result as existing.
+      while (await UserModel.exists({ slug })) {
+        slug = `${baseSlug}-${count++}`;
+      }
+
+      this.slug = slug;
     }
-
-    this.slug = slug;
-  }
-  next();
-});
+    next();
+  },
+);

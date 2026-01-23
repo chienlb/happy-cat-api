@@ -22,6 +22,7 @@ import { FacebookStrategy } from './strategies/facebook.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RedisService } from 'src/app/configs/redis/redis.service';
 import { RedisModule } from 'src/app/configs/redis/redis.module';
+import { OtpsModule } from '../otps/otps.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { RedisModule } from 'src/app/configs/redis/redis.module';
     // Dùng jwt làm default strategy, các strategy khác gọi theo tên
     PassportModule.register({ defaultStrategy: 'jwt', session: false }),
     RedisModule,
+    OtpsModule,
   ],
   controllers: [AuthsController],
   providers: [
@@ -48,4 +50,4 @@ import { RedisModule } from 'src/app/configs/redis/redis.module';
     JwtStrategy,
   ],
 })
-export class AuthsModule {}
+export class AuthsModule { }

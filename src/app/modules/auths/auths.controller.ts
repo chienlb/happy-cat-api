@@ -18,14 +18,11 @@ import { ok } from 'src/app/common/response/api-response';
 import { LogoutDeviceAuthDto } from './dto/logout-auth.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { JwtStrategy } from './strategies/jwt.strategy';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationEmailDto } from './dto/resend-verification-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import mongoose, { ClientSession } from 'mongoose';
-
 @ApiTags('Auths')
 @ApiBearerAuth()
 @Controller('auths')
@@ -95,7 +92,9 @@ export class AuthsController {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new BadRequestException(error.message);
+      const message =
+        error instanceof Error ? error.message : 'An error occurred';
+      throw new BadRequestException(message);
     }
   }
 
@@ -119,16 +118,18 @@ export class AuthsController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   async login(@Body() loginAuthDto: LoginAuthDto) {
     try {
-      const result = await this.authsService.login(loginAuthDto);
-      return ok(result, 'User logged in successfully', 200);
+      await this.authsService.login(loginAuthDto);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new BadRequestException(error.message);
+      const message =
+        error instanceof Error ? error.message : 'An error occurred';
+      throw new BadRequestException(message);
     }
   }
 
+  @Post('verify-email')
   @Post('verify-email')
   @ApiOperation({ summary: 'Verify email' })
   @ApiBody({

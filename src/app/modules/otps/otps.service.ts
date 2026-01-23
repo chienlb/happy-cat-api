@@ -1,0 +1,28 @@
+import { Injectable } from '@nestjs/common';
+import { CreateOtpDto } from './dto/create-otp.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Otp } from './schema/otp.schema';
+import { User } from '../users/schema/user.schema';
+import { NotFoundException } from '@nestjs/common';
+
+@Injectable()
+export class OtpsService {
+  constructor(
+    @InjectModel(Otp.name) private readonly otpModel: Model<Otp>,
+    @InjectModel(User.name) private readonly userModel: Model<User>,
+  ) {}
+
+  async createOTP(createOtpDto: CreateOtpDto) {
+    const user = await this.userModel.findOne({ email: createOtpDto.email });
+    if (!user) throw new NotFoundException('User not found');
+    const otp = new this.otpModel(createOtpDto);
+    return await otp.save();
+  }
+
+  async findOTP(email: string) {
+    const otp = await this.otpModel.findOne({ email });
+    if (!otp) throw new NotFoundException('OTP not found');
+    return otp;
+  }
+}

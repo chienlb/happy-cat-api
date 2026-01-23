@@ -4,9 +4,6 @@ import { AppService } from './app.service';
 import { UsersModule } from './app/modules/users/users.module';
 import { TokensModule } from './app/modules/tokens/tokens.module';
 import { ProvincesModule } from './app/modules/provinces/provinces.module';
-import { DistrictsModule } from './app/modules/districts/districts.module';
-import { SchoolsModule } from './app/modules/schools/schools.module';
-import { ClassesModule } from './app/modules/classes/classes.module';
 import { GroupsModule } from './app/modules/groups/groups.module';
 import { UnitsModule } from './app/modules/units/units.module';
 import { LessonsModule } from './app/modules/lessons/lessons.module';
@@ -39,6 +36,7 @@ import { RedisModule } from './app/configs/redis/redis.module';
 import { PronunciationsModule } from './app/modules/pronunciations/pronunciations.module';
 import { LessonProgressModule } from './app/modules/lesson-progress/lesson-progress.module';
 import { UnitProgressModule } from './app/modules/unit-progress/unit-progress.module';
+import { OtpsModule } from './app/modules/otps/otps.module';
 
 @Module({
   imports: [
@@ -51,9 +49,6 @@ import { UnitProgressModule } from './app/modules/unit-progress/unit-progress.mo
     UsersModule,
     TokensModule,
     ProvincesModule,
-    DistrictsModule,
-    SchoolsModule,
-    ClassesModule,
     GroupsModule,
     UnitsModule,
     LessonsModule,
@@ -82,6 +77,7 @@ import { UnitProgressModule } from './app/modules/unit-progress/unit-progress.mo
     PronunciationsModule,
     LessonProgressModule,
     UnitProgressModule,
+    OtpsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

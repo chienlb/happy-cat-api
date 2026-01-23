@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import {
   BadRequestException,
   ConflictException,
@@ -19,12 +20,10 @@ import {
 import { RegisterAuthDto } from './dto/register-auth.dto';
 import { InvitationCodesService } from '../invitation-codes/invitation-codes.service';
 import { HistoryInvitationsService } from '../history-invitations/history-invitations.service';
-import { CreateInvitationCodeDto } from '../invitation-codes/dto/create-invitation-code.dto';
 import { HistoryInvitationStatus } from '../history-invitations/dto/create-history-invitation.dto';
 import {
   InvitationCode,
   InvitationCodeDocument,
-  InvitationCodeType,
 } from '../invitation-codes/schema/invitation-code.schema';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import * as jwt from 'jsonwebtoken';
@@ -44,6 +43,7 @@ import { ResendVerificationEmailDto } from './dto/resend-verification-email.dto'
 import { RedisService } from 'src/app/configs/redis/redis.service';
 import { verifyEmailQueue } from 'src/app/jobs/queues/verify-email.queue';
 import { initializeVerifyEmailWorker } from 'src/app/jobs/workers/verify-email.worker';
+import { OtpsService } from '../otps/otps.service';
 
 @Injectable()
 export class AuthsService implements OnModuleInit {
@@ -88,6 +88,7 @@ export class AuthsService implements OnModuleInit {
     private readonly inviteCodeModel: Model<InvitationCodeDocument>,
 
     private readonly tokensService: TokensService,
+    private readonly otpsService: OtpsService,
     private readonly invitationCodesService: InvitationCodesService,
     private readonly historyInvitationsService: HistoryInvitationsService,
 
@@ -178,38 +179,42 @@ export class AuthsService implements OnModuleInit {
         status: UserStatus.ACTIVE,
         isVerify: false,
         invitedBy,
-        codeVerify: this.generateVerificationCode(),
+      });
+
+      await this.otpsService.createOTP({
+        email: user.email,
+        otp: this.generateVerificationCode(),
       });
 
       const savedUser = await user.save({ session: mongooseSession });
 
       if (isNewSession) {
         await mongooseSession.commitTransaction();
-        mongooseSession.endSession();
+        await mongooseSession.endSession();
       }
 
       // AFTER COMMIT
       await verifyEmailQueue.add('verify-email', {
         email: savedUser.email,
-        codeDigits: this.splitCodeToDigits(savedUser.codeVerify),
+        codeDigits: this.splitCodeToDigits(String(savedUser.codeVerify ?? '')),
         fullname: savedUser.fullname,
         username: savedUser.username,
         year: new Date().getFullYear(),
       });
-
-      const obj = savedUser.toObject();
-      delete (obj as any).password;
-      return obj;
+      return savedUser;
     } catch (error) {
       if (isNewSession) {
         await mongooseSession.abortTransaction();
-        mongooseSession.endSession();
+        await mongooseSession.endSession();
       }
       throw error;
     }
   }
 
-  async login(loginAuthDto: LoginAuthDto, session?: ClientSession) {
+  async login(
+    loginAuthDto: LoginAuthDto,
+    session?: ClientSession,
+  ): Promise<{ user: any; accessToken: string; refreshToken: string }> {
     if (this.connection.readyState !== 1) {
       throw new BadRequestException('Database not ready.');
     }
@@ -276,9 +281,6 @@ export class AuthsService implements OnModuleInit {
         )
         .session(mongooseSession);
 
-      const obj = user.toObject();
-      delete (obj as any).password;
-
       if (isNewSession) {
         await mongooseSession.commitTransaction();
         await mongooseSession.endSession();
@@ -292,7 +294,7 @@ export class AuthsService implements OnModuleInit {
       });
 
       return {
-        ...obj,
+        user,
         accessToken,
         refreshToken,
       };
@@ -309,18 +311,20 @@ export class AuthsService implements OnModuleInit {
   async verifyEmail(verifyEmailDto: VerifyEmailDto) {
     try {
       const user = await this.userModel.findOne({
-        codeVerify: verifyEmailDto.codeVerify,
         email: verifyEmailDto.email,
       });
-      if (!user) throw new NotFoundException('Invalid code or email.');
+
+      if (!user) throw new NotFoundException('User not found.');
+
+      const otpRecord = await this.otpsService.findOTP(verifyEmailDto.email);
+      if (!otpRecord || otpRecord?.otp !== verifyEmailDto.codeVerify) {
+        throw new NotFoundException('Invalid code or email.');
+      }
 
       user.isVerify = true;
       await user.save();
 
-      const obj = user.toObject();
-      delete (obj as any).password;
-
-      return { email: user.email, user: obj };
+      return { email: user.email, user };
     } catch (error) {
       this.logger.error('Verify email failed:', error);
       throw error;
@@ -515,7 +519,12 @@ export class AuthsService implements OnModuleInit {
     }
   }
 
-  async loginWithGoogle(googleUser: any) {
+  async loginWithGoogle(googleUser: {
+    googleId: string;
+    email: string;
+    fullname: string;
+    avatar: string;
+  }) {
     try {
       const env = envSchema.parse(process.env);
       const { googleId, email, fullname, avatar } = googleUser;
@@ -587,7 +596,12 @@ export class AuthsService implements OnModuleInit {
     }
   }
 
-  async loginWithFacebook(facebookUser: any) {
+  async loginWithFacebook(facebookUser: {
+    facebookId: string;
+    email: string;
+    fullname: string;
+    avatar: string;
+  }) {
     try {
       const env = envSchema.parse(process.env);
       const { facebookId, email, fullname, avatar } = facebookUser;
