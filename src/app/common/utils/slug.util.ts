@@ -1,11 +1,27 @@
 import slugify from 'slugify';
+import { Model } from 'mongoose';
 
-export function generateSlug(name: string): string {
+export async function generateSlug<T>(
+  model: Model<T>,
+  name: string
+): Promise<string> {
   if (!name) return '';
-  return slugify(name, {
-    lower: true, // chữ thường
-    strict: true, // bỏ ký tự đặc biệt
-    locale: 'vi', // hỗ trợ tiếng Việt
-    trim: true, // bỏ khoảng trắng
+
+  const baseSlug = slugify(name, {
+    lower: true,
+    strict: true,
+    locale: 'vi',
+    trim: true,
   });
+
+  let slug = baseSlug;
+  let count = 1;
+
+  // Check if slug already exists
+  while (await model.exists({ slug })) {
+    slug = `${baseSlug}-${count}`;
+    count++;
+  }
+
+  return slug;
 }

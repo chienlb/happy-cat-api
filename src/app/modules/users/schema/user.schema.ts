@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types, HydratedDocument } from 'mongoose';
+import { Types, HydratedDocument, Model, model } from 'mongoose';
 import { generateSlug } from '../../../common/utils/slug.util';
 import { PackageType } from '../../packages/schema/package.schema';
 
@@ -212,32 +212,9 @@ export class User implements IUser {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-UserSchema.pre(
-  'validate',
-  async function (this: UserDocument, next: (err?: any) => void) {
-    if (
-      this.isModified('fullname') ||
-      this.isModified('username') ||
-      !this.slug
-    ) {
-      const baseSlug = generateSlug(this.fullname || this.username);
-      let slug = baseSlug;
-      let count = 1;
+const UserModel = model<User>('User', UserSchema);
 
-      // Use the constructor to avoid context issues and provide a narrow type for `exists`
-      type ModelWithExists = {
-        exists(filter: Record<string, unknown>): Promise<boolean | null>;
-      };
-      const UserModel = this.constructor as unknown as ModelWithExists;
-
-      // `exists` may return `true`, `false` or `null` depending on the driver/version.
-      // Treat any truthy result as existing.
-      while (await UserModel.exists({ slug })) {
-        slug = `${baseSlug}-${count++}`;
-      }
-
-      this.slug = slug;
-    }
-    next();
-  },
-);
+UserSchema.pre('save', async function (next) {
+  this.slug = await generateSlug(UserModel, this.username);
+  next();
+});

@@ -1,5 +1,6 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Types, HydratedDocument } from 'mongoose';
+import { Types, HydratedDocument, model } from 'mongoose';
+import { generateSlug } from 'src/app/common/utils/slug.util';
 
 export type LessonDocument = HydratedDocument<Lesson>;
 
@@ -453,6 +454,15 @@ export class Lesson implements ILesson {
 }
 
 export const LessonSchema = SchemaFactory.createForClass(Lesson);
+
+
+const LessonModel = model<Lesson>('Lesson', LessonSchema);
+
+LessonSchema.pre('save', async function (next) {
+  this.slug = await generateSlug(LessonModel, this.title);
+  next();
+});
+
 
 // Indexes để tối ưu performance cho các query phổ biến
 LessonSchema.index({ unit: 1, orderIndex: 1 }); // Query lessons theo unit và thứ tự

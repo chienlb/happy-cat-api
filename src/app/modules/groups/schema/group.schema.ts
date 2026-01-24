@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types, HydratedDocument } from 'mongoose';
+import { Types, HydratedDocument, model } from 'mongoose';
+import { generateSlug } from 'src/app/common/utils/slug.util';
 
 export type GroupDocument = HydratedDocument<Group>;
 
@@ -88,3 +89,10 @@ export class Group implements IGroup {
 }
 
 export const GroupSchema = SchemaFactory.createForClass(Group);
+
+const GroupModel = model<Group>('Group', GroupSchema);
+
+GroupSchema.pre('save', async function (next) {
+  this.slug = await generateSlug(GroupModel, this.groupName);
+  next();
+});

@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types, HydratedDocument } from 'mongoose';
+import { Types, HydratedDocument, Model, model } from 'mongoose';
+import { generateSlug } from 'src/app/common/utils/slug.util';
 
 export type UnitDocument = HydratedDocument<Unit>;
 
@@ -29,7 +30,6 @@ export interface IUnit {
   description?: string; // Mô tả ngắn về Unit
   topic: string; // Chủ đề chính của Unit
   slug: string; // Đường dẫn thân thiện với SEO
-  grade: string; // Lớp học phù hợp
   level: UnitLevel; // Cấp độ (A1, A2, B1, B2, C1, C2)
   difficulty: UnitDifficulty; // Mức độ khó (Dễ, Trung bình, Khó)
   totalLessons: number; // Tổng số bài học trong Unit
@@ -70,9 +70,6 @@ export class Unit implements IUnit {
 
   @Prop({ required: true, unique: true })
   slug: string;
-
-  @Prop({ required: true })
-  grade: string;
 
   @Prop({ default: UnitLevel.A1, enum: UnitLevel })
   level: UnitLevel;
@@ -131,3 +128,10 @@ export class Unit implements IUnit {
 }
 
 export const UnitSchema = SchemaFactory.createForClass(Unit);
+
+const UnitModel = model<Unit>('Unit', UnitSchema);
+
+UnitSchema.pre('save', async function (next) {
+  this.slug = await generateSlug(UnitModel, this.name);
+  next();
+});
