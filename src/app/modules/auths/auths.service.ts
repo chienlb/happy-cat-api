@@ -99,7 +99,7 @@ export class AuthsService implements OnModuleInit {
     private readonly connection: Connection,
 
     private readonly redisService: RedisService,
-  ) {}
+  ) { }
 
   async onModuleInit() {
     await initializeVerifyEmailWorker();
@@ -201,6 +201,12 @@ export class AuthsService implements OnModuleInit {
         username: savedUser.username,
         year: new Date().getFullYear(),
       });
+
+
+      if ((savedUser as any).password) {
+        delete (savedUser as any).password;
+      }
+
       return savedUser;
     } catch (error) {
       if (isNewSession) {
@@ -292,6 +298,10 @@ export class AuthsService implements OnModuleInit {
         role: user.role,
         deviceId: loginAuthDto.deviceId,
       });
+
+      if ((user as any).password) {
+        delete (user as any).password;
+      }
 
       return {
         user,

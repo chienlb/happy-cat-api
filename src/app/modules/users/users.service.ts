@@ -39,7 +39,7 @@ export class UsersService {
     private readonly invitationCodesService: InvitationCodesService,
     private readonly redisService: RedisService,
     @InjectConnection() private readonly connection: Connection,
-  ) {}
+  ) { }
 
   /**
    * Create a new user. Optional session may be provided by caller.
@@ -180,7 +180,8 @@ export class UsersService {
       .find({ status: UserStatus.ACTIVE })
       .skip(skip)
       .limit(limit)
-      .sort({ [sort]: order === 'asc' ? 1 : -1 });
+      .sort({ [sort]: order === 'asc' ? 1 : -1 })
+      .select('-password');
 
     const users = session ? await query.session(session) : await query;
 
@@ -206,7 +207,7 @@ export class UsersService {
     session?: ClientSession,
   ): Promise<UserDocument | null> {
     try {
-      const q = this.userModel.findById(id);
+      const q = this.userModel.findById(id).select('-password');
       const user = session ? await q.session(session) : await q;
       return user;
     } catch (err: unknown) {
@@ -231,9 +232,11 @@ export class UsersService {
         updateUserDto,
         options,
       );
-      if (!user) {
-        throw new NotFoundException('User not found.');
+
+      if ((user as any).password) {
+        delete (user as any).password;
       }
+
       return user;
     } catch (err: unknown) {
       if (err instanceof NotFoundException) throw err;
@@ -258,6 +261,9 @@ export class UsersService {
       if (!user) {
         throw new NotFoundException('User not found.');
       }
+      if ((user as any).password) {
+        delete (user as any).password;
+      }
       return user;
     } catch (err: unknown) {
       if (err instanceof NotFoundException) throw err;
@@ -273,7 +279,7 @@ export class UsersService {
     session?: ClientSession,
   ): Promise<UserDocument | null> {
     try {
-      const q = this.userModel.findOne({ slug, status: UserStatus.ACTIVE });
+      const q = this.userModel.findOne({ slug, status: UserStatus.ACTIVE }).select('-password');
       const user = session ? await q.session(session) : await q;
       return user;
     } catch (err: unknown) {
@@ -289,7 +295,7 @@ export class UsersService {
     session?: ClientSession,
   ): Promise<UserDocument | null> {
     try {
-      const q = this.userModel.findOne({ email, status: UserStatus.ACTIVE });
+      const q = this.userModel.findOne({ email, status: UserStatus.ACTIVE }).select('-password');
       const user = session ? await q.session(session) : await q;
       return user;
     } catch (err: unknown) {
@@ -305,7 +311,7 @@ export class UsersService {
     session?: ClientSession,
   ): Promise<UserDocument | null> {
     try {
-      const q = this.userModel.findOne({ username, status: UserStatus.ACTIVE });
+      const q = this.userModel.findOne({ username, status: UserStatus.ACTIVE }).select('-password');
       const user = session ? await q.session(session) : await q;
       return user;
     } catch (err: unknown) {
