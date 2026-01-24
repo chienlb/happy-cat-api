@@ -13,7 +13,7 @@ export class ProvincesService {
   constructor(
     @InjectModel(Province.name) private provinceModel: Model<ProvinceDocument>,
     private readonly redisService: RedisService,
-  ) {}
+  ) { }
 
   async createProvince(
     createProvinceDto: CreateProvinceDto,
@@ -67,7 +67,7 @@ export class ProvincesService {
     if (cached) {
       return JSON.parse(cached);
     }
-    const province = await this.provinceModel.findOne({ provinceId: id });
+    const province = await this.provinceModel.findById(id);
     if (!province) {
       throw new NotFoundException('Province not found');
     }
@@ -84,7 +84,7 @@ export class ProvincesService {
   ): Promise<ProvinceDocument> {
     try {
       const updatedProvince = await this.provinceModel.findOneAndUpdate(
-        { provinceId: id },
+        { _id: id },
         updateProvinceDto,
         { new: true },
       );
@@ -100,7 +100,7 @@ export class ProvincesService {
   async deleteProvince(id: string): Promise<ProvinceDocument> {
     try {
       const deletedProvince = await this.provinceModel.findOneAndDelete({
-        provinceId: id,
+        _id: id,
       });
       if (!deletedProvince) {
         throw new NotFoundException('Province not found');
