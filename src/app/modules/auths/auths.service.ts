@@ -336,6 +336,9 @@ export class AuthsService implements OnModuleInit {
       user.isVerify = true;
       await user.save();
 
+      otpRecord.isUsed = true;
+      await otpRecord.save();
+
       return { email: user.email, user };
     } catch (error) {
       this.logger.error('Verify email failed:', error);
@@ -353,8 +356,10 @@ export class AuthsService implements OnModuleInit {
       if (!user) throw new NotFoundException('User not found.');
 
       const code = this.generateVerificationCode();
-      user.codeVerify = code;
-      await user.save();
+      await this.otpsService.createOTP(
+        { email: user.email, otp: code },
+        { requireUser: false },
+      );
 
       const codeDigits = this.splitCodeToDigits(code);
       sendEmail(user.email, 'Mã xác minh tài khoản HAPPY CAT', 'verify-email', {
@@ -382,8 +387,11 @@ export class AuthsService implements OnModuleInit {
       if (!user) throw new NotFoundException('User not found.');
 
       const code = this.generateVerificationCode();
-      user.codeVerify = code;
-      await user.save();
+
+      await this.otpsService.createOTP(
+        { email: user.email, otp: code },
+        { requireUser: false },
+      );
 
       const codeDigits = this.splitCodeToDigits(code);
       // Gửi email quên mật khẩu với template riêng
@@ -406,14 +414,19 @@ export class AuthsService implements OnModuleInit {
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
     try {
-      const user = await this.userModel.findOne({
-        codeVerify: resetPasswordDto.codeVerify,
-        email: resetPasswordDto.email,
-      });
+      const otpRecord = await this.otpsService.findOTP(resetPasswordDto.email);
+      if (!otpRecord || otpRecord?.otp !== resetPasswordDto.codeVerify) {
+        throw new NotFoundException('Invalid code or email.');
+      }
+
+      const user = await this.userModel.findOne({ email: resetPasswordDto.email });
       if (!user) throw new NotFoundException('User not found.');
 
       user.password = await bcrypt.hash(resetPasswordDto.password, 10);
       await user.save();
+
+      otpRecord.isUsed = true;
+      await otpRecord.save();
 
       // Gửi email thông báo đặt lại mật khẩu thành công
       sendEmail(

@@ -11,7 +11,7 @@ export class OtpsService {
   constructor(
     @InjectModel(Otp.name) private readonly otpModel: Model<Otp>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
-  ) {}
+  ) { }
 
   /**
    * @param createOtpDto - email và otp
@@ -31,7 +31,7 @@ export class OtpsService {
   }
 
   async findOTP(email: string) {
-    const otp = await this.otpModel.findOne({ email });
+    const otp = await this.otpModel.findOne({ email, isUsed: false });
     if (!otp) throw new NotFoundException('OTP not found');
     return otp;
   }

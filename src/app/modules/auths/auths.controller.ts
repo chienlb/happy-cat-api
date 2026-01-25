@@ -29,7 +29,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 export class AuthsController {
   private readonly logger = new Logger(AuthsController.name);
 
-  constructor(private readonly authsService: AuthsService) {}
+  constructor(private readonly authsService: AuthsService) { }
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
@@ -118,7 +118,8 @@ export class AuthsController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   async login(@Body() loginAuthDto: LoginAuthDto) {
     try {
-      await this.authsService.login(loginAuthDto);
+      const result = await this.authsService.login(loginAuthDto);
+      return ok(result, 'User logged in successfully', 200);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;

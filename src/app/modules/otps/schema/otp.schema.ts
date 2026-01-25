@@ -7,6 +7,7 @@ export interface IOtp {
   _id: Types.ObjectId;
   email: string;
   otp: string;
+  isUsed: boolean;
   createdAt: Date;
 }
 
@@ -17,6 +18,9 @@ export class Otp {
 
   @Prop({ required: true })
   otp: string;
+
+  @Prop({ default: false })
+  isUsed: boolean;
 
   @Prop({ index: { expires: 300 } })
   createdAt: Date;
