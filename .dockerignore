@@ -1,0 +1,51 @@
+# Dependencies
+node_modules
+pnpm-store
+
+# Build output
+dist
+build
+coverage
+.nyc_output
+*.tsbuildinfo
+
+# Git
+.git
+.gitignore
+
+# Environment (không đưa secret vào image)
+.env
+.env.*
+!.env.example
+
+# IDE & Editor
+.vscode
+.idea
+*.sublime-*
+
+# Logs & temp
+logs
+*.log
+.temp
+.tmp
+report.*.json
+
+# Tests (không cần trong image)
+test
+*.spec.ts
+*.e2e-spec.ts
+jest-e2e.json
+
+# Docs & config dev
+*.md
+!README.md
+.prettierrc
+eslint.config.mjs
+.editorconfig
+
+# Postman
+postman-collection.json
+
+# OS
+.DS_Store
+Thumbs.db
