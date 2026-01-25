@@ -58,3 +58,7 @@ EXPOSE 3000
 #   CMD wget -q -O- http://localhost:3000/api/v1/health || exit 1
 
 CMD ["node", "dist/main.js"]
+
+# Chạy: cần truyền biến môi trường (file .env không được copy vào image)
+#   docker run --env-file .env -p 3000:3000 spnc-api
+# Hoặc: docker compose up

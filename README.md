@@ -22,6 +22,7 @@ Backend cho nền tảng học tiếng Anh trực tuyến, xây dựng với Nes
 - [Công nghệ](#-công-nghệ)
 - [Cài đặt nhanh](#-cài-đặt-nhanh)
 - [Cấu hình môi trường](#-cấu-hình-môi-trường)
+- [Docker](#-docker)
 - [API & Swagger](#-api--swagger)
 - [Cấu trúc dự án](#-cấu-trúc-dự-án)
 - [Scripts](#-scripts)
@@ -208,6 +209,45 @@ TRUST_PROXY=false
 LOG_LEVEL=debug
 OPEN_ROUTER_API=your-open-router-api-key
 ```
+
+---
+
+## 🐳 Docker
+
+Chạy API bằng Docker. **Cần file `.env`** ở thư mục gốc (xem [Cấu hình môi trường](#-cấu-hình-môi-trường)); file `.env` không được đưa vào image (bảo mật).
+
+**MongoDB và Redis** phải chạy sẵn (trên host hoặc container khác). Trong `.env`, `MONGODB_URI` và `REDIS_URL` cần trỏ đúng:
+- Chạy Docker trên **Windows/macOS**: dùng `host.docker.internal` thay cho `localhost`, ví dụ:
+  - `MONGODB_URI=mongodb://host.docker.internal:27017/spnc_db`
+  - `REDIS_URL=redis://host.docker.internal:6379`
+- Chạy Docker trên **Linux**: dùng `172.17.0.1` hoặc IP của host thay cho `localhost`.
+
+### Build image
+
+```bash
+docker build -t spnc-api .
+```
+
+### Chạy container
+
+**Cách 1: `docker run` + `--env-file`**
+
+```bash
+docker run --env-file .env -p 3000:3000 spnc-api
+```
+
+**Cách 2: Docker Compose**
+
+```bash
+docker compose up
+```
+
+Compose đọc `docker-compose.yml` và dùng `env_file: .env`. API lắng nghe cổng `3000`.
+
+### Lưu ý
+
+- `NODE_ENV` trong container mặc định là `production` (trong Dockerfile). Nếu `.env` ghi đè, giá trị phải là `development`, `production` hoặc `test`.
+- Không commit `.env`; dùng `--env-file` hoặc biến môi trường ở môi trường deploy (K8s, ECS, …).
 
 ---
 

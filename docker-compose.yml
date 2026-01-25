@@ -1,0 +1,9 @@
+# Chạy: docker compose up
+# Cần file .env ở thư mục gốc với đủ: MONGODB_URI, REDIS_URL, EMAIL_*, JWT_*, ...
+services:
+  api:
+    build: .
+    image: spnc-api
+    ports:
+      - "3000:3000"
+    env_file: .env

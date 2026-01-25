@@ -1,9 +1,13 @@
 import { z } from 'zod';
 
 export const envSchema = z.object({
-  NODE_ENV: z
-    .enum(['development', 'production', 'test'])
-    .default('development'),
+  NODE_ENV: z.preprocess(
+    (v) => {
+      const s = typeof v === 'string' ? v.trim().toLowerCase() : '';
+      return ['development', 'production', 'test'].includes(s) ? s : 'development';
+    },
+    z.enum(['development', 'production', 'test']),
+  ),
   PORT: z.coerce.number().min(1024).max(65535).default(3000),
   MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
   JWT_ACCESS_TOKEN_SECRET: z

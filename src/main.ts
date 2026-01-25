@@ -7,7 +7,8 @@ import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
 import type { Express } from 'express';
-import { envSchema } from './app/configs/env/env.config';
+import { ZodError } from 'zod';
+import { envSchema, type Env } from './app/configs/env/env.config';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { HttpExceptionFilter } from './app/common/filters/http-exception.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -15,7 +16,17 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap');
 
-  const env = envSchema.parse(process.env);
+  let env: Env;
+  try {
+    env = envSchema.parse(process.env);
+  } catch (e) {
+    if (e instanceof ZodError) {
+      logger.error(
+        'Thiếu biến môi trường. Chạy Docker: docker run --env-file .env -p 3000:3000 spnc-api',
+      );
+    }
+    throw e;
+  }
 
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
