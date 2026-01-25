@@ -9,9 +9,11 @@ import {
   UseGuards,
   NotFoundException,
   Query,
-  Session,
+  Req,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -54,12 +56,18 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async create(@Body() createUserDto: CreateUserDto) {
+  async create(@Body() createUserDto: CreateUserDto, @Req() req: Request) {
     try {
-      const result = await this.usersService.createUser(createUserDto);
+      const callerRole = (req.user as { role?: UserRole })?.role;
+      const result = await this.usersService.createUser(
+        createUserDto,
+        undefined,
+        callerRole,
+      );
       return ok(result, 'User created successfully', 200);
-    } catch (error) {
-      throw new BadRequestException(error.message);
+    } catch (error: any) {
+      if (error instanceof ForbiddenException) throw error;
+      throw new BadRequestException(error?.message ?? 'Bad request');
     }
   }
 

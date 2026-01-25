@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   Inject,
   forwardRef,
@@ -10,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User, UserDocument, UserStatus } from './schema/user.schema';
+import { User, UserDocument, UserRole, UserStatus } from './schema/user.schema';
 import { ClientSession, Connection, Model } from 'mongoose';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
@@ -43,13 +44,23 @@ export class UsersService {
 
   /**
    * Create a new user. Optional session may be provided by caller.
+   * @param callerRole - Role của người gọi: ADMIN được tạo mọi role; TEACHER/PARENT chỉ được tạo STUDENT.
    */
   async createUser(
     createUserDto: CreateUserDto,
     session?: ClientSession,
+    callerRole?: UserRole,
   ): Promise<UserDocument> {
     if (this.connection.readyState !== 1) {
       throw new BadRequestException('Database is not connected.');
+    }
+
+    if (callerRole === UserRole.TEACHER || callerRole === UserRole.PARENT) {
+      if (createUserDto.role !== UserRole.STUDENT) {
+        throw new ForbiddenException(
+          'Teacher or parent can only create student account.',
+        );
+      }
     }
 
     const mongooseSession = session ?? (await this.connection.startSession());
@@ -83,6 +94,8 @@ export class UsersService {
 
       // If user role is not STUDENT, create invitation code for them
       // Normalize role to string to avoid enum-type lint errors
+
+
       const roleStr = String(
         (createUserDto as unknown as { role?: unknown }).role ?? '',
       ).toLowerCase();

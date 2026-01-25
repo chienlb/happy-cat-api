@@ -28,15 +28,14 @@ export class InvitationCodesService {
     @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
     private readonly redisService: RedisService,
-  ) {}
+  ) { }
 
   async createInvitationCode(
     dto: CreateInvitationCodeDto,
-    session?: ClientSession, // ✔ session optional
+    session?: ClientSession,
   ) {
     try {
-      // ✔ Lấy user bằng cách hỗ trợ session nếu có
-      const user = await this.userService.findUserById(dto.createdBy);
+      const user = await this.userService.findUserById(dto.createdBy, session);
       if (!user) {
         throw new NotFoundException(
           'Creator of invitation code does not exist.',
