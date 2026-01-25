@@ -110,7 +110,10 @@ export class UsersService {
         await mongooseSession.commitTransaction();
       }
 
-      return newUser;
+      const result = newUser.toObject();
+      delete (result as any).password;
+
+      return result;
     } catch (err: unknown) {
       if (createdLocalSession) {
         try {

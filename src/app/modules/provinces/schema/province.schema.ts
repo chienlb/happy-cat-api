@@ -42,7 +42,7 @@ export const ProvinceSchema = SchemaFactory.createForClass(Province);
 
 const ProvinceModel = model<Province>('Province', ProvinceSchema);
 
-ProvinceSchema.pre('save', async function (next) {
+ProvinceSchema.pre('validate', async function (next) {
   this.slug = await generateSlug(ProvinceModel, this.provinceName);
   next();
 });

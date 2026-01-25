@@ -458,7 +458,7 @@ export const LessonSchema = SchemaFactory.createForClass(Lesson);
 
 const LessonModel = model<Lesson>('Lesson', LessonSchema);
 
-LessonSchema.pre('save', async function (next) {
+LessonSchema.pre('validate', async function (next) {
   this.slug = await generateSlug(LessonModel, this.title);
   next();
 });

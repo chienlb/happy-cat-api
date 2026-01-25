@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types, HydratedDocument, Model, model } from 'mongoose';
+import { Types, HydratedDocument, Model } from 'mongoose';
 import { generateSlug } from '../../../common/utils/slug.util';
 import { PackageType } from '../../packages/schema/package.schema';
 
@@ -212,9 +212,11 @@ export class User implements IUser {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-const UserModel = model<User>('User', UserSchema);
-
-UserSchema.pre('save', async function (next) {
-  this.slug = await generateSlug(UserModel, this.username);
+UserSchema.pre('validate', async function (next) {
+  if (this.username) {
+    // Dùng model của document (từ @InjectModel) thay vì model() để tránh buffering
+    // do model() gắn kết nối mặc định có thể chưa sẵn sàng
+    this.slug = await generateSlug(this.constructor as Model<User>, this.username);
+  }
   next();
 });

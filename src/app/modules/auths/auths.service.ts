@@ -181,10 +181,15 @@ export class AuthsService implements OnModuleInit {
         invitedBy,
       });
 
-      await this.otpsService.createOTP({
-        email: user.email,
-        otp: this.generateVerificationCode(),
-      });
+      if (!user) {
+        throw new BadRequestException('Failed to create user.');
+      }
+
+      const verificationCode = this.generateVerificationCode();
+      await this.otpsService.createOTP(
+        { email: user.email, otp: verificationCode },
+        { requireUser: false },
+      );
 
       const savedUser = await user.save({ session: mongooseSession });
 
@@ -193,21 +198,19 @@ export class AuthsService implements OnModuleInit {
         await mongooseSession.endSession();
       }
 
-      // AFTER COMMIT
+      // AFTER COMMIT - dùng verificationCode đã lưu trong OTP (savedUser.codeVerify chưa có khi mới đăng ký)
       await verifyEmailQueue.add('verify-email', {
         email: savedUser.email,
-        codeDigits: this.splitCodeToDigits(String(savedUser.codeVerify ?? '')),
+        codeDigits: this.splitCodeToDigits(verificationCode),
         fullname: savedUser.fullname,
         username: savedUser.username,
         year: new Date().getFullYear(),
       });
 
+      const result = savedUser.toObject();
+      delete (result as any).password;
 
-      if ((savedUser as any).password) {
-        delete (savedUser as any).password;
-      }
-
-      return savedUser;
+      return result;
     } catch (error) {
       if (isNewSession) {
         await mongooseSession.abortTransaction();
@@ -299,12 +302,11 @@ export class AuthsService implements OnModuleInit {
         deviceId: loginAuthDto.deviceId,
       });
 
-      if ((user as any).password) {
-        delete (user as any).password;
-      }
+      const result = user.toObject();
+      delete (result as any).password;
 
       return {
-        user,
+        user: result,
         accessToken,
         refreshToken,
       };

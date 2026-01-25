@@ -92,7 +92,7 @@ export const GroupSchema = SchemaFactory.createForClass(Group);
 
 const GroupModel = model<Group>('Group', GroupSchema);
 
-GroupSchema.pre('save', async function (next) {
+GroupSchema.pre('validate', async function (next) {
   this.slug = await generateSlug(GroupModel, this.groupName);
   next();
 });

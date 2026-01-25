@@ -13,9 +13,19 @@ export class OtpsService {
     @InjectModel(User.name) private readonly userModel: Model<User>,
   ) {}
 
-  async createOTP(createOtpDto: CreateOtpDto) {
-    const user = await this.userModel.findOne({ email: createOtpDto.email });
-    if (!user) throw new NotFoundException('User not found');
+  /**
+   * @param createOtpDto - email và otp
+   * @param options.requireUser - nếu true (mặc định) thì bắt buộc đã có user với email đó (dùng cho forgot/resend). Nếu false thì không kiểm tra (dùng cho register vì user chưa được tạo).
+   */
+  async createOTP(
+    createOtpDto: CreateOtpDto,
+    options?: { requireUser?: boolean },
+  ) {
+    const requireUser = options?.requireUser !== false;
+    if (requireUser) {
+      const user = await this.userModel.findOne({ email: createOtpDto.email });
+      if (!user) throw new NotFoundException('User not found');
+    }
     const otp = new this.otpModel(createOtpDto);
     return await otp.save();
   }

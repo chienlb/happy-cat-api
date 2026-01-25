@@ -131,7 +131,7 @@ export const UnitSchema = SchemaFactory.createForClass(Unit);
 
 const UnitModel = model<Unit>('Unit', UnitSchema);
 
-UnitSchema.pre('save', async function (next) {
+UnitSchema.pre('validate', async function (next) {
   this.slug = await generateSlug(UnitModel, this.name);
   next();
 });
