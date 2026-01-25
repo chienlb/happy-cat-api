@@ -366,10 +366,11 @@
           "name": "Create Province",
           "request": {
             "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/provinces",
             "body": {
               "mode": "raw",
-              "raw": "{ \"name\": \"Ha Noi\", \"code\": \"HN\" }"
+              "raw": "{\"provinceName\": \"Ha Noi\", \"region\": \"north\", \"country\": \"Vietnam\"}"
             }
           }
         },
@@ -386,120 +387,12 @@
           "request": {
             "method": "PUT",
             "url": "{{baseUrl}}/provinces/:id",
-            "body": { "mode": "raw", "raw": "{ \"name\": \"Updated\" }" }
+            "body": { "mode": "raw", "raw": "{\"provinceName\": \"Updated\", \"region\": \"north\", \"country\": \"Vietnam\"}" }
           }
         },
         {
           "name": "Delete Province",
           "request": { "method": "DELETE", "url": "{{baseUrl}}/provinces/:id" }
-        }
-      ]
-    },
-    {
-      "name": "Districts",
-      "item": [
-        {
-          "name": "Create District",
-          "request": {
-            "method": "POST",
-            "url": "{{baseUrl}}/districts",
-            "body": {
-              "mode": "raw",
-              "raw": "{ \"name\": \"Ba Dinh\", \"province\": \"<provinceId>\" }"
-            }
-          }
-        },
-        {
-          "name": "List Districts",
-          "request": { "method": "GET", "url": "{{baseUrl}}/districts" }
-        },
-        {
-          "name": "Get District",
-          "request": { "method": "GET", "url": "{{baseUrl}}/districts/:id" }
-        },
-        {
-          "name": "Update District",
-          "request": {
-            "method": "PUT",
-            "url": "{{baseUrl}}/districts/:id",
-            "body": { "mode": "raw", "raw": "{ \"name\": \"Updated\" }" }
-          }
-        },
-        {
-          "name": "Delete District",
-          "request": { "method": "DELETE", "url": "{{baseUrl}}/districts/:id" }
-        }
-      ]
-    },
-    {
-      "name": "Schools",
-      "item": [
-        {
-          "name": "Create School",
-          "request": {
-            "method": "POST",
-            "url": "{{baseUrl}}/schools",
-            "body": {
-              "mode": "raw",
-              "raw": "{ \"name\": \"THPT A\", \"district\": \"<districtId>\" }"
-            }
-          }
-        },
-        {
-          "name": "List Schools",
-          "request": { "method": "GET", "url": "{{baseUrl}}/schools" }
-        },
-        {
-          "name": "Get School",
-          "request": { "method": "GET", "url": "{{baseUrl}}/schools/:id" }
-        },
-        {
-          "name": "Update School",
-          "request": {
-            "method": "PUT",
-            "url": "{{baseUrl}}/schools/:id",
-            "body": { "mode": "raw", "raw": "{ \"name\": \"Updated\" }" }
-          }
-        },
-        {
-          "name": "Delete School",
-          "request": { "method": "DELETE", "url": "{{baseUrl}}/schools/:id" }
-        }
-      ]
-    },
-    {
-      "name": "Classes",
-      "item": [
-        {
-          "name": "Create Class",
-          "request": {
-            "method": "POST",
-            "url": "{{baseUrl}}/classes",
-            "body": {
-              "mode": "raw",
-              "raw": "{ \"classId\": \"10A1\", \"className\": \"10A1\", \"schoolGrade\": \"10\", \"schoolId\": \"<schoolId>\", \"schoolName\": \"THPT A\", \"districtName\": \"Ba Dinh\", \"provinceName\": \"Ha Noi\" }"
-            }
-          }
-        },
-        {
-          "name": "List Classes",
-          "request": { "method": "GET", "url": "{{baseUrl}}/classes" }
-        },
-        {
-          "name": "Get Class",
-          "request": { "method": "GET", "url": "{{baseUrl}}/classes/:id" }
-        },
-        {
-          "name": "Update Class",
-          "request": {
-            "method": "PUT",
-            "url": "{{baseUrl}}/classes/:id",
-            "body": { "mode": "raw", "raw": "{ \"className\": \"Updated\" }" }
-          }
-        },
-        {
-          "name": "Delete Class",
-          "request": { "method": "DELETE", "url": "{{baseUrl}}/classes/:id" }
         }
       ]
     },
@@ -523,7 +416,7 @@
             "url": "{{baseUrl}}/groups",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"groupName\": \"Group A\",\n  \"description\": \"Group description\",\n  \"slug\": \"group-a\",\n  \"type\": \"study\",\n  \"visibility\": \"public\",\n  \"owner\": \"<userId>\",\n  \"members\": [],\n  \"isActive\": true\n}"
+              "raw": "{\n  \"groupName\": \"Group A\",\n  \"description\": \"Group description\",\n  \"slug\": \"group-a\",\n  \"type\": \"class\",\n  \"visibility\": \"public\",\n  \"owner\": \"<userId>\",\n  \"members\": [],\n  \"school\": \"<schoolId>\",\n  \"classRef\": \"<classId>\",\n  \"subject\": \"English\",\n  \"maxMembers\": 30,\n  \"isActive\": true,\n  \"joinCode\": \"ABC123\",\n  \"avatar\": \"\",\n  \"background\": \"\"\n}"
             }
           }
         },
@@ -601,11 +494,7 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{baseUrl}}/groups/:groupId/join",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userId\": \"<userId>\"\n}"
-            }
+            "url": "{{baseUrl}}/groups/:groupId/join"
           }
         },
         {
@@ -622,11 +511,7 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{baseUrl}}/groups/:groupId/leave",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userId\": \"<userId>\"\n}"
-            }
+            "url": "{{baseUrl}}/groups/:groupId/leave"
           }
         },
         {
@@ -656,11 +541,7 @@
                 "value": "application/json"
               }
             ],
-            "url": "{{baseUrl}}/groups/:groupId/change-visibility",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"visibility\": \"public\"\n}"
-            }
+            "url": "{{baseUrl}}/groups/:groupId/change-visibility"
           }
         }
       ]
@@ -1604,10 +1485,14 @@
           "name": "Create Payment",
           "request": {
             "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
             "url": "{{baseUrl}}/payments/create",
             "body": {
               "mode": "raw",
-              "raw": "{ \"userId\": \"\", \"subscriptionId\": \"\", \"method\": \"stripe\", \"amount\": 100000, \"currency\": \"VND\", \"description\": \"\" }"
+              "raw": "{\n  \"userId\": \"<userId>\",\n  \"subscriptionId\": \"<subscriptionId>\",\n  \"method\": \"vnpay\",\n  \"amount\": 100000,\n  \"currency\": \"VND\",\n  \"description\": \"Thanh toan goi hoc\"\n}"
             }
           }
         },
@@ -2055,22 +1940,13 @@
       ]
     },
     {
-      "name": "Packages Cloudflare",
+      "name": "Cloudflare",
       "item": [
         {
-          "name": "Get Signed Upload URL",
+          "name": "Get Signed Upload URL (Create)",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/cloudflare",
             "body": {
               "mode": "raw",
@@ -2081,8 +1957,152 @@
       ]
     },
     {
-      "name": "History Invitations & Invitation Codes (shortcuts)",
-      "item": []
+      "name": "Pronunciation",
+      "item": [
+        {
+          "name": "Assess (multipart: audio + referenceText)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "audio", "type": "file", "src": "" },
+                { "key": "referenceText", "value": "Good morning", "type": "text" },
+                { "key": "language", "value": "en-US", "type": "text" }
+              ]
+            },
+            "url": "{{baseUrl}}/pronunciation/assess"
+          }
+        },
+        {
+          "name": "Create Exercise",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/pronunciation/create",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Hello\",\n  \"ipa\": \"həˈləʊ\",\n  \"translation\": \"Xin chào\",\n  \"description\": \"Greeting\",\n  \"referenceAudio\": \"https://example.com/audio.wav\",\n  \"referenceAudioDuration\": 100,\n  \"lessonId\": \"<lessonId>\",\n  \"unitId\": \"<unitId>\",\n  \"level\": \"A1\",\n  \"difficulty\": \"easy\",\n  \"topic\": \"greetings\",\n  \"tags\": [\"greetings\"],\n  \"minScore\": 80,\n  \"maxAttempts\": 3,\n  \"isActive\": true,\n  \"orderIndex\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/pronunciation/get-all?lessonId=<lessonId>&unitId=<unitId>"
+          }
+        },
+        {
+          "name": "Get By Id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/pronunciation/get-by-id?id=<id>"
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/pronunciation/update?id=<id>",
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"Hello\",\n  \"minScore\": 85\n}" }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/pronunciation/delete?id=<id>"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Lesson Progress",
+      "item": [
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/lesson-prgress",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"<userId>\",\n  \"lessonId\": \"<lessonId>\",\n  \"progress\": 50,\n  \"status\": \"in_progress\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get By User",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/lesson-prgress/user/:userId?page=1&limit=10"
+          }
+        },
+        {
+          "name": "Get By Lesson",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/lesson-prgress/lesson/:lessonId?page=1&limit=10"
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/lesson-prgress/:lessonId",
+            "body": { "mode": "raw", "raw": "{\n  \"progress\": 100,\n  \"status\": \"completed\"\n}" }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/lesson-prgress/:lessonId"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Unit Progress",
+      "item": [
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/unit-progress",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"<userId>\",\n  \"unitId\": \"<unitId>\",\n  \"orderIndex\": 1,\n  \"progress\": 50,\n  \"status\": \"in_progress\",\n  \"completedAt\": \"\",\n  \"createBy\": \"<userId>\",\n  \"updatedBy\": \"<userId>\"\n}"
+            }
+          }
+        }
+      ]
     }
   ]
 }
