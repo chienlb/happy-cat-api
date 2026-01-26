@@ -18,6 +18,7 @@ import { UpdateGroupDto } from './dto/update-group.dto';
 import { PackageType } from '../packages/schema/package.schema';
 import { PaginationDto } from '../pagination/pagination.dto';
 import { RedisService } from 'src/app/configs/redis/redis.service';
+import { CloudflareService } from '../cloudflare/cloudflare.service';
 
 @Injectable()
 export class GroupsService {
@@ -25,10 +26,21 @@ export class GroupsService {
     @InjectModel(Group.name) private readonly groupModel: Model<GroupDocument>,
     private usersService: UsersService,
     private readonly redisService: RedisService,
+    private readonly cloudflareService: CloudflareService,
   ) {}
 
   async createGroup(userId: string, createGroupDto: CreateGroupDto): Promise<GroupDocument> {
     try {
+      const avatar = await this.cloudflareService.create({
+        filename: createGroupDto.avatar || 'default-avatar.png',
+        contentType: 'image/png',
+      });
+      const background = await this.cloudflareService.create({
+        filename: createGroupDto.background || 'default-background.png',
+        contentType: 'image/png',
+      });
+      const groupAvatarUrl = avatar.uploadUrl.split('?')[0];
+      const groupBackgroundUrl = background.uploadUrl.split('?')[0];
       const user = await this.usersService.findUserById(userId);
       if (!user) {
         throw new NotFoundException('User not found');
@@ -73,8 +85,8 @@ export class GroupsService {
         maxMembers: createGroupDto.maxMembers,
         isActive: true,
         joinCode: code,
-        avatar: createGroupDto.avatar,
-        background: createGroupDto.background,
+        avatar: groupAvatarUrl,
+        background: groupBackgroundUrl,
       });
       if(!newGroup) {
         throw new InternalServerErrorException('Failed to create group');

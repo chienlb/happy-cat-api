@@ -6,6 +6,7 @@ import { Group, GroupSchema } from './schema/group.schema';
 import { UsersModule } from '../users/users.module';
 import { RedisModule } from 'src/app/configs/redis/redis.module';
 import { RedisService } from 'src/app/configs/redis/redis.service';
+import { CloudflareService } from '../cloudflare/cloudflare.service';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { RedisService } from 'src/app/configs/redis/redis.service';
     RedisModule,
   ],
   controllers: [GroupsController],
-  providers: [GroupsService, RedisService],
+  providers: [GroupsService, RedisService, CloudflareService],
   exports: [GroupsService, MongooseModule],
 })
 export class GroupsModule {}
