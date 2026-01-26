@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types, HydratedDocument, model } from 'mongoose';
+import { Types, HydratedDocument, Model } from 'mongoose';
 import { generateSlug } from 'src/app/common/utils/slug.util';
 
 export type GroupDocument = HydratedDocument<Group>;
@@ -24,9 +24,6 @@ export interface IGroup {
   visibility: GroupVisibility; // Ai có thể thấy nhóm này
   owner: Types.ObjectId; // Người tạo nhóm (thường là giáo viên)
   members: Types.ObjectId[]; // Danh sách thành viên trong nhóm
-  school?: Types.ObjectId; // Thuộc về trường nào (nếu có)
-  classRef?: Types.ObjectId; // Thuộc về lớp học nào (nếu có)
-  subject?: string; // Tên môn học (nếu nhóm theo môn)
   maxMembers?: number; // Giới hạn số lượng thành viên
   isActive: boolean; // Nhóm còn hoạt động không
   joinCode?: string; // Mã mời tham gia nhóm (tự sinh)
@@ -63,15 +60,6 @@ export class Group implements IGroup {
   @Prop({ required: true, type: [Types.ObjectId] })
   members: Types.ObjectId[];
 
-  @Prop({ type: Types.ObjectId })
-  school?: Types.ObjectId;
-
-  @Prop({ type: Types.ObjectId })
-  classRef?: Types.ObjectId;
-
-  @Prop()
-  subject?: string;
-
   @Prop()
   maxMembers?: number;
 
@@ -90,9 +78,9 @@ export class Group implements IGroup {
 
 export const GroupSchema = SchemaFactory.createForClass(Group);
 
-const GroupModel = model<Group>('Group', GroupSchema);
-
+// Use the model bound to this document to avoid using a detached/global model
 GroupSchema.pre('validate', async function (next) {
-  this.slug = await generateSlug(GroupModel, this.groupName);
+  const docModel = (this.constructor as Model<Group>);
+  this.slug = await generateSlug(docModel, this.groupName);
   next();
 });

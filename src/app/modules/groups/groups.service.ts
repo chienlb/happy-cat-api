@@ -22,15 +22,14 @@ import { RedisService } from 'src/app/configs/redis/redis.service';
 @Injectable()
 export class GroupsService {
   constructor(
-    @InjectModel(Group.name)
-    private groupRepository: Model<Group>,
+    @InjectModel(Group.name) private readonly groupModel: Model<GroupDocument>,
     private usersService: UsersService,
     private readonly redisService: RedisService,
   ) {}
 
-  async createGroup(createGroupDto: CreateGroupDto): Promise<GroupDocument> {
+  async createGroup(userId: string, createGroupDto: CreateGroupDto): Promise<GroupDocument> {
     try {
-      const user = await this.usersService.findUserById(createGroupDto.owner);
+      const user = await this.usersService.findUserById(userId);
       if (!user) {
         throw new NotFoundException('User not found');
       }
@@ -59,27 +58,27 @@ export class GroupsService {
       if (typeOwner === PackageType.VIP) {
         createGroupDto.maxMembers = 100;
       }
-      const newGroup = new this.groupRepository({
+      const newGroup = await this.groupModel.create({
         ...createGroupDto,
-        owner: user._id,
+        owner: userId,
         members: createGroupDto.members,
-        school: createGroupDto.school,
-        classRef: createGroupDto.classRef,
-        subject: createGroupDto.subject,
         maxMembers: createGroupDto.maxMembers,
         isActive: true,
         joinCode: createGroupDto.joinCode,
         avatar: createGroupDto.avatar,
         background: createGroupDto.background,
       });
-      return await newGroup.save();
+      if(!newGroup) {
+        throw new InternalServerErrorException('Failed to create group');
+      }
+      return newGroup;
     } catch (error) {
       throw new Error('Failed to create group: ' + error.message);
     }
   }
 
   async findGroupById(id: string): Promise<GroupDocument> {
-    const group = await this.groupRepository.findById(id);
+    const group = await this.groupModel.findById(id);
     if (!group) {
       throw new NotFoundException('Group not found');
     }
@@ -87,7 +86,7 @@ export class GroupsService {
   }
 
   async findGroupsByUserId(userId: string): Promise<GroupDocument[]> {
-    const groups = await this.groupRepository.find({ members: userId });
+    const groups = await this.groupModel.find({ members: userId });
     if (!groups) {
       throw new NotFoundException('Groups not found');
     }
@@ -95,7 +94,7 @@ export class GroupsService {
   }
 
   async findGroupsBySchoolId(schoolId: string): Promise<GroupDocument[]> {
-    const groups = await this.groupRepository.find({ school: schoolId });
+    const groups = await this.groupModel.find({ school: schoolId });
     if (!groups) {
       throw new NotFoundException('Groups not found');
     }
@@ -103,7 +102,7 @@ export class GroupsService {
   }
 
   async findGroupsByClassId(classId: string): Promise<GroupDocument[]> {
-    const groups = await this.groupRepository.find({ classRef: classId });
+    const groups = await this.groupModel.find({ classRef: classId });
     if (!groups) {
       throw new NotFoundException('Groups not found');
     }
@@ -123,12 +122,12 @@ export class GroupsService {
       if (cached) {
         return JSON.parse(cached);
       }
-      const groups = await this.groupRepository
+      const groups = await this.groupModel
         .find({ isActive: true })
         .skip((paginationDto.page - 1) * paginationDto.limit)
         .limit(paginationDto.limit)
         .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 });
-      const total = await this.groupRepository.countDocuments({
+      const total = await this.groupModel.countDocuments({
         isActive: true,
       });
       const totalPages = Math.ceil(total / paginationDto.limit);
@@ -154,7 +153,7 @@ export class GroupsService {
     updateGroupDto: UpdateGroupDto,
   ): Promise<GroupDocument> {
     try {
-      const updatedGroup = await this.groupRepository.findByIdAndUpdate(
+      const updatedGroup = await this.groupModel.findByIdAndUpdate(
         new Types.ObjectId(id),
         updateGroupDto,
         { new: true, runValidators: true },
@@ -176,7 +175,7 @@ export class GroupsService {
 
   async deleteGroup(id: string): Promise<GroupDocument> {
     try {
-      const deletedGroup = await this.groupRepository.findByIdAndUpdate(
+      const deletedGroup = await this.groupModel.findByIdAndUpdate(  
         new Types.ObjectId(id),
         { isActive: false },
         { new: true },

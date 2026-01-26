@@ -18,12 +18,12 @@ import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../../common/decorators/role.decorator';
 import { UserRole } from '../users/schema/user.schema';
 import { UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
 
 @ApiTags('Groups')
 @ApiBearerAuth()
 @Controller('groups')
 @UseGuards(AuthGuard('jwt'))
-@Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
 export class GroupsController {
   constructor(private readonly groupsService: GroupsService) {}
 
@@ -62,8 +62,8 @@ export class GroupsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  create(@Body() createGroupDto: CreateGroupDto) {
-    return this.groupsService.createGroup(createGroupDto);
+  create(@Body() createGroupDto: CreateGroupDto, @Req() req: Request) {
+    return this.groupsService.createGroup((req as any).user.userId, createGroupDto);
   }
 
   @Get(':id')

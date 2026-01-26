@@ -29,25 +29,10 @@ export class CreateGroupDto {
   @IsEnum(GroupVisibility)
   visibility: GroupVisibility;
 
-  @IsMongoId()
-  owner: string;
-
   @IsOptional()
   @IsArray()
   @IsMongoId({ each: true })
   members?: string[];
-
-  @IsOptional()
-  @IsMongoId()
-  school?: string;
-
-  @IsOptional()
-  @IsMongoId()
-  classRef?: string;
-
-  @IsOptional()
-  @IsString()
-  subject?: string;
 
   @IsOptional()
   @IsNumber()

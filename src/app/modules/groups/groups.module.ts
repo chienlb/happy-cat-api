@@ -15,6 +15,6 @@ import { RedisService } from 'src/app/configs/redis/redis.service';
   ],
   controllers: [GroupsController],
   providers: [GroupsService, RedisService],
-  exports: [GroupsService],
+  exports: [GroupsService, MongooseModule],
 })
 export class GroupsModule {}

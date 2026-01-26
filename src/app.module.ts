@@ -40,11 +40,11 @@ import { OtpsModule } from './app/modules/otps/otps.module';
 
 @Module({
   imports: [
-    MongoDBModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env`,
     }),
+    MongoDBModule,
     MailModule,
     UsersModule,
     TokensModule,
