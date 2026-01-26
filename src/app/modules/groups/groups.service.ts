@@ -58,13 +58,21 @@ export class GroupsService {
       if (typeOwner === PackageType.VIP) {
         createGroupDto.maxMembers = 100;
       }
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase(); 
+      const checkCode = await this.groupModel.findOne({ joinCode: code });
+
+      if (checkCode) {
+        const countCode = await this.groupModel.countDocuments({joinCode: code});
+        const newCode = (parseInt(countCode.toString(36)) + 1).toString(36).toUpperCase();
+        createGroupDto.joinCode = newCode;
+      }
       const newGroup = await this.groupModel.create({
         ...createGroupDto,
         owner: userId,
         members: createGroupDto.members,
         maxMembers: createGroupDto.maxMembers,
         isActive: true,
-        joinCode: createGroupDto.joinCode,
+        joinCode: code,
         avatar: createGroupDto.avatar,
         background: createGroupDto.background,
       });
