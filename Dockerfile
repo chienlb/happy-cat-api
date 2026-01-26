@@ -1,7 +1,7 @@
 # ============================================
 # Stage 1: Dependencies
 # ============================================
-FROM node:20-alpine AS deps
+FROM node:25-alpine AS deps
 
 RUN corepack enable && corepack prepare pnpm@9 --activate
 
@@ -17,7 +17,7 @@ RUN apk add --no-cache --virtual .build-deps build-base python3 && \
 # ============================================
 # Stage 2: Build
 # ============================================
-FROM node:20-alpine AS build
+FROM node:25-alpine AS build
 
 RUN corepack enable && corepack prepare pnpm@9 --activate
 
@@ -31,7 +31,7 @@ RUN pnpm run build
 # ============================================
 # Stage 3: Production
 # ============================================
-FROM node:20-alpine AS production
+FROM node:25-alpine AS production
 
 RUN corepack enable && corepack prepare pnpm@9 --activate
 
