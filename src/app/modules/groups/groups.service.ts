@@ -27,20 +27,29 @@ export class GroupsService {
     private usersService: UsersService,
     private readonly redisService: RedisService,
     private readonly cloudflareService: CloudflareService,
-  ) {}
+  ) { }
 
-  async createGroup(userId: string, createGroupDto: CreateGroupDto): Promise<GroupDocument> {
+  async createGroup(userId: string, createGroupDto: CreateGroupDto, avatar?: any, background?: any): Promise<GroupDocument> {
     try {
-      const avatar = await this.cloudflareService.create({
-        filename: createGroupDto.avatar || 'default-avatar.png',
-        contentType: 'image/png',
-      });
-      const background = await this.cloudflareService.create({
-        filename: createGroupDto.background || 'default-background.png',
-        contentType: 'image/png',
-      });
-      const groupAvatarUrl = avatar.uploadUrl.split('?')[0];
-      const groupBackgroundUrl = background.uploadUrl.split('?')[0];
+      let groupAvatarUrl: string | null = null;
+      let groupBackgroundUrl: string | null = null;
+      if (avatar) {
+        // Upload file trực tiếp lên Cloudflare R2
+        const uploadResult = await this.cloudflareService.uploadFile(
+          avatar,
+          'groups/avatars',
+        );
+        groupAvatarUrl = uploadResult.fileUrl;
+      }
+
+      if (background) {
+        // Upload file trực tiếp lên Cloudflare R2
+        const uploadResultBg = await this.cloudflareService.uploadFile(
+          background,
+          'groups/backgrounds',
+        );
+        groupBackgroundUrl = uploadResultBg.fileUrl;
+      }
       const user = await this.usersService.findUserById(userId);
       if (!user) {
         throw new NotFoundException('User not found');
@@ -70,11 +79,11 @@ export class GroupsService {
       if (typeOwner === PackageType.VIP) {
         createGroupDto.maxMembers = 100;
       }
-      const code = Math.random().toString(36).substring(2, 8).toUpperCase(); 
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
       const checkCode = await this.groupModel.findOne({ joinCode: code });
 
       if (checkCode) {
-        const countCode = await this.groupModel.countDocuments({joinCode: code});
+        const countCode = await this.groupModel.countDocuments({ joinCode: code });
         const newCode = (parseInt(countCode.toString(36)) + 1).toString(36).toUpperCase();
         createGroupDto.joinCode = newCode;
       }
@@ -88,7 +97,7 @@ export class GroupsService {
         avatar: groupAvatarUrl,
         background: groupBackgroundUrl,
       });
-      if(!newGroup) {
+      if (!newGroup) {
         throw new InternalServerErrorException('Failed to create group');
       }
       return newGroup;
@@ -195,7 +204,7 @@ export class GroupsService {
 
   async deleteGroup(id: string): Promise<GroupDocument> {
     try {
-      const deletedGroup = await this.groupModel.findByIdAndUpdate(  
+      const deletedGroup = await this.groupModel.findByIdAndUpdate(
         new Types.ObjectId(id),
         { isActive: false },
         { new: true },

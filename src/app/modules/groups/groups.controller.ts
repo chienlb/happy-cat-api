@@ -1,4 +1,4 @@
-import { Controller, Req } from '@nestjs/common';
+import { Controller, Req, UploadedFiles } from '@nestjs/common';
 import { GroupsService } from './groups.service';
 import {
   ApiTags,
@@ -25,7 +25,7 @@ import type { Request } from 'express';
 @Controller('groups')
 @UseGuards(AuthGuard('jwt'))
 export class GroupsController {
-  constructor(private readonly groupsService: GroupsService) {}
+  constructor(private readonly groupsService: GroupsService) { }
 
   @Post()
   @UseGuards(AuthGuard('jwt'))
@@ -62,8 +62,8 @@ export class GroupsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  create(@Body() createGroupDto: CreateGroupDto, @Req() req: Request) {
-    return this.groupsService.createGroup((req as any).user.userId, createGroupDto);
+  create(@Body() createGroupDto: CreateGroupDto, @Req() req: Request, @UploadedFiles() files: { avatar?: any; background?: any }) {
+    return this.groupsService.createGroup((req as any).user.userId, createGroupDto, files.avatar, files.background);
   }
 
   @Get(':id')
