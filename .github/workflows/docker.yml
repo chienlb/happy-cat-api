@@ -1,16 +1,10 @@
 name: Docker Build & Push
 
 on:
+  workflow_dispatch:
   push:
-    branches:
-      - main
-      - develop
     tags:
       - 'v*.*.*'
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
