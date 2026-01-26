@@ -79,7 +79,7 @@ jobs:
           npx cr --format json --output complexity-report.json src/**/*.ts || echo '{}' > complexity-report.json
 
       - name: Upload complexity report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: complexity-report
           path: complexity-report.json
@@ -121,7 +121,7 @@ jobs:
           npx type-coverage --detail > type-coverage-report.txt || echo 'No type coverage' > type-coverage-report.txt
 
       - name: Upload type coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: type-coverage-report
           path: type-coverage-report.txt
@@ -218,7 +218,7 @@ jobs:
           echo "Documentation generation skipped" > documentation/README.md
 
       - name: Upload documentation
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: api-documentation
           path: documentation/

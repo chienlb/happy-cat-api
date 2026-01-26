@@ -193,7 +193,7 @@ jobs:
           echo "Build successful - dist directory exists"
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: dist
           path: dist/
@@ -227,7 +227,7 @@ jobs:
           pnpm audit --json > audit-report.json || true
           
       - name: Upload audit report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: security-audit-report
           path: audit-report.json

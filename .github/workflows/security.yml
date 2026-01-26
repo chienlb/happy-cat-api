@@ -52,7 +52,7 @@ jobs:
         run: pnpm audit --audit-level=moderate --json > npm-audit.json || true
 
       - name: Upload npm audit results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: npm-audit-report
           path: npm-audit.json
@@ -206,7 +206,7 @@ jobs:
           pnpm eslint . --ext .ts --format json -o eslint-security-report.json || true
 
       - name: Upload ESLint results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: eslint-security-report
           path: eslint-security-report.json
