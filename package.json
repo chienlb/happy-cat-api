@@ -50,7 +50,7 @@
     "handlebars": "^4.7.8",
     "helmet": "^8.1.0",
     "hpp": "^0.2.3",
-    "ioredis": "^5.8.2",
+    "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.2",
     "mjml": "^4.18.0",
     "mongoose": "^8.19.2",
