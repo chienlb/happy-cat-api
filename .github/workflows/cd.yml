@@ -1,0 +1,296 @@
+name: CD - Continuous Deployment
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  NODE_VERSION: '20.x'
+  PNPM_VERSION: '8.x'
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging'
+    environment:
+      name: staging
+      url: https://staging.happycat.api
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prod
+
+      - name: Build application
+        run: pnpm run build
+
+      - name: Create deployment package
+        run: |
+          mkdir -p deploy
+          cp -r dist node_modules package.json pnpm-lock.yaml deploy/
+          tar -czf deploy.tar.gz -C deploy .
+
+      - name: Deploy to staging server via SSH
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_PORT }}
+          source: "deploy.tar.gz"
+          target: "/tmp/"
+
+      - name: Execute deployment commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_PORT }}
+          script: |
+            set -e
+            
+            # Define paths
+            APP_DIR="/var/www/happy-cat-api"
+            BACKUP_DIR="/var/www/backups/happy-cat-api"
+            TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+            
+            # Create backup
+            echo "Creating backup..."
+            mkdir -p $BACKUP_DIR
+            if [ -d "$APP_DIR" ]; then
+              tar -czf $BACKUP_DIR/backup_$TIMESTAMP.tar.gz -C $APP_DIR .
+              echo "Backup created: $BACKUP_DIR/backup_$TIMESTAMP.tar.gz"
+            fi
+            
+            # Deploy new version
+            echo "Deploying new version..."
+            mkdir -p $APP_DIR
+            tar -xzf /tmp/deploy.tar.gz -C $APP_DIR
+            
+            # Copy environment file
+            cp /var/www/configs/.env.staging $APP_DIR/.env
+            
+            # Restart application
+            echo "Restarting application..."
+            cd $APP_DIR
+            pm2 restart happy-cat-api-staging || pm2 start dist/main.js --name happy-cat-api-staging
+            
+            # Health check
+            echo "Performing health check..."
+            sleep 5
+            curl -f http://localhost:3000/health || exit 1
+            
+            # Cleanup old backups (keep last 5)
+            echo "Cleaning up old backups..."
+            cd $BACKUP_DIR
+            ls -t | tail -n +6 | xargs -r rm
+            
+            echo "Deployment completed successfully!"
+
+      - name: Notify deployment status
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Staging deployment ${{ job.status }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.environment == 'production'
+    environment:
+      name: production
+      url: https://api.happycat.com
+    needs: []
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prod
+
+      - name: Build application
+        run: pnpm run build
+
+      - name: Run production tests
+        run: pnpm run test
+
+      - name: Create deployment package
+        run: |
+          mkdir -p deploy
+          cp -r dist node_modules package.json pnpm-lock.yaml deploy/
+          tar -czf deploy.tar.gz -C deploy .
+
+      - name: Deploy to production server via SSH
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT }}
+          source: "deploy.tar.gz"
+          target: "/tmp/"
+
+      - name: Execute deployment commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT }}
+          script: |
+            set -e
+            
+            # Define paths
+            APP_DIR="/var/www/happy-cat-api"
+            BACKUP_DIR="/var/www/backups/happy-cat-api"
+            TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+            
+            # Create backup
+            echo "Creating backup..."
+            mkdir -p $BACKUP_DIR
+            if [ -d "$APP_DIR" ]; then
+              tar -czf $BACKUP_DIR/backup_$TIMESTAMP.tar.gz -C $APP_DIR .
+              echo "Backup created: $BACKUP_DIR/backup_$TIMESTAMP.tar.gz"
+            fi
+            
+            # Deploy new version
+            echo "Deploying new version..."
+            mkdir -p $APP_DIR
+            tar -xzf /tmp/deploy.tar.gz -C $APP_DIR
+            
+            # Copy environment file
+            cp /var/www/configs/.env.production $APP_DIR/.env
+            
+            # Run database migrations if needed
+            echo "Running database migrations..."
+            cd $APP_DIR
+            # npm run migrate:up (if you have migrations)
+            
+            # Restart application with zero-downtime
+            echo "Restarting application..."
+            pm2 reload happy-cat-api-production --update-env || pm2 start dist/main.js --name happy-cat-api-production
+            
+            # Health check
+            echo "Performing health check..."
+            sleep 10
+            for i in {1..5}; do
+              if curl -f http://localhost:3000/health; then
+                echo "Health check passed!"
+                break
+              fi
+              if [ $i -eq 5 ]; then
+                echo "Health check failed after 5 attempts"
+                echo "Rolling back..."
+                tar -xzf $BACKUP_DIR/backup_$TIMESTAMP.tar.gz -C $APP_DIR
+                pm2 restart happy-cat-api-production
+                exit 1
+              fi
+              echo "Health check attempt $i failed, retrying..."
+              sleep 5
+            done
+            
+            # Cleanup old backups (keep last 10)
+            echo "Cleaning up old backups..."
+            cd $BACKUP_DIR
+            ls -t | tail -n +11 | xargs -r rm
+            
+            echo "Production deployment completed successfully!"
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Notify deployment status
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Production deployment ${{ job.status }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    if: failure()
+    needs: [deploy-production]
+    
+    steps:
+      - name: Rollback production
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT }}
+          script: |
+            set -e
+            APP_DIR="/var/www/happy-cat-api"
+            BACKUP_DIR="/var/www/backups/happy-cat-api"
+            
+            echo "Rolling back to previous version..."
+            LATEST_BACKUP=$(ls -t $BACKUP_DIR | head -n 1)
+            
+            if [ -z "$LATEST_BACKUP" ]; then
+              echo "No backup found!"
+              exit 1
+            fi
+            
+            echo "Restoring from backup: $LATEST_BACKUP"
+            tar -xzf $BACKUP_DIR/$LATEST_BACKUP -C $APP_DIR
+            
+            cd $APP_DIR
+            pm2 restart happy-cat-api-production
+            
+            echo "Rollback completed!"

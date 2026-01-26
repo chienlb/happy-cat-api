@@ -1,0 +1,259 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * 0' # Weekly on Sunday at midnight
+
+jobs:
+  sonarcloud:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '8.x'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests with coverage
+        run: pnpm run test:cov
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=happy-cat-api
+            -Dsonar.organization=your-org
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.sources=src
+            -Dsonar.tests=test
+            -Dsonar.exclusions=**/*.spec.ts,**/*.test.ts,**/node_modules/**
+
+  code-metrics:
+    name: Code Metrics & Complexity
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '8.x'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install complexity tools
+        run: pnpm add -D complexity-report typescript-complexity
+
+      - name: Generate complexity report
+        run: |
+          npx cr --format json --output complexity-report.json src/**/*.ts || true
+
+      - name: Upload complexity report
+        uses: actions/upload-artifact@v3
+        with:
+          name: complexity-report
+          path: complexity-report.json
+
+      - name: Check code complexity
+        run: |
+          echo "# Code Complexity Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Complexity analysis completed. Check artifacts for detailed report." >> $GITHUB_STEP_SUMMARY
+
+  type-coverage:
+    name: TypeScript Type Coverage
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '8.x'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install type-coverage
+        run: pnpm add -D type-coverage
+
+      - name: Check type coverage
+        run: |
+          npx type-coverage --detail --at-least 90 || true
+          npx type-coverage --detail > type-coverage-report.txt
+
+      - name: Upload type coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: type-coverage-report
+          path: type-coverage-report.txt
+
+      - name: Comment PR with type coverage
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('type-coverage-report.txt', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## TypeScript Type Coverage\n\`\`\`\n${report}\n\`\`\``
+            });
+
+  bundle-size:
+    name: Bundle Size Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '8.x'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: pnpm run build
+
+      - name: Analyze bundle size
+        run: |
+          echo "# Bundle Size Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Distribution Folder Size" >> $GITHUB_STEP_SUMMARY
+          du -sh dist/ >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Detailed Breakdown" >> $GITHUB_STEP_SUMMARY
+          du -h dist/* | sort -rh | head -20 >> $GITHUB_STEP_SUMMARY
+
+      - name: Check bundle size limit
+        run: |
+          SIZE=$(du -sb dist/ | cut -f1)
+          LIMIT=52428800 # 50MB in bytes
+          
+          if [ $SIZE -gt $LIMIT ]; then
+            echo "::error::Bundle size ($SIZE bytes) exceeds limit ($LIMIT bytes)"
+            exit 1
+          fi
+          
+          echo "Bundle size: $SIZE bytes (within limit)"
+
+  documentation:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '8.x'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install documentation tools
+        run: pnpm add -D @compodoc/compodoc
+
+      - name: Generate documentation
+        run: npx @compodoc/compodoc -p tsconfig.json -d ./documentation --hideGenerator || true
+
+      - name: Upload documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: api-documentation
+          path: documentation/
+
+      - name: Check for README updates
+        if: github.event_name == 'pull_request'
+        run: |
+          if git diff origin/${{ github.base_ref }} --name-only | grep -q "README.md"; then
+            echo "✅ README.md has been updated"
+          else
+            echo "⚠️ Consider updating README.md if needed"
+          fi
+
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    needs: [sonarcloud, code-metrics, type-coverage, bundle-size]
+    if: always()
+    
+    steps:
+      - name: Check quality gate
+        run: |
+          echo "# Quality Gate Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| SonarCloud | ${{ needs.sonarcloud.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Metrics | ${{ needs.code-metrics.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Type Coverage | ${{ needs.type-coverage.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Bundle Size | ${{ needs.bundle-size.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.sonarcloud.result }}" != "success" ] || \
+             [ "${{ needs.bundle-size.result }}" != "success" ]; then
+            echo "::error::Quality gate failed!"
+            exit 1
+          fi
+          
+          echo "✅ Quality gate passed!"

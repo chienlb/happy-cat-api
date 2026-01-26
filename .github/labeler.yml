@@ -1,0 +1,60 @@
+# Pull Request Labeler Configuration
+# Automatically label PRs based on file paths
+
+# Module labels
+'module:users':
+  - 'src/app/modules/users/**/*'
+
+'module:auth':
+  - 'src/app/modules/auths/**/*'
+
+'module:groups':
+  - 'src/app/modules/groups/**/*'
+
+'module:lessons':
+  - 'src/app/modules/lessons/**/*'
+
+'module:discussions':
+  - 'src/app/modules/discussions/**/*'
+
+'module:badges':
+  - 'src/app/modules/badges/**/*'
+
+'module:competitions':
+  - 'src/app/modules/competitions/**/*'
+
+# Type labels
+'tests':
+  - '**/*.spec.ts'
+  - '**/*.test.ts'
+  - 'test/**/*'
+
+'documentation':
+  - '**/*.md'
+  - 'docs/**/*'
+
+'config':
+  - '*.config.*'
+  - '.github/**/*'
+  - 'docker-compose.yml'
+  - 'Dockerfile'
+
+'database':
+  - '**/schema/**/*'
+  - '**/migrations/**/*'
+
+'api':
+  - '**/*.controller.ts'
+  - '**/dto/**/*'
+
+'dependencies':
+  - 'package.json'
+  - 'pnpm-lock.yaml'
+
+'docker':
+  - 'Dockerfile'
+  - 'docker-compose.yml'
+  - '.dockerignore'
+
+'ci/cd':
+  - '.github/workflows/**/*'
