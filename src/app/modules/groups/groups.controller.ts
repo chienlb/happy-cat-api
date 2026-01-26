@@ -1,4 +1,5 @@
-import { Controller, Req, UploadedFiles } from '@nestjs/common';
+import { Controller, Req, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { GroupsService } from './groups.service';
 import {
   ApiTags,
@@ -30,6 +31,7 @@ export class GroupsController {
   @Post()
   @UseGuards(AuthGuard('jwt'))
   @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
+  @UseInterceptors(AnyFilesInterceptor())
   @ApiOperation({ summary: 'Create a new group' })
   @ApiBody({
     type: CreateGroupDto,
@@ -62,8 +64,11 @@ export class GroupsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  create(@Body() createGroupDto: CreateGroupDto, @Req() req: Request, @UploadedFiles() files: { avatar?: any; background?: any }) {
-    return this.groupsService.createGroup((req as any).user.userId, createGroupDto, files.avatar, files.background);
+  create(@Body() createGroupDto: CreateGroupDto, @Req() req: Request, @UploadedFiles() files?: any[]) {
+    const avatar = files?.find(f => f.fieldname === 'avatar');
+    const background = files?.find(f => f.fieldname === 'background');
+
+    return this.groupsService.createGroup((req as any).user.userId, createGroupDto, avatar, background);
   }
 
   @Get(':id')

@@ -21,7 +21,8 @@ export class CreateGroupDto {
   description?: string;
 
   @IsString()
-  slug: string;
+  @IsOptional()
+  slug?: string;
 
   @IsEnum(GroupType)
   type: GroupType;
@@ -31,7 +32,6 @@ export class CreateGroupDto {
 
   @IsOptional()
   @IsArray()
-  @IsMongoId({ each: true })
   members?: string[];
 
   @IsOptional()
@@ -39,7 +39,8 @@ export class CreateGroupDto {
   maxMembers?: number;
 
   @IsBoolean()
-  isActive: boolean;
+  @IsOptional()
+  isActive?: boolean;
 
   @IsOptional()
   @IsString()
