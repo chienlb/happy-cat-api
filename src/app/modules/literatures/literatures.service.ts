@@ -43,21 +43,21 @@ export class LiteraturesService {
   // Upload cover image to Cloudflare if exists
   let coverUrl = dto.imageUrl;
   if (cover) {
-    const uploadedCover = await this.cloudflareService.uploadFile(cover);
+    const uploadedCover = await this.cloudflareService.uploadFile(cover, "image comics");
     coverUrl = uploadedCover.fileUrl;
   }
 
   // Upload audio file to Cloudflare if exists
   let audioUrl = dto.audioUrl;
   if (audioFile) {
-    const uploadedAudio = await this.cloudflareService.uploadFile(audioFile);
+    const uploadedAudio = await this.cloudflareService.uploadFile(audioFile, "audio");
     audioUrl = uploadedAudio.fileUrl;
   }
 
   // Upload page images to Cloudflare
   const images = await Promise.all(
     pages.map(async (f, idx) => {
-      const uploaded = await this.cloudflareService.uploadFile(f);
+      const uploaded = await this.cloudflareService.uploadFile(f, "image comics");
       return {
         pageIndex: imagesMeta[idx]?.pageIndex ?? idx + 1,
         image: uploaded.fileUrl,
