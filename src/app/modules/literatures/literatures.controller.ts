@@ -9,6 +9,8 @@ import {
   Put,
   Patch,
   Delete,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import { LiteraturesService } from './literatures.service';
 import {
@@ -23,12 +25,13 @@ import {
 import { CreateLiteratureDto } from './dto/create-literature.dto';
 import { UpdateLiteratureDto } from './dto/update-literature.dto';
 import { PaginationDto } from '../pagination/pagination.dto';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Literatures')
 @ApiBearerAuth()
 @Controller('literatures')
 export class LiteraturesController {
-  constructor(private readonly literaturesService: LiteraturesService) {}
+  constructor(private readonly literaturesService: LiteraturesService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create a new literature' })
@@ -72,10 +75,27 @@ export class LiteraturesController {
     type: CreateLiteratureDto,
   })
   @ApiResponse({ status: 400, description: 'Bad Request', type: HttpException })
+
+   @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'image', maxCount: 1 },   // cover image
+      { name: 'images', maxCount: 20 }, // page images
+      { name: 'audio', maxCount: 1 },   // audio file
+    ]),
+  )
   async createLiterature(
     @Body() createLiteratureDto: CreateLiteratureDto,
+    @UploadedFiles()
+    files: {
+      image?: any;
+      images?: any[];
+      audio?: any;
+    },
   ): Promise<any> {
-    return this.literaturesService.createLiterature(createLiteratureDto);
+    return this.literaturesService.createLiterature(
+      createLiteratureDto,
+      files,
+    );
   }
 
   @Get()

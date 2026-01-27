@@ -6,6 +6,7 @@ import { Literature, LiteratureSchema } from './schema/literature.schema';
 import { UsersModule } from '../users/users.module';
 import { RedisModule } from 'src/app/configs/redis/redis.module';
 import { RedisService } from 'src/app/configs/redis/redis.service';
+import { CloudflareService } from '../cloudflare/cloudflare.service';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { RedisService } from 'src/app/configs/redis/redis.service';
     RedisModule,
   ],
   controllers: [LiteraturesController],
-  providers: [LiteraturesService, RedisService],
+  providers: [LiteraturesService, RedisService, CloudflareService],
   exports: [LiteraturesService],
 })
 export class LiteraturesModule {}

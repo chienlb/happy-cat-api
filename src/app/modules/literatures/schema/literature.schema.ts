@@ -20,6 +20,35 @@ export enum LiteratureLevel {
   INTERMEDIATE = 'intermediate',
 }
 
+export enum PartOfSpeech {
+  NOUN = 'noun',
+  VERB = 'verb',
+  ADJECTIVE = 'adjective',
+  ADVERB = 'adverb',
+  PRONOUN = 'pronoun',
+  PREPOSITION = 'preposition',
+  CONJUNCTION = 'conjunction',
+  DETERMINER = 'determiner',
+  EXCLAMATION = 'exclamation',
+}
+
+export type vocabulary = {
+  word: string; // từ vựng
+  partOfSpeech?: PartOfSpeech; // loại từ
+  ipa?: string; // phiên âm
+  meaning?: string; // nghĩa tiếng Việt
+}
+
+export type comprehensionQuestion = {
+  question: string; // câu hỏi
+  answer?: string; // đáp án
+}
+
+export type grammarPoints = {
+  point: string; // điểm ngữ pháp
+  explanation?: string; // giải thích
+}
+
 export interface ILiterature {
   title: string; // Tên bài đọc / truyện / thơ
   type: LiteratureType; // Loại nội dung
@@ -27,15 +56,15 @@ export interface ILiterature {
   topic?: string; // Chủ đề: animals, friendship, nature, school,...
   contentEnglish?: string; // Nội dung tiếng Anh không cần nếu là truyện tranh
   contentVietnamese?: string; // Bản dịch tiếng Việt (nếu có)
-  vocabulary?: string[]; // Danh sách từ vựng chính
-  grammarPoints?: string[]; // Cấu trúc ngữ pháp liên quan
+  vocabulary?: vocabulary[]; // Danh sách từ vựng chính
+  grammarPoints?: grammarPoints[]; // Cấu trúc ngữ pháp liên quan
   audioUrl?: string; // Đường dẫn file âm thanh
   imageUrl?: string; // Ảnh minh họa (bìa hoặc hình nội dung)
   images?: {
     pageIndex: number;
     image: string;
   }[]; // Ảnh minh họa (bìa hoặc hình nội dung)
-  comprehensionQuestions?: string[]; // Câu hỏi đọc hiểu
+  comprehensionQuestions?: comprehensionQuestion[]; // Câu hỏi đọc hiểu
   isPublished: boolean; // Có công khai trên website không
   createdBy?: Types.ObjectId; // Người tạo (giáo viên / admin)
   updatedBy?: Types.ObjectId; // Người chỉnh sửa lần cuối
@@ -73,11 +102,11 @@ export class Literature {
   @Prop()
   contentVietnamese?: string;
 
-  @Prop({ type: [String], default: [] })
-  vocabulary?: string[];
+  @Prop({ type: [Object], default: [] })
+  vocabulary?: vocabulary[];
 
-  @Prop({ type: [String], default: [] })
-  grammarPoints?: string[];
+  @Prop({ type: [Object], default: [] })
+  grammarPoints?: grammarPoints[];
 
   @Prop()
   audioUrl?: string;
@@ -88,8 +117,8 @@ export class Literature {
   @Prop({ type: [{ pageIndex: Number, image: String }], default: [] })
   images?: { pageIndex: number; image: string }[];
 
-  @Prop({ type: [String], default: [] })
-  comprehensionQuestions?: string[];
+  @Prop({ type: [Object], default: [] })
+  comprehensionQuestions?: comprehensionQuestion[];
 
   @Prop({ default: false })
   isPublished: boolean;

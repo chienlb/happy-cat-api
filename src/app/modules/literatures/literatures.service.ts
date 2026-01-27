@@ -1,12 +1,14 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Literature, LiteratureDocument } from './schema/literature.schema';
 import { CreateLiteratureDto } from './dto/create-literature.dto';
 import { UpdateLiteratureDto } from './dto/update-literature.dto';
 import { UsersService } from '../users/users.service';
 import { PaginationDto } from '../pagination/pagination.dto';
 import { RedisService } from 'src/app/configs/redis/redis.service';
+import { CloudflareService } from '../cloudflare/cloudflare.service';
+
 
 @Injectable()
 export class LiteraturesService {
@@ -15,34 +17,89 @@ export class LiteraturesService {
     private literatureModel: Model<LiteratureDocument>,
     private usersService: UsersService,
     private readonly redisService: RedisService,
-  ) {}
+    private readonly cloudflareService: CloudflareService,
+  ) { }
 
   async createLiterature(
-    createLiteratureDto: CreateLiteratureDto,
-  ): Promise<LiteratureDocument> {
-    try {
-      const existingLiterature = await this.literatureModel.findOne({
-        title: createLiteratureDto.title,
-      });
-      if (existingLiterature) {
-        throw new BadRequestException('Literature already exists');
-      }
+  dto: CreateLiteratureDto,
+  files?: { image?: any; images?: any[]; audio?: any },
+): Promise<LiteratureDocument> {
+  const existing = await this.literatureModel.findOne({ title: dto.title }).lean();
+  if (existing) throw new ConflictException('Literature already exists');
 
-      const user = await this.usersService.findUserById(
-        createLiteratureDto.createdBy?.toString() || '',
-      );
-      if (user) {
-        createLiteratureDto.createdBy = user._id;
-        createLiteratureDto.updatedBy = user._id;
-      }
+  const vocabulary = dto.vocabulary;
+  const grammarPoints = dto.grammarPoints;
+  const comprehensionQuestions = dto.comprehensionQuestions;
 
-      const createdLiterature =
-        await this.literatureModel.create(createLiteratureDto);
-      return createdLiterature;
-    } catch (error) {
-      throw new BadRequestException(error.message);
-    }
+  const isPublished =
+    dto.isPublished === true || (dto.isPublished as any) === 'true';
+
+  const cover = files?.image?.[0];
+  const pages = files?.images ?? [];
+  const audioFile = files?.audio?.[0];
+
+  const imagesMeta = dto.imagesMeta ?? [];
+
+  // Upload cover image to Cloudflare if exists
+  let coverUrl = dto.imageUrl;
+  if (cover) {
+    const uploadedCover = await this.cloudflareService.uploadFile(cover);
+    coverUrl = uploadedCover.fileUrl;
   }
+
+  // Upload audio file to Cloudflare if exists
+  let audioUrl = dto.audioUrl;
+  if (audioFile) {
+    const uploadedAudio = await this.cloudflareService.uploadFile(audioFile);
+    audioUrl = uploadedAudio.fileUrl;
+  }
+
+  // Upload page images to Cloudflare
+  const images = await Promise.all(
+    pages.map(async (f, idx) => {
+      const uploaded = await this.cloudflareService.uploadFile(f);
+      return {
+        pageIndex: imagesMeta[idx]?.pageIndex ?? idx + 1,
+        image: uploaded.fileUrl,
+      };
+    })
+  );
+
+  let createdBy: any = dto.createdBy;
+  let updatedBy: any = dto.updatedBy;
+
+  if (dto.createdBy) {
+    const user = await this.usersService.findUserById(dto.createdBy.toString());
+    if (!user) throw new NotFoundException('createdBy user not found');
+    createdBy = user._id;
+    updatedBy = user._id;
+  }
+
+  const createData = {
+    title: dto.title,
+    type: dto.type,
+    level: dto.level,
+    topic: dto.topic,
+    contentEnglish: dto.contentEnglish,
+    contentVietnamese: dto.contentVietnamese,
+    vocabulary,
+    grammarPoints,
+    comprehensionQuestions,
+    isPublished,
+    audioUrl: audioUrl,
+    imageUrl: coverUrl,
+    images: images.length ? images : undefined,
+    createdBy,
+    updatedBy,
+  };
+  const newLiterature = new this.literatureModel(createData);
+
+  if (!newLiterature) {
+    throw new BadRequestException('Failed to create literature');
+  }
+  return newLiterature.save();
+}
+
 
   async getLiteratures(paginationDto: PaginationDto): Promise<{
     literatures: LiteratureDocument[];

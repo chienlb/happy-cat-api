@@ -1,64 +1,63 @@
-import {
-  IsString,
-  IsOptional,
-  IsEnum,
-  IsBoolean,
-  IsArray,
-  IsUrl,
-} from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsBoolean, IsString as IsStr } from 'class-validator';
 import { Types } from 'mongoose';
 import { LiteratureType, LiteratureLevel } from '../schema/literature.schema';
+import { IsString as IsStringEach } from 'class-validator';
+import { ToArray } from 'src/app/common/decorators/to-array.decorator';
+import { Transform } from 'class-transformer';
+import { vocabulary, grammarPoints, comprehensionQuestion } from '../schema/literature.schema';
 
 export class CreateLiteratureDto {
   @IsString()
-  title: string; // Tên bài đọc / truyện / thơ
+  title: string;
 
   @IsEnum(LiteratureType)
-  type: LiteratureType; // Loại nội dung
+  type: LiteratureType;
 
   @IsEnum(LiteratureLevel)
-  level: LiteratureLevel; // Trình độ tiếng Anh
+  level: LiteratureLevel;
 
   @IsOptional()
   @IsString()
-  topic?: string; // Chủ đề
+  topic?: string;
 
   @IsString()
-  contentEnglish: string; // Nội dung tiếng Anh
+  contentEnglish: string;
 
   @IsOptional()
   @IsString()
-  contentVietnamese?: string; // Dịch tiếng Việt
+  contentVietnamese?: string;
+
+  @ToArray({ optional: true })
+  vocabulary?: vocabulary[];
+
+  @ToArray({ optional: true })
+  grammarPoints?: grammarPoints[];
 
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  vocabulary?: string[]; // Từ vựng
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  grammarPoints?: string[]; // Điểm ngữ pháp
-
-  @IsOptional()
-  @IsUrl()
   audioUrl?: string;
 
   @IsOptional()
-  @IsUrl()
   imageUrl?: string;
 
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  comprehensionQuestions?: string[];
+  @ToArray({ optional: true })
+  comprehensionQuestions?: comprehensionQuestion[];
 
+  @IsOptional()
   @IsBoolean()
-  isPublished: boolean; // Có công khai không
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return undefined;
+  })
+  isPublished?: boolean;
 
   @IsOptional()
   createdBy?: Types.ObjectId;
 
   @IsOptional()
   updatedBy?: Types.ObjectId;
+
+  // cái này là array object, KHÔNG mapToString
+  @ToArray({ optional: true })
+  imagesMeta?: { pageIndex: number, image: string }[];
 }
