@@ -253,7 +253,7 @@ Compose đọc `docker-compose.yml` và dùng `env_file: .env`. API lắng nghe 
 
 ## 📚 API & Swagger
 
-- Swagger UI: `http://localhost:3000/docs`
+- Swagger UI: `http://localhost:3000/api-docs`
 - Base URL: `http://localhost:3000/api/v1`
 - Auth header: `Authorization: Bearer <access-token>`
 
