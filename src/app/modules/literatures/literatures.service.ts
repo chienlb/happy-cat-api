@@ -21,88 +21,89 @@ export class LiteraturesService {
   ) { }
 
   async createLiterature(
-  dto: CreateLiteratureDto,
-  files?: { image?: any; images?: any[]; audio?: any },
-): Promise<LiteratureDocument> {
-  const existing = await this.literatureModel.findOne({ title: dto.title }).lean();
-  if (existing) throw new ConflictException('Literature already exists');
+    dto: CreateLiteratureDto,
+    files?: { image?: any; images?: any[]; audio?: any },
+  ): Promise<LiteratureDocument> {
+    const existing = await this.literatureModel.findOne({ title: dto.title }).lean();
+    if (existing) throw new ConflictException('Literature already exists');
 
-  const vocabulary = dto.vocabulary;
-  const grammarPoints = dto.grammarPoints;
-  const comprehensionQuestions = dto.comprehensionQuestions;
+    const vocabulary = dto.vocabulary;
+    const grammarPoints = dto.grammarPoints;
+    const comprehensionQuestions = dto.comprehensionQuestions;
 
-  const isPublished =
-    dto.isPublished === true || (dto.isPublished as any) === 'true';
+    const isPublished =
+      dto.isPublished === true || (dto.isPublished as any) === 'true';
 
-  const cover = files?.image?.[0];
-  const pages = files?.images ?? [];
-  const audioFile = files?.audio?.[0];
+    const cover = files?.image?.[0];
+    const pages = files?.images ?? [];
+    const audioFile = files?.audio?.[0];
 
-  const imagesMeta = dto.imagesMeta ?? [];
+    const imagesMeta = dto.imagesMeta ?? [];
 
-  // Upload cover image to Cloudflare if exists
-  let coverUrl = dto.imageUrl;
-  if (cover) {
-    const uploadedCover = await this.cloudflareService.uploadFile(cover, "image comics");
-    coverUrl = uploadedCover.fileUrl;
+    // Upload cover image to Cloudflare if exists
+    let coverUrl = dto.imageUrl;
+    if (cover) {
+      const uploadedCover = await this.cloudflareService.uploadFile(cover, "image comics");
+      coverUrl = uploadedCover.fileUrl;
+    }
+
+    // Upload audio file to Cloudflare if exists
+    let audioUrl = dto.audioUrl;
+    if (audioFile) {
+      const uploadedAudio = await this.cloudflareService.uploadFile(audioFile, "audio");
+      audioUrl = uploadedAudio.fileUrl;
+    }
+
+    // Upload page images to Cloudflare
+    const images = await Promise.all(
+      pages.map(async (f, idx) => {
+        const uploaded = await this.cloudflareService.uploadFile(f, "image comics");
+        return {
+          pageIndex: imagesMeta[idx]?.pageIndex ?? idx + 1,
+          image: uploaded.fileUrl,
+        };
+      })
+    );
+
+    let createdBy: any = dto.createdBy;
+    let updatedBy: any = dto.updatedBy;
+
+    if (dto.createdBy) {
+      const user = await this.usersService.findUserById(dto.createdBy.toString());
+      if (!user) throw new NotFoundException('createdBy user not found');
+      createdBy = user._id;
+      updatedBy = user._id;
+    }
+
+    const createData = {
+      title: dto.title,
+      type: dto.type,
+      level: dto.level,
+      topic: dto.topic,
+      contentEnglish: dto.contentEnglish,
+      contentVietnamese: dto.contentVietnamese,
+      vocabulary,
+      grammarPoints,
+      comprehensionQuestions,
+      isPublished,
+      audioUrl: audioUrl,
+      imageUrl: coverUrl,
+      images: images.length ? images : undefined,
+      createdBy,
+      updatedBy,
+    };
+    const newLiterature = new this.literatureModel(createData);
+
+    if (!newLiterature) {
+      throw new BadRequestException('Failed to create literature');
+    }
+    return newLiterature.save();
   }
 
-  // Upload audio file to Cloudflare if exists
-  let audioUrl = dto.audioUrl;
-  if (audioFile) {
-    const uploadedAudio = await this.cloudflareService.uploadFile(audioFile, "audio");
-    audioUrl = uploadedAudio.fileUrl;
-  }
-
-  // Upload page images to Cloudflare
-  const images = await Promise.all(
-    pages.map(async (f, idx) => {
-      const uploaded = await this.cloudflareService.uploadFile(f, "image comics");
-      return {
-        pageIndex: imagesMeta[idx]?.pageIndex ?? idx + 1,
-        image: uploaded.fileUrl,
-      };
-    })
-  );
-
-  let createdBy: any = dto.createdBy;
-  let updatedBy: any = dto.updatedBy;
-
-  if (dto.createdBy) {
-    const user = await this.usersService.findUserById(dto.createdBy.toString());
-    if (!user) throw new NotFoundException('createdBy user not found');
-    createdBy = user._id;
-    updatedBy = user._id;
-  }
-
-  const createData = {
-    title: dto.title,
-    type: dto.type,
-    level: dto.level,
-    topic: dto.topic,
-    contentEnglish: dto.contentEnglish,
-    contentVietnamese: dto.contentVietnamese,
-    vocabulary,
-    grammarPoints,
-    comprehensionQuestions,
-    isPublished,
-    audioUrl: audioUrl,
-    imageUrl: coverUrl,
-    images: images.length ? images : undefined,
-    createdBy,
-    updatedBy,
-  };
-  const newLiterature = new this.literatureModel(createData);
-
-  if (!newLiterature) {
-    throw new BadRequestException('Failed to create literature');
-  }
-  return newLiterature.save();
-}
 
 
   async getLiteratures(paginationDto: PaginationDto): Promise<{
-    literatures: LiteratureDocument[];
+    literatures: any[];
     total: number;
     totalPages: number;
     currentPage: number;
@@ -111,43 +112,71 @@ export class LiteraturesService {
     nextPage: number | null;
     prevPage: number | null;
   }> {
-    try {
-      const cacheKey = `literatures:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
-      }
-      const literatures = await this.literatureModel
-        .find({ isActive: true })
-        .skip((paginationDto.page - 1) * paginationDto.limit)
-        .limit(paginationDto.limit)
-        .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 });
-      const total = await this.literatureModel.countDocuments({
-        isActive: true,
-      });
-      const totalPages = Math.ceil(total / paginationDto.limit);
-      const currentPage = paginationDto.page;
-      const hasNextPage = currentPage < totalPages;
-      const hasPreviousPage = currentPage > 1;
-      const nextPage =
-        paginationDto.page < totalPages ? paginationDto.page + 1 : null;
-      const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
-      const result = {
-        literatures,
-        total,
-        totalPages,
-        currentPage,
-        hasNextPage,
-        hasPreviousPage,
-        nextPage,
-        prevPage,
-      };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
-      return result;
-    } catch (error) {
-      throw new BadRequestException(error.message);
-    }
+    const allowedSortFields = new Set([
+      'createdAt',
+      'updatedAt',
+      'title',
+      'level',
+      'type',
+      'topic',
+    ]);
+
+    // 1) sanitize page/limit
+    const page = Math.max(1, Number(paginationDto.page) || 1);
+    const limitRaw = Number(paginationDto.limit) || 10;
+    const limit = Math.min(Math.max(1, limitRaw), 50); // max 50
+
+    // 2) sanitize sort/order
+    const sortField = allowedSortFields.has(paginationDto.sort)
+      ? paginationDto.sort
+      : 'createdAt';
+
+    const sortOrder = paginationDto.order === 'asc' ? 1 : -1;
+
+    const cacheKey = `literatures:isPublished=true:page=${page}:limit=${limit}:sort=${sortField}:order=${sortOrder}`;
+
+    // 3) cache
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+
+    const filter = { isPublished: true };
+
+    // 4) query parallel + lean
+    const [literatures, total] = await Promise.all([
+      this.literatureModel
+        .find(filter)
+        .sort({ [sortField]: sortOrder })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+        .exec(),
+      this.literatureModel.countDocuments(filter).exec(),
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const currentPage = page;
+
+    const hasNextPage = currentPage < totalPages;
+    const hasPreviousPage = currentPage > 1;
+
+    const nextPage = hasNextPage ? currentPage + 1 : null;
+    const prevPage = hasPreviousPage ? currentPage - 1 : null;
+
+    const result = {
+      literatures,
+      total,
+      totalPages,
+      currentPage,
+      hasNextPage,
+      hasPreviousPage,
+      nextPage,
+      prevPage,
+    };
+
+    await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+    return result;
   }
+
 
   async getLiteratureById(id: string): Promise<LiteratureDocument> {
     try {
