@@ -14,6 +14,7 @@ import { UsersService } from '../users/users.service';
 import { PaginationDto } from '../pagination/pagination.dto';
 import { RedisService } from 'src/app/configs/redis/redis.service';
 import { UnitProgressService } from '../unit-progress/unit-progress.service';
+import { CloudflareService } from '../cloudflare/cloudflare.service';
 
 @Injectable()
 export class UnitsService {
@@ -21,10 +22,23 @@ export class UnitsService {
     @InjectModel(Unit.name) private readonly unitModel: Model<UnitDocument>,
     private readonly usersService: UsersService,
     private readonly redisService: RedisService,
+    private readonly cloudflareService: CloudflareService,
     @Inject(forwardRef(() => UnitProgressService))
     private readonly unitProgressService: UnitProgressService,
   ) {}
-  async createUnit(createUnitDto: CreateUnitDto, session?: ClientSession) {
+
+  async createUnit(
+    createUnitDto: CreateUnitDto,
+    session?: ClientSession,
+    thumbnail?: { buffer: Buffer; originalname: string; mimetype: string },
+    banner?: { buffer: Buffer; originalname: string; mimetype: string },
+    materialsFiles?: {
+      textLessons: { buffer: Buffer; originalname: string; mimetype: string }[];
+      audios: { buffer: Buffer; originalname: string; mimetype: string }[];
+      videos: { buffer: Buffer; originalname: string; mimetype: string }[];
+      exercises: { buffer: Buffer; originalname: string; mimetype: string }[];
+    },
+  ) {
     try {
       const user = await this.usersService.findUserById(
         createUnitDto.createdBy,
@@ -38,8 +52,85 @@ export class UnitsService {
       if (existingUnit) {
         throw new BadRequestException('Unit already exists');
       }
+
+      let thumbnailUrl: string | undefined = createUnitDto.thumbnail;
+      let bannerUrl: string | undefined = createUnitDto.banner;
+
+      if (thumbnail) {
+        const upload = await this.cloudflareService.uploadFile(
+          thumbnail,
+          'units/thumbnails',
+        );
+        thumbnailUrl = upload.fileUrl;
+      }
+      if (banner) {
+        const upload = await this.cloudflareService.uploadFile(
+          banner,
+          'units/banners',
+        );
+        bannerUrl = upload.fileUrl;
+      }
+
+      const dtoMaterials = createUnitDto.materials ?? {};
+      let materials: {
+        textLessons?: string[];
+        videos?: string[];
+        audios?: string[];
+        exercises?: string[];
+      } = {
+        textLessons: [...(dtoMaterials.textLessons ?? [])],
+        audios: [...(dtoMaterials.audios ?? [])],
+        videos: [...(dtoMaterials.videos ?? [])],
+        exercises: [...(dtoMaterials.exercises ?? [])],
+      };
+
+      if (materialsFiles) {
+        const uploadMany = async (
+          files: { buffer: Buffer; originalname: string; mimetype: string }[],
+          folder: string,
+        ) => {
+          const urls: string[] = [];
+          for (const f of files) {
+            const u = await this.cloudflareService.uploadFile(f, folder);
+            urls.push(u.fileUrl);
+          }
+          return urls;
+        };
+        if (materialsFiles.textLessons?.length) {
+          const urls = await uploadMany(
+            materialsFiles.textLessons,
+            'units/materials/text-lessons',
+          );
+          materials.textLessons = [...urls, ...(materials.textLessons ?? [])];
+        }
+        if (materialsFiles.audios?.length) {
+          const urls = await uploadMany(
+            materialsFiles.audios,
+            'units/materials/audios',
+          );
+          materials.audios = [...urls, ...(materials.audios ?? [])];
+        }
+        if (materialsFiles.videos?.length) {
+          const urls = await uploadMany(
+            materialsFiles.videos,
+            'units/materials/videos',
+          );
+          materials.videos = [...urls, ...(materials.videos ?? [])];
+        }
+        if (materialsFiles.exercises?.length) {
+          const urls = await uploadMany(
+            materialsFiles.exercises,
+            'units/materials/exercises',
+          );
+          materials.exercises = [...urls, ...(materials.exercises ?? [])];
+        }
+      }
+
       const newUnit = new this.unitModel({
         ...createUnitDto,
+        thumbnail: thumbnailUrl,
+        banner: bannerUrl,
+        materials,
         createdBy: user._id,
         updatedBy: user._id,
       });

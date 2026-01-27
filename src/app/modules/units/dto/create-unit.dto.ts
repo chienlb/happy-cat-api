@@ -10,7 +10,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { UnitLevel, UnitDifficulty, UnitStatus } from '../schema/unit.schema';
+import { UnitDifficulty, UnitStatus } from '../schema/unit.schema';
 
 class MaterialsDto {
   @ApiPropertyOptional({
@@ -74,14 +74,6 @@ export class CreateUnitDto {
   @ApiProperty({ description: 'Grade level', example: 'Grade 6' })
   @IsString()
   grade: string;
-
-  @ApiProperty({
-    description: 'Unit level',
-    enum: UnitLevel,
-    example: UnitLevel.A1,
-  })
-  @IsEnum(UnitLevel)
-  level: UnitLevel;
 
   @ApiProperty({
     description: 'Unit difficulty',

@@ -1,4 +1,12 @@
-import { Controller, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Param,
+  Query,
+  UseGuards,
+  UseInterceptors,
+  UploadedFiles,
+} from '@nestjs/common';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { UnitsService } from './units.service';
 import {
   ApiTags,
@@ -28,7 +36,8 @@ export class UnitsController {
   constructor(private readonly unitsService: UnitsService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new unit' })
+  @UseInterceptors(AnyFilesInterceptor())
+  @ApiOperation({ summary: 'Create a new unit (form-data + thumbnail, banner, materials upload)' })
   @ApiBody({
     description: 'Create a new unit',
     type: CreateUnitDto,
@@ -72,8 +81,23 @@ export class UnitsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  create(@Body() createUnitDto: CreateUnitDto) {
-    return this.unitsService.createUnit(createUnitDto);
+  create(
+    @Body() createUnitDto: CreateUnitDto,
+    @UploadedFiles() files?: any[],
+  ) {
+    const thumbnail = files?.find((f) => f.fieldname === 'thumbnail');
+    const banner = files?.find((f) => f.fieldname === 'banner');
+    const textLessons = files?.filter((f) => f.fieldname === 'textLessons') ?? [];
+    const audios = files?.filter((f) => f.fieldname === 'audios') ?? [];
+    const videos = files?.filter((f) => f.fieldname === 'videos') ?? [];
+    const exercises = files?.filter((f) => f.fieldname === 'exercises') ?? [];
+    return this.unitsService.createUnit(
+      createUnitDto,
+      undefined,
+      thumbnail,
+      banner,
+      { textLessons, audios, videos, exercises },
+    );
   }
 
   @Get()

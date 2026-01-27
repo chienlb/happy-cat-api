@@ -5,11 +5,16 @@ import {
   Patch,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFiles,
+  Body,
+  Get,
+  Post,
 } from '@nestjs/common';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { LessonsService } from './lessons.service';
 import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
-import { Body, Get, Post } from '@nestjs/common';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -40,7 +45,11 @@ export class LessonsController {
   constructor(private readonly lessonsService: LessonsService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new lesson' })
+  @UseInterceptors(AnyFilesInterceptor())
+  @ApiOperation({
+    summary:
+      'Create a new lesson (form-data + thumbnail, audioIntro, videoIntro, materials, content files)',
+  })
   @ApiBody({
     description: 'Create a new lesson',
     type: CreateLessonDto,
@@ -101,8 +110,37 @@ export class LessonsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Not Found' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  createLesson(@Body() createLessonDto: CreateLessonDto) {
-    return this.lessonsService.createLesson(createLessonDto);
+  createLesson(
+    @Body() createLessonDto: CreateLessonDto,
+    @UploadedFiles() files?: any[],
+  ) {
+    const thumbnail = files?.find((f) => f.fieldname === 'thumbnail');
+    const audioIntro = files?.find((f) => f.fieldname === 'audioIntro');
+    const videoIntro = files?.find((f) => f.fieldname === 'videoIntro');
+    const materialsFiles =
+      files?.filter((f) => f.fieldname === 'materials') ?? [];
+    const contentSongsAudio = files?.find(
+      (f) => f.fieldname === 'content_songs_audio',
+    );
+    const contentSongsVideo = files?.find(
+      (f) => f.fieldname === 'content_songs_video',
+    );
+    const contentSongsVocabularyImage =
+      files?.filter((f) => f.fieldname === 'content_songs_vocabulary_image') ??
+      [];
+    const contentSongsVocabularyAudio =
+      files?.filter((f) => f.fieldname === 'content_songs_vocabulary_audio') ??
+      [];
+    return this.lessonsService.createLesson(createLessonDto, undefined, {
+      thumbnail,
+      audioIntro,
+      videoIntro,
+      materialsFiles,
+      contentSongsAudio,
+      contentSongsVideo,
+      contentSongsVocabularyImage,
+      contentSongsVocabularyAudio,
+    });
   }
 
   @Get(':id')

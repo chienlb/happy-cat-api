@@ -6,8 +6,8 @@ import {
   forwardRef,
   BadRequestException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Model, Types } from 'mongoose';
+import { InjectModel, InjectConnection } from '@nestjs/mongoose';
+import { ClientSession, Connection, Model, Types } from 'mongoose';
 import { Lesson, LessonDocument, LessonStatus } from './schema/lesson.schema';
 import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
@@ -16,14 +16,19 @@ import { UnitsService } from '../units/units.service';
 import { PaginationDto } from '../pagination/pagination.dto';
 import { RedisService } from 'src/app/configs/redis/redis.service';
 import { LessonProgressService } from '../lesson-progress/lesson-progress.service';
+import { CloudflareService } from '../cloudflare/cloudflare.service';
+
+type MulterFile = { buffer: Buffer; originalname: string; mimetype: string };
 
 @Injectable()
 export class LessonsService {
   constructor(
     @InjectModel(Lesson.name) private lessonModel: Model<LessonDocument>,
+    @InjectConnection() private readonly connection: Connection,
     private readonly usersService: UsersService,
     private readonly unitsService: UnitsService,
     private readonly redisService: RedisService,
+    private readonly cloudflareService: CloudflareService,
     @Inject(forwardRef(() => LessonProgressService))
     private readonly lessonProgressService: LessonProgressService,
   ) {}
@@ -31,12 +36,23 @@ export class LessonsService {
   async createLesson(
     createLessonDto: CreateLessonDto,
     session?: ClientSession,
+    files?: {
+      thumbnail?: MulterFile;
+      audioIntro?: MulterFile;
+      videoIntro?: MulterFile;
+      materialsFiles: MulterFile[];
+      contentSongsAudio?: MulterFile;
+      contentSongsVideo?: MulterFile;
+      contentSongsVocabularyImage: MulterFile[];
+      contentSongsVocabularyAudio: MulterFile[];
+    },
   ): Promise<LessonDocument> {
-    const mongooseSession = session ?? (await this.lessonModel.startSession());
+    const mongooseSession =
+      session ?? (await this.connection.startSession());
     const isNewSession = !session;
 
     if (isNewSession) {
-      await mongooseSession.startTransaction();
+      mongooseSession.startTransaction();
     }
     try {
       const user = await this.usersService.findUserById(
@@ -49,8 +65,114 @@ export class LessonsService {
       if (!unit) {
         throw new NotFoundException('Unit not found');
       }
+
+      let thumbnailUrl: string | undefined = createLessonDto.thumbnail;
+      let audioIntroUrl: string | undefined = createLessonDto.audioIntro;
+      let videoIntroUrl: string | undefined = createLessonDto.videoIntro;
+      let materials: string[] = [...(createLessonDto.materials ?? [])];
+
+      if (files) {
+        if (files.thumbnail) {
+          const u = await this.cloudflareService.uploadFile(
+            files.thumbnail,
+            'lessons/thumbnails',
+          );
+          thumbnailUrl = u.fileUrl;
+        }
+        if (files.audioIntro) {
+          const u = await this.cloudflareService.uploadFile(
+            files.audioIntro,
+            'lessons/audio-intro',
+          );
+          audioIntroUrl = u.fileUrl;
+        }
+        if (files.videoIntro) {
+          const u = await this.cloudflareService.uploadFile(
+            files.videoIntro,
+            'lessons/video-intro',
+          );
+          videoIntroUrl = u.fileUrl;
+        }
+        if (files.materialsFiles?.length) {
+          const uploadMany = async (list: MulterFile[], folder: string) => {
+            const urls: string[] = [];
+            for (const f of list) {
+              const u = await this.cloudflareService.uploadFile(f, folder);
+              urls.push(u.fileUrl);
+            }
+            return urls;
+          };
+          const urls = await uploadMany(
+            files.materialsFiles,
+            'lessons/materials',
+          );
+          materials = [...urls, ...materials];
+        }
+
+        if (
+          files.contentSongsAudio ||
+          files.contentSongsVideo ||
+          (files.contentSongsVocabularyImage?.length ?? 0) > 0 ||
+          (files.contentSongsVocabularyAudio?.length ?? 0) > 0
+        ) {
+          const uploadMany = async (list: MulterFile[], folder: string) => {
+            const urls: string[] = [];
+            for (const f of list) {
+              const u = await this.cloudflareService.uploadFile(f, folder);
+              urls.push(u.fileUrl);
+            }
+            return urls;
+          };
+
+          if (files.contentSongsAudio && createLessonDto.content?.songs) {
+            const u = await this.cloudflareService.uploadFile(
+              files.contentSongsAudio,
+              'lessons/content/songs-audio',
+            );
+            createLessonDto.content.songs.audio = u.fileUrl;
+          }
+          if (files.contentSongsVideo && createLessonDto.content?.songs) {
+            const u = await this.cloudflareService.uploadFile(
+              files.contentSongsVideo,
+              'lessons/content/songs-video',
+            );
+            createLessonDto.content.songs.video = u.fileUrl;
+          }
+          if (
+            (files.contentSongsVocabularyImage?.length ?? 0) > 0 &&
+            createLessonDto.content?.songs?.vocabulary?.length
+          ) {
+            const imageUrls = await uploadMany(
+              files.contentSongsVocabularyImage,
+              'lessons/content/songs-vocabulary-images',
+            );
+            const vocab = createLessonDto.content!.songs!.vocabulary;
+            for (let i = 0; i < imageUrls.length && i < vocab.length; i++) {
+              (vocab[i] as any).image = imageUrls[i];
+            }
+          }
+          if (
+            (files.contentSongsVocabularyAudio?.length ?? 0) > 0 &&
+            createLessonDto.content?.songs?.vocabulary?.length
+          ) {
+            const audioUrls = await uploadMany(
+              files.contentSongsVocabularyAudio,
+              'lessons/content/songs-vocabulary-audios',
+            );
+            const vocab = createLessonDto.content!.songs!.vocabulary;
+            for (let i = 0; i < audioUrls.length && i < vocab.length; i++) {
+              (vocab[i] as any).audio = audioUrls[i];
+            }
+          }
+        }
+      }
+
       const newLesson = new this.lessonModel({
         ...createLessonDto,
+        thumbnail: thumbnailUrl,
+        audioIntro: audioIntroUrl,
+        videoIntro: videoIntroUrl,
+        materials,
         createdBy: user._id,
         updatedBy: user._id,
         unit: unit._id,
@@ -70,11 +192,15 @@ export class LessonsService {
         throw error;
       }
       throw new InternalServerErrorException(
-        'Failed to create lesson: ' + error.message,
+        'Failed to create lesson: ' + (error instanceof Error ? error.message : String(error)),
       );
     } finally {
       if (isNewSession) {
-        await mongooseSession.endSession();
+        try {
+          await mongooseSession.endSession();
+        } catch {
+          /* ignore */
+        }
       }
     }
   }

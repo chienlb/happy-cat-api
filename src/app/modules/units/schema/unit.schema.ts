@@ -16,26 +16,16 @@ export enum UnitDifficulty {
   HARD = 'hard',
 }
 
-export enum UnitLevel {
-  A1 = 'A1',
-  A2 = 'A2',
-  B1 = 'B1',
-  B2 = 'B2',
-  C1 = 'C1',
-  C2 = 'C2',
-}
-
 export interface IUnit {
   name: string; // Tên chủ đề học (Unit)
   description?: string; // Mô tả ngắn về Unit
   topic: string; // Chủ đề chính của Unit
   slug: string; // Đường dẫn thân thiện với SEO
-  level: UnitLevel; // Cấp độ (A1, A2, B1, B2, C1, C2)
   difficulty: UnitDifficulty; // Mức độ khó (Dễ, Trung bình, Khó)
   totalLessons: number; // Tổng số bài học trong Unit
   objectives: string[]; // Mục tiêu học tập chính
   orderIndex: number; // Thứ tự của Unit
-  materials: {
+  materials?: {
     textLessons?: string[]; // Đường dẫn file PDF, DOC...
     videos?: string[]; // Video bài giảng
     audios?: string[]; // Audio luyện nghe
@@ -70,9 +60,6 @@ export class Unit implements IUnit {
 
   @Prop({ required: true, unique: true })
   slug: string;
-
-  @Prop({ default: UnitLevel.A1, enum: UnitLevel })
-  level: UnitLevel;
 
   @Prop({ default: UnitDifficulty.EASY, enum: UnitDifficulty })
   difficulty: UnitDifficulty;

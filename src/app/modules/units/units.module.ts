@@ -8,6 +8,7 @@ import { UsersModule } from '../users/users.module';
 import { RedisModule } from 'src/app/configs/redis/redis.module';
 import { RedisService } from 'src/app/configs/redis/redis.service';
 import { UnitProgressModule } from '../unit-progress/unit-progress.module';
+import { CloudflareModule } from '../cloudflare/cloudflare.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { UnitProgressModule } from '../unit-progress/unit-progress.module';
     ]),
     UsersModule,
     RedisModule,
+    CloudflareModule,
     forwardRef(() => UnitProgressModule),
   ],
   controllers: [UnitsController],

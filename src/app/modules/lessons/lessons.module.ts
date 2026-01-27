@@ -8,6 +8,7 @@ import { UnitsModule } from '../units/units.module';
 import { RedisModule } from 'src/app/configs/redis/redis.module';
 import { RedisService } from 'src/app/configs/redis/redis.service';
 import { LessonProgressModule } from '../lesson-progress/lesson-progress.module';
+import { CloudflareModule } from '../cloudflare/cloudflare.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { LessonProgressModule } from '../lesson-progress/lesson-progress.module'
     UsersModule,
     UnitsModule,
     RedisModule,
+    CloudflareModule,
     forwardRef(() => LessonProgressModule),
   ],
   controllers: [LessonsController],
