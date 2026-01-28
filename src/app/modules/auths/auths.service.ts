@@ -43,6 +43,7 @@ import { ResendVerificationEmailDto } from './dto/resend-verification-email.dto'
 import { RedisService } from 'src/app/configs/redis/redis.service';
 import { verifyEmailQueue } from 'src/app/jobs/queues/verify-email.queue';
 import { initializeVerifyEmailWorker } from 'src/app/jobs/workers/verify-email.worker';
+import { initializeEmailInformationWorker } from 'src/app/jobs/workers/email-information.worker';
 import { OtpsService } from '../otps/otps.service';
 
 @Injectable()
@@ -104,6 +105,8 @@ export class AuthsService implements OnModuleInit {
   async onModuleInit() {
     await initializeVerifyEmailWorker();
     this.logger.log('Verify email worker initialized');
+    await initializeEmailInformationWorker();
+    this.logger.log('Email information worker initialized');
   }
 
   async register(

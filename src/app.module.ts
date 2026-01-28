@@ -26,6 +26,7 @@ import { ProgressesModule } from './app/modules/progresses/progresses.module';
 import { DiscussionsModule } from './app/modules/discussions/discussions.module';
 import { GroupMessagesModule } from './app/modules/group-messages/group-messages.module';
 import { MailModule } from './app/configs/mail/mail.module';
+import { NotificationJobsModule } from './app/modules/notification-jobs/notification-jobs.module';
 
 import { ConfigModule } from '@nestjs/config';
 import { AuthsModule } from './app/modules/auths/auths.module';
@@ -71,6 +72,7 @@ import { OtpsModule } from './app/modules/otps/otps.module';
     DiscussionsModule,
     GroupMessagesModule,
     AuthsModule,
+    NotificationJobsModule,
     CloudflareModule,
     PurchasesModule,
     RedisModule,
@@ -82,4 +84,4 @@ import { OtpsModule } from './app/modules/otps/otps.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

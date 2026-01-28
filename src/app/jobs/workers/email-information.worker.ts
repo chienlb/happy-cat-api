@@ -1,5 +1,5 @@
 import { Job, Worker } from 'bullmq';
-import { QUEUE_NAME } from '../queues/verify-email.queue';
+import { QUEUE_NAME } from '../queues/email-information.queue';
 import { sendEmail } from 'src/app/common/utils/mail.util';
 import { Logger } from '@nestjs/common';
 import { redis } from 'src/app/configs/redis/redis.client';
@@ -7,27 +7,23 @@ import { redis } from 'src/app/configs/redis/redis.client';
 const logger = new Logger('EmailInformationWorker');
 
 interface EmailInformationJobData {
-    email: string;
-    fullname: string;
-    username: string;
-    password: string;
-    year: number;
+  email: string;
+  fullname: string;
+  username: string;
+  password: string;
+  year: number;
 }
 
 export const emailInformationWorker = async (job: Job<EmailInformationJobData>) => {
-    const {
-        email,
-        fullname,
-        username,
-        password,
-        year,
-    } = job.data;
-    await sendEmail(email, 'Thông tin tài khoản HAPPY CAT', 'email-information', {
-        fullname: fullname,
-        username: fullname || username || 'Bạn',
-        password: password,
-        year: year,
-    });
+  const { email, fullname, username, password, year } = job.data;
+  const displayName = fullname || username || 'Bạn';
+  await sendEmail(email, 'Thông tin tài khoản HAPPY CAT', 'email-information', {
+    fullname,
+    username,
+    displayName,
+    password,
+    year,
+  });
 };
 
 let workerInstance: Worker | null = null;

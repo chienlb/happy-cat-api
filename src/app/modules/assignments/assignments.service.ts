@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -10,15 +11,19 @@ import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { UsersService } from '../users/users.service';
 import { CloudflareService } from '../cloudflare/cloudflare.service';
 import { UpdateAssignmentDto } from './dto/update-assignment.dto';
+import { NotificationJobsService } from '../notification-jobs/notification-jobs.service';
 
 @Injectable()
 export class AssignmentsService {
+  private readonly logger = new Logger(AssignmentsService.name);
+
   constructor(
     @InjectModel(Assignment.name)
     private assignmentModel: Model<AssignmentDocument>,
     private usersService: UsersService,
     private cloudflareService: CloudflareService,
-  ) {}
+    private notificationJobsService: NotificationJobsService,
+  ) { }
 
   async create(createAssignmentDto: CreateAssignmentDto, file?: any) {
     const user = await this.usersService.findUserById(
@@ -56,7 +61,16 @@ export class AssignmentsService {
       createdBy: user._id,
     });
 
-    return assignment.save();
+    const saved = await assignment.save();
+
+    this.notificationJobsService
+      .notifyNewAssignment(
+        saved._id.toString(),
+        (saved.classId as any)?.toString?.() ?? String(createAssignmentDto.classId),
+      )
+      .catch((e) => this.logger.warn('Failed to enqueue new-assignment notification:', (e as Error).message));
+
+    return saved;
   }
 
   async updateAssignment(id: string, updateAssignmentDto: UpdateAssignmentDto) {
