@@ -158,14 +158,28 @@ export class GroupMessagesController {
     description: 'The id of the group message',
     example: '1234567890',
   })
+  @ApiBody({
+    description: 'User ID who is marking the message as read',
+    schema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          example: '507f1f77bcf86cd799439011',
+          description: 'ID of the user marking as read',
+        },
+      },
+      required: ['userId'],
+    },
+  })
   @ApiResponse({
     status: 200,
     description: 'Group message marked as read successfully',
   })
   @ApiResponse({ status: 404, description: 'Group message not found' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  markAsRead(@Param('id') id: string) {
-    return this.groupMessagesService.markMessageAsRead(id);
+  markAsRead(@Param('id') id: string, @Body('userId') userId: string) {
+    return this.groupMessagesService.markMessageAsRead(id, userId);
   }
 
   @Post(':id/unread')
@@ -175,14 +189,31 @@ export class GroupMessagesController {
     description: 'The id of the group message',
     example: '1234567890',
   })
+  @ApiBody({
+    description: 'User ID who is marking the message as unread',
+    schema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          example: '507f1f77bcf86cd799439011',
+          description: 'ID of the user marking as unread',
+        },
+      },
+      required: ['userId'],
+    },
+  })
   @ApiResponse({
     status: 200,
     description: 'Group message marked as unread successfully',
   })
   @ApiResponse({ status: 404, description: 'Group message not found' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  markAsUnreadByMessageId(@Param('id') id: string) {
-    return this.groupMessagesService.markMessageAsUnread(id);
+  markAsUnreadByMessageId(
+    @Param('id') id: string,
+    @Body('userId') userId: string,
+  ) {
+    return this.groupMessagesService.markMessageAsUnread(id, userId);
   }
 
   @Post(':id/reply')

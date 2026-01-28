@@ -233,26 +233,44 @@ export class GroupMessagesService {
     }
   }
 
-  async markMessageAsRead(id: string): Promise<{
+  async markMessageAsRead(
+    id: string,
+    userId: string,
+  ): Promise<{
     data: GroupMessageDocument;
   }> {
     try {
+      if (!Types.ObjectId.isValid(userId)) {
+        throw new NotFoundException('Invalid user ID');
+      }
+
       const message = await this.findMessageById(id);
       if (!message) {
         throw new NotFoundException('Message not found');
       }
-      await this.groupMessageRepository.findByIdAndUpdate(
+
+      const userObjectId = new Types.ObjectId(userId);
+
+      // Chỉ add user vào readBy nếu chưa có
+      const updatedMessage = await this.groupMessageRepository.findByIdAndUpdate(
         id,
-        { readBy: [message.data.senderId] },
+        { $addToSet: { readBy: userObjectId } },
         { new: true },
       );
+
+      if (!updatedMessage) {
+        throw new NotFoundException('Failed to update message');
+      }
+
+      // Emit read receipt qua WebSocket
       this.groupMessagesGateway.emitReadReceipt(
         message.data.groupId.toString(),
         id,
-        message.data.senderId.toString(),
+        userId,
       );
+
       return {
-        data: message.data,
+        data: updatedMessage as GroupMessageDocument,
       };
     } catch (error) {
       throw new InternalServerErrorException(
@@ -262,26 +280,44 @@ export class GroupMessagesService {
     }
   }
 
-  async markMessageAsUnread(id: string): Promise<{
+  async markMessageAsUnread(
+    id: string,
+    userId: string,
+  ): Promise<{
     data: GroupMessageDocument;
   }> {
     try {
+      if (!Types.ObjectId.isValid(userId)) {
+        throw new NotFoundException('Invalid user ID');
+      }
+
       const message = await this.findMessageById(id);
       if (!message) {
         throw new NotFoundException('Message not found');
       }
-      await this.groupMessageRepository.findByIdAndUpdate(
+
+      const userObjectId = new Types.ObjectId(userId);
+
+      // Remove user khỏi readBy array
+      const updatedMessage = await this.groupMessageRepository.findByIdAndUpdate(
         id,
-        { readBy: [] },
+        { $pull: { readBy: userObjectId } },
         { new: true },
       );
+
+      if (!updatedMessage) {
+        throw new NotFoundException('Failed to update message');
+      }
+
+      // Emit read receipt qua WebSocket
       this.groupMessagesGateway.emitReadReceipt(
         message.data.groupId.toString(),
         id,
-        message.data.senderId.toString(),
+        userId,
       );
+
       return {
-        data: message.data,
+        data: updatedMessage as GroupMessageDocument,
       };
     } catch (error) {
       throw new InternalServerErrorException(
