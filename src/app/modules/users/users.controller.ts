@@ -12,11 +12,14 @@ import {
   Req,
   BadRequestException,
   ForbiddenException,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ImportStudentsDto } from './dto/import-students.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -25,6 +28,7 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiQuery,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { ok } from '../../common/response/api-response';
 import { UserRole } from './schema/user.schema';
@@ -35,6 +39,8 @@ import { Roles } from '../../common/decorators/role.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { PaginationDto } from '../pagination/pagination.dto';
 import mongoose, { ClientSession } from 'mongoose';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { AnyARecord } from 'dns';
 
 @Controller('users')
 @ApiTags('Users')
@@ -156,5 +162,88 @@ export class UsersController {
     const user = await this.usersService.getUserBySlug(slug);
     if (!user) throw new NotFoundException('User not found.');
     return ok(user, 'User retrieved successfully');
+  }
+
+  @Post('import-from-excel')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Import students from Excel file' })
+  @ApiBody({
+    description: 'Excel file containing student data (columns: fullname, email, birthDate, gender, phone)',
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Excel file (.xlsx or .xls)',
+        },
+        groupId: {
+          type: 'string',
+          description: 'Group/Class ID to add students to',
+        },
+        autoEnroll: {
+          type: 'boolean',
+          default: true,
+          description: 'Automatically add students to the group',
+        },
+        sendInviteEmail: {
+          type: 'boolean',
+          default: true,
+          description: 'Send invite email with login credentials',
+        },
+        autoPassword: {
+          type: 'string',
+          description: 'Default password for all students (if not provided, random passwords will be generated)',
+        },
+      },
+      required: ['file', 'groupId'],
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Students imported successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request - invalid file or data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - no permission' })
+  @ApiResponse({ status: 404, description: 'Group not found' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async importStudentsFromExcel(
+    @UploadedFile() file: any,
+    @Body() importDto: ImportStudentsDto,
+    @Req() req: Request,
+  ) {
+    try {
+      if (!file) {
+        throw new BadRequestException('Excel file is required');
+      }
+
+      // Validate file extension
+      const allowedExtensions = ['.xlsx', '.xls', '.csv'];
+      const fileName = file.originalname.toLowerCase();
+      const hasValidExtension = allowedExtensions.some((ext) => fileName.endsWith(ext));
+
+      if (!hasValidExtension) {
+        throw new BadRequestException(
+          `Invalid file format. Allowed formats: ${allowedExtensions.join(', ')}`,
+        );
+      }
+
+      const userId = (req.user as { sub?: string })?.sub || '';
+      const result = await this.usersService.importStudentsFromExcel(
+        file,
+        importDto,
+        userId,
+      );
+
+      return ok(result, result.message, 201);
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof ForbiddenException || error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        error instanceof Error ? error.message : 'Failed to import students',
+      );
+    }
   }
 }
