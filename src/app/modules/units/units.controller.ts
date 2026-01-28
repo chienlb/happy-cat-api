@@ -5,6 +5,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFiles,
+  Req,
 } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { UnitsService } from './units.service';
@@ -84,6 +85,7 @@ export class UnitsController {
   create(
     @Body() createUnitDto: CreateUnitDto,
     @UploadedFiles() files?: any[],
+    @Req  () req?: any,
   ) {
     const thumbnail = files?.find((f) => f.fieldname === 'thumbnail');
     const banner = files?.find((f) => f.fieldname === 'banner');
@@ -92,6 +94,7 @@ export class UnitsController {
     const videos = files?.filter((f) => f.fieldname === 'videos') ?? [];
     const exercises = files?.filter((f) => f.fieldname === 'exercises') ?? [];
     return this.unitsService.createUnit(
+      req.user.userId,
       createUnitDto,
       undefined,
       thumbnail,

@@ -118,7 +118,9 @@ export const UnitSchema = SchemaFactory.createForClass(Unit);
 
 const UnitModel = model<Unit>('Unit', UnitSchema);
 
+// DISABLED: Pre-validate hook causes buffering timeout when checking slug existence
+// Client must provide unique slug in the request
 UnitSchema.pre('validate', async function (next) {
-  this.slug = await generateSlug(UnitModel, this.name);
+  this.slug = await generateSlug(this.constructor as Model<Unit>, this.name);
   next();
 });

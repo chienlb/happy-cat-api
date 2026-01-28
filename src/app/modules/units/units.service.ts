@@ -28,6 +28,7 @@ export class UnitsService {
   ) {}
 
   async createUnit(
+    userId: string,
     createUnitDto: CreateUnitDto,
     session?: ClientSession,
     thumbnail?: { buffer: Buffer; originalname: string; mimetype: string },
@@ -41,16 +42,10 @@ export class UnitsService {
   ) {
     try {
       const user = await this.usersService.findUserById(
-        createUnitDto.createdBy,
+        userId,
       );
       if (!user) {
         throw new NotFoundException('User not found');
-      }
-      const existingUnit = await this.unitModel.findOne({
-        slug: createUnitDto.slug,
-      });
-      if (existingUnit) {
-        throw new BadRequestException('Unit already exists');
       }
 
       let thumbnailUrl: string | undefined = createUnitDto.thumbnail;
@@ -125,16 +120,15 @@ export class UnitsService {
           materials.exercises = [...urls, ...(materials.exercises ?? [])];
         }
       }
-
       const newUnit = new this.unitModel({
         ...createUnitDto,
         thumbnail: thumbnailUrl,
         banner: bannerUrl,
         materials,
-        createdBy: user._id,
-        updatedBy: user._id,
+        createdBy: userId,
+        updatedBy: userId,
       });
-      await newUnit.save({ session });
+      await newUnit.save();
       return newUnit;
     } catch (error) {
       throw new Error('Failed to create unit: ' + error.message);

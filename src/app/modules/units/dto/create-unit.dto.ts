@@ -9,8 +9,10 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { UnitDifficulty, UnitStatus } from '../schema/unit.schema';
+import { ToArray } from 'src/app/common/decorators/to-array.decorator';
+import { Optional } from '@nestjs/common';
 
 class MaterialsDto {
   @ApiPropertyOptional({
@@ -63,18 +65,7 @@ export class CreateUnitDto {
   })
   @IsString()
   topic: string;
-
-  @ApiProperty({
-    description: 'SEO-friendly slug',
-    example: 'unit-1-greetings',
-  })
-  @IsString()
-  slug: string;
-
-  @ApiProperty({ description: 'Grade level', example: 'Grade 6' })
-  @IsString()
-  grade: string;
-
+  
   @ApiProperty({
     description: 'Unit difficulty',
     enum: UnitDifficulty,
@@ -85,6 +76,7 @@ export class CreateUnitDto {
 
   @ApiProperty({ description: 'Order index', example: 1, minimum: 0 })
   @IsNumber()
+  @Transform(({ value }) => Number(value))
   @Min(0)
   orderIndex: number;
 
@@ -94,6 +86,7 @@ export class CreateUnitDto {
     minimum: 1,
   })
   @IsNumber()
+  @Transform(({ value }) => Number(value))
   @Min(1)
   totalLessons: number;
 
@@ -103,6 +96,7 @@ export class CreateUnitDto {
     example: ['Understand basic greetings', 'Learn introduction phrases'],
   })
   @IsArray()
+  @ToArray()
   @IsString({ each: true })
   objectives: string[];
 
@@ -118,6 +112,7 @@ export class CreateUnitDto {
   @ApiPropertyOptional({ description: 'Prerequisite unit IDs', type: [String] })
   @IsOptional()
   @IsArray()
+  @ToArray()
   @IsMongoId({ each: true })
   prerequisites?: string[];
 
@@ -127,6 +122,7 @@ export class CreateUnitDto {
   })
   @IsOptional()
   @IsNumber()
+  @Transform(({ value }) => Number(value))
   estimatedDuration?: number;
 
   @ApiPropertyOptional({
@@ -153,6 +149,7 @@ export class CreateUnitDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @ToArray()
   tags?: string[];
 
   @ApiProperty({
@@ -162,18 +159,4 @@ export class CreateUnitDto {
   })
   @IsEnum(UnitStatus)
   isActive: UnitStatus;
-
-  @ApiProperty({
-    description: 'Creator user ID',
-    example: '507f1f77bcf86cd799439011',
-  })
-  @IsMongoId()
-  createdBy: string;
-
-  @ApiProperty({
-    description: 'Updater user ID',
-    example: '507f1f77bcf86cd799439011',
-  })
-  @IsMongoId()
-  updatedBy: string;
 }
