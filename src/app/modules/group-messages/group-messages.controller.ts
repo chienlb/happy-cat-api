@@ -7,7 +7,10 @@ import {
   Delete,
   Body,
   Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { GroupMessagesService } from './group-messages.service';
 import { CreateGroupMessageDto } from './dto/create-group-message.dto';
 import {
@@ -25,9 +28,10 @@ import { PaginationDto } from '../pagination/pagination.dto';
 
 @ApiTags('Group Messages')
 @ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
 @Controller('group-messages')
 export class GroupMessagesController {
-  constructor(private readonly groupMessagesService: GroupMessagesService) {}
+  constructor(private readonly groupMessagesService: GroupMessagesService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create a new group message' })
@@ -57,8 +61,8 @@ export class GroupMessagesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  create(@Body() createGroupMessageDto: CreateGroupMessageDto) {
-    return this.groupMessagesService.createMessage(createGroupMessageDto);
+  create(@Body() createGroupMessageDto: CreateGroupMessageDto, @Req() req: any) {
+    return this.groupMessagesService.createMessage(req.user.userId, createGroupMessageDto);
   }
 
   @Get(':id')
@@ -250,8 +254,9 @@ export class GroupMessagesController {
   replyToMessage(
     @Param('id') id: string,
     @Body() createGroupMessageDto: CreateGroupMessageDto,
+    @Req() req: any,
   ) {
-    return this.groupMessagesService.replyToMessage(id, createGroupMessageDto);
+    return this.groupMessagesService.replyToMessage(id, req.user.userId, createGroupMessageDto);
   }
 
   @Get(':id/replies')

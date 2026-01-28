@@ -1,5 +1,6 @@
 import {
   Injectable,
+  ForbiddenException,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
@@ -26,15 +27,14 @@ export class GroupMessagesService {
     private groupsService: GroupsService,
     private readonly redisService: RedisService,
     private readonly groupMessagesGateway: GroupMessagesGateway,
-  ) {}
+  ) { }
 
   async createMessage(
+    userId: string,
     createGroupMessageDto: CreateGroupMessageDto,
   ): Promise<GroupMessageDocument> {
     try {
-      const user = await this.usersService.findUserById(
-        createGroupMessageDto.senderId.toString(),
-      );
+      const user = await this.usersService.findUserById(userId);
       if (!user) {
         throw new NotFoundException('User not found');
       }
@@ -43,6 +43,15 @@ export class GroupMessagesService {
       );
       if (!group) {
         throw new NotFoundException('Group not found');
+      }
+
+      const userIdObj = user._id;
+      const isMember = group.members?.some((m) => m.equals(userIdObj));
+      const isOwner = group.owner?.equals(userIdObj);
+      if (!isMember && !isOwner) {
+        throw new ForbiddenException(
+          'Sender must be a member of the group to send messages.',
+        );
       }
 
       if (
@@ -70,7 +79,7 @@ export class GroupMessagesService {
       }
       const groupMessage = new this.groupMessageRepository({
         ...createGroupMessageDto,
-        senderId: user._id,
+        senderId: new Types.ObjectId(userId),
         groupId: group._id,
       });
       const savedMessage = await groupMessage.save();
@@ -80,9 +89,15 @@ export class GroupMessagesService {
       );
       return savedMessage;
     } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      }
       throw new InternalServerErrorException(
-        'Failed to create group message: ' + error.message,
-        error,
+        'Failed to create group message: ' + (error instanceof Error ? error.message : String(error)),
+        error instanceof Error ? error : undefined,
       );
     }
   }
@@ -329,12 +344,11 @@ export class GroupMessagesService {
 
   async replyToMessage(
     id: string,
+    userId: string,
     replyToMessageDto: CreateGroupMessageDto,
   ): Promise<GroupMessageDocument> {
     try {
-      const user = await this.usersService.findUserById(
-        replyToMessageDto.senderId.toString(),
-      );
+      const user = await this.usersService.findUserById(userId);
       if (!user) {
         throw new NotFoundException('User not found');
       }
@@ -351,16 +365,22 @@ export class GroupMessagesService {
         throw new NotFoundException('Message not found');
       }
       replyToMessageDto.replyTo = message.data._id;
-      const savedMessage = await this.createMessage(replyToMessageDto);
+      const savedMessage = await this.createMessage(userId, replyToMessageDto);
       this.groupMessagesGateway.emitNewMessage(
         group._id.toString(),
         savedMessage,
       );
       return savedMessage;
     } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      }
       throw new InternalServerErrorException(
-        'Failed to reply to message: ' + error.message,
-        error,
+        'Failed to reply to message: ' + (error instanceof Error ? error.message : String(error)),
+        error instanceof Error ? error : undefined,
       );
     }
   }

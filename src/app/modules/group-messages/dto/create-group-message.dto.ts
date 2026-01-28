@@ -12,8 +12,8 @@ export class CreateGroupMessageDto {
   @IsNotEmpty()
   groupId: Types.ObjectId;
 
-  @IsNotEmpty()
-  senderId: Types.ObjectId;
+  @IsOptional()
+  senderId?: Types.ObjectId;
 
   @IsNotEmpty()
   @IsString()

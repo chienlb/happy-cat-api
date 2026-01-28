@@ -54,18 +54,24 @@ export class GroupsService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
+      let members: string[] = [];
       if (createGroupDto.members && createGroupDto.members.length > 0) {
-        const members = await Promise.all(
+        const resolved = await Promise.all(
           createGroupDto.members.map(async (member) => {
-            const user = await this.usersService.findUserById(member);
-            if (!user) {
+            const memberUser = await this.usersService.findUserById(member);
+            if (!memberUser) {
               throw new NotFoundException('User not found');
             }
-            return user._id;
+            return memberUser._id;
           }),
         );
-        createGroupDto.members = members.map((member) => member.toString());
+        members = resolved.map((m) => m.toString());
       }
+      const ownerId = userId;
+      if (!members.includes(ownerId)) {
+        members = [ownerId, ...members];
+      }
+      createGroupDto.members = members;
       const typeOwner = user.accountPackage;
       if (typeOwner === PackageType.FREE) {
         createGroupDto.maxMembers = 10;

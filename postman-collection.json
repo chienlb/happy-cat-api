@@ -7,7 +7,9 @@
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:3000/api/v1" },
-    { "key": "token", "value": "" }
+    { "key": "token", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "groupId", "value": "" }
   ],
   "item": [
     {
@@ -42,6 +44,10 @@
                   "    if (jsonData.data && jsonData.data.accessToken) {",
                   "        pm.collectionVariables.set('token', jsonData.data.accessToken);",
                   "        console.log('Token saved:', jsonData.data.accessToken);",
+                  "    }",
+                  "    if (jsonData.data && jsonData.data.user && jsonData.data.user._id) {",
+                  "        pm.collectionVariables.set('userId', jsonData.data.user._id);",
+                  "        console.log('UserId saved:', jsonData.data.user._id);",
                   "    }",
                   "}"
                 ],
@@ -553,10 +559,14 @@
           "name": "Create Message",
           "request": {
             "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
             "url": "{{baseUrl}}/group-messages",
             "body": {
               "mode": "raw",
-              "raw": "{ \"groupId\": \"\", \"senderId\": \"\", \"content\": \"Hello\", \"type\": \"text\", \"attachments\": [] }"
+              "raw": "{\n  \"groupId\": \"{{groupId}}\",\n  \"content\": \"Hello, đây là tin nhắn test!\",\n  \"type\": \"text\"\n}"
             }
           }
         },
@@ -564,6 +574,7 @@
           "name": "Get Message",
           "request": {
             "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{baseUrl}}/group-messages/:id"
           }
         },
@@ -571,6 +582,7 @@
           "name": "Get Messages By Group",
           "request": {
             "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{baseUrl}}/group-messages/:groupId"
           }
         },
@@ -578,14 +590,19 @@
           "name": "Update Message",
           "request": {
             "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
             "url": "{{baseUrl}}/group-messages/:id",
-            "body": { "mode": "raw", "raw": "{ \"content\": \"Updated\" }" }
+            "body": { "mode": "raw", "raw": "{ \"content\": \"Updated\", \"type\": \"text\" }" }
           }
         },
         {
           "name": "Delete Message",
           "request": {
             "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{baseUrl}}/group-messages/:id"
           }
         },
@@ -593,24 +610,38 @@
           "name": "Mark Read",
           "request": {
             "method": "POST",
-            "url": "{{baseUrl}}/group-messages/:id/read"
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/group-messages/:id/read",
+            "body": { "mode": "raw", "raw": "{ \"userId\": \"{{userId}}\" }" }
           }
         },
         {
           "name": "Mark Unread",
           "request": {
             "method": "POST",
-            "url": "{{baseUrl}}/group-messages/:id/unread"
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/group-messages/:id/unread",
+            "body": { "mode": "raw", "raw": "{ \"userId\": \"{{userId}}\" }" }
           }
         },
         {
           "name": "Reply Message",
           "request": {
             "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
             "url": "{{baseUrl}}/group-messages/:id/reply",
             "body": {
               "mode": "raw",
-              "raw": "{ \"senderId\": \"\", \"content\": \"Reply text\" }"
+              "raw": "{\n  \"groupId\": \"{{groupId}}\",\n  \"content\": \"Reply text\",\n  \"type\": \"text\"\n}"
             }
           }
         },
@@ -618,6 +649,7 @@
           "name": "Get Replies",
           "request": {
             "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{baseUrl}}/group-messages/:id/replies"
           }
         },
@@ -625,6 +657,7 @@
           "name": "Replies Count",
           "request": {
             "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{baseUrl}}/group-messages/:id/replies-count"
           }
         },
@@ -632,6 +665,7 @@
           "name": "Group Message Count",
           "request": {
             "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{baseUrl}}/group-messages/:groupId/count"
           }
         }
