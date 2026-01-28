@@ -1,5 +1,6 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Types, HydratedDocument, model } from 'mongoose';
+import { Types, HydratedDocument, model, Model } from 'mongoose';
+import * as mongoose from 'mongoose';
 import { generateSlug } from 'src/app/common/utils/slug.util';
 
 export type LessonDocument = HydratedDocument<Lesson>;
@@ -61,101 +62,110 @@ export interface ILesson {
   level: LessonLevel; // Mức CEFR: A1, A2, B1...
   orderIndex?: number; // Thứ tự trong Unit
   unit: Types.ObjectId; // Thuộc về Unit nào
-  content: {
-    vocabulary: {
-      description: string;
-      words: {
-        word: string;
-        definition: string;
-      }[];
-      tags: string[];
-    };
-    grammar: {
-      description: string;
-      rule: string;
-      examples: {
-        example: string;
-        translation: string;
-      }[];
-      tags: string[];
-    };
-    dialogue: {
-      description: string;
-      script: string;
-      audio: string;
-      translation: string;
-      tags: string[];
-    };
-    reading: {
-      description: string;
-      passage: string;
-      questionsAndAnswers: {
-        question: string;
-        answer: string;
-      }[];
-      tags: string[];
-    };
-    exercises: {
-      description: string;
-      type: string;
-      questionsAndAnswers: {
-        question: string;
-        answer: string;
-      }[];
-      tags: string[];
-    };
-    quizzes: {
-      description: string;
-      questionsAndAnswers: {
-        question: string;
-        answer: string;
-      }[];
-      tags: string[];
-    };
-    reviews: {
-      description: string;
-      questionsAndAnswers: {
-        question: string;
-        answer: string;
-      }[];
-      tags: string[];
-    };
-    summaries: {
-      description: string;
-      questionsAndAnswers: {
-        question: string;
-        answer: string;
-      }[];
-      tags: string[];
-    };
-    games: {
-      description: string;
-      questionsAndAnswers: {
-        question: string;
-        answer: string;
-      }[];
-      tags: string[];
-    };
-    songs: {
-      description: string;
-      lyrics: string;
-      translation: string;
-      audio: string;
-      video: string;
-      vocabulary: {
-        word: string;
-        definition: string;
-        ipa: string;
-        image: string;
+  content:
+    | {
+        type: 'vocabulary';
+        description: string;
+        words: {
+          word: string;
+          definition: string;
+        }[];
+        tags?: string[];
+      }
+    | {
+        type: 'grammar';
+        description: string;
+        rule: string;
+        examples: {
+          example: string;
+          translation: string;
+        }[];
+        tags?: string[];
+      }
+    | {
+        type: 'dialogue';
+        description: string;
+        script: string;
         audio: string;
-      }[];
-      questionsAndAnswers: {
-        question: string;
-        answer: string;
-      }[];
-      tags: string[];
-    };
-  };
+        translation: string;
+        tags?: string[];
+      }
+    | {
+        type: 'reading';
+        description: string;
+        passage: string;
+        questionsAndAnswers: {
+          question: string;
+          answer: string;
+        }[];
+        tags?: string[];
+      }
+    | {
+        type: 'exercises';
+        description: string;
+        exerciseType: string;
+        questionsAndAnswers: {
+          question: string;
+          answer: string;
+        }[];
+        tags?: string[];
+      }
+    | {
+        type: 'quizzes';
+        description: string;
+        questionsAndAnswers: {
+          question: string;
+          answer: string;
+        }[];
+        tags?: string[];
+      }
+    | {
+        type: 'reviews';
+        description: string;
+        questionsAndAnswers: {
+          question: string;
+          answer: string;
+        }[];
+        tags?: string[];
+      }
+    | {
+        type: 'summaries';
+        description: string;
+        questionsAndAnswers: {
+          question: string;
+          answer: string;
+        }[];
+        tags?: string[];
+      }
+    | {
+        type: 'games';
+        description: string;
+        questionsAndAnswers: {
+          question: string;
+          answer: string;
+        }[];
+        tags?: string[];
+      }
+    | {
+        type: 'songs';
+        description: string;
+        lyrics: string;
+        translation: string;
+        audio: string;
+        video: string;
+        vocabulary: {
+          word: string;
+          definition: string;
+          ipa?: string;
+          image?: string;
+          audio?: string;
+        }[];
+        questionsAndAnswers: {
+          question: string;
+          answer: string;
+        }[];
+        tags?: string[];
+      };
   skillFocus?: LessonSkill;
   estimatedDuration?: number; // Thời gian học dự kiến (phút)
   materials?: string[]; // File PDF, worksheet, tài liệu kèm theo
@@ -204,223 +214,111 @@ export class Lesson implements ILesson {
   @Prop({ required: true, type: Types.ObjectId, ref: 'Unit', index: true })
   unit: Types.ObjectId;
 
-  @Prop({
-    type: {
-      vocabulary: {
-        description: { type: String },
-        words: [
-          {
-            word: { type: String },
-            definition: { type: String },
-          },
-        ],
-        tags: { type: [String], default: [] },
-      },
-      grammar: {
-        description: { type: String },
-        rule: { type: String },
-        examples: [
-          {
-            example: { type: String },
-            translation: { type: String },
-          },
-        ],
-        tags: { type: [String], default: [] },
-      },
-      dialogue: {
-        description: { type: String },
-        script: { type: String },
-        audio: { type: String },
-        translation: { type: String },
-        tags: { type: [String], default: [] },
-      },
-      reading: {
-        description: { type: String },
-        passage: { type: String },
-        questionsAndAnswers: [
-          {
-            question: { type: String },
-            answer: { type: String },
-          },
-        ],
-        tags: { type: [String], default: [] },
-      },
-      exercises: {
-        description: { type: String },
-        type: { type: String },
-        questionsAndAnswers: [
-          {
-            question: { type: String },
-            answer: { type: String },
-          },
-        ],
-        tags: { type: [String], default: [] },
-      },
-      quizzes: {
-        description: { type: String },
-        questionsAndAnswers: [
-          {
-            question: { type: String },
-            answer: { type: String },
-          },
-        ],
-        tags: { type: [String], default: [] },
-      },
-      reviews: {
-        description: { type: String },
-        questionsAndAnswers: [
-          {
-            question: { type: String },
-            answer: { type: String },
-          },
-        ],
-        tags: { type: [String], default: [] },
-      },
-      summaries: {
-        description: { type: String },
-        questionsAndAnswers: [
-          {
-            question: { type: String },
-            answer: { type: String },
-          },
-        ],
-        tags: { type: [String], default: [] },
-      },
-      games: {
-        description: { type: String },
-        questionsAndAnswers: [
-          {
-            question: { type: String },
-            answer: { type: String },
-          },
-        ],
-        tags: { type: [String], default: [] },
-      },
-      songs: {
-        description: { type: String },
-        lyrics: { type: String },
-        translation: { type: String },
-        audio: { type: String },
-        video: { type: String },
-        vocabulary: [
-          {
-            word: { type: String },
-            definition: { type: String },
-            ipa: { type: String },
-            image: { type: String },
-            audio: { type: String },
-          },
-        ],
-        questionsAndAnswers: [
-          {
-            question: { type: String },
-            answer: { type: String },
-          },
-        ],
-        tags: { type: [String], default: [] },
-      },
-    },
-    default: {},
-    required: true,
-  })
-  content: {
-    vocabulary: {
-      description: string;
-      words: {
-        word: string;
-        definition: string;
-        ipa: string;
-        image: string;
+  @Prop({ type: mongoose.Schema.Types.Mixed, required: true })
+  content:
+    | {
+        type: 'vocabulary';
+        description: string;
+        words: {
+          word: string;
+          definition: string;
+        }[];
+        tags?: string[];
+      }
+    | {
+        type: 'grammar';
+        description: string;
+        rule: string;
+        examples: {
+          example: string;
+          translation: string;
+        }[];
+        tags?: string[];
+      }
+    | {
+        type: 'dialogue';
+        description: string;
+        script: string;
         audio: string;
-      }[];
-      tags: string[];
-    };
-    grammar: {
-      description: string;
-      rule: string;
-      examples: {
-        example: string;
         translation: string;
-      }[];
-      tags: string[];
-    };
-    dialogue: {
-      description: string;
-      script: string;
-      audio: string;
-      translation: string;
-      tags: string[];
-    };
-    reading: {
-      description: string;
-      passage: string;
-      questionsAndAnswers: {
-        question: string;
-        answer: string;
-      }[];
-      tags: string[];
-    };
-    exercises: {
-      description: string;
-      type: string;
-      questionsAndAnswers: {
-        question: string;
-        answer: string;
-      }[];
-      tags: string[];
-    };
-    quizzes: {
-      description: string;
-      questionsAndAnswers: {
-        question: string;
-        answer: string;
-      }[];
-      tags: string[];
-    };
-    reviews: {
-      description: string;
-      questionsAndAnswers: {
-        question: string;
-        answer: string;
-      }[];
-      tags: string[];
-    };
-    summaries: {
-      description: string;
-      questionsAndAnswers: {
-        question: string;
-        answer: string;
-      }[];
-      tags: string[];
-    };
-    games: {
-      description: string;
-      questionsAndAnswers: {
-        question: string;
-        answer: string;
-      }[];
-      tags: string[];
-    };
-    songs: {
-      description: string;
-      lyrics: string;
-      translation: string;
-      audio: string;
-      video: string;
-      vocabulary: {
-        word: string;
-        definition: string;
-        ipa: string;
-        image: string;
+        tags?: string[];
+      }
+    | {
+        type: 'reading';
+        description: string;
+        passage: string;
+        questionsAndAnswers: {
+          question: string;
+          answer: string;
+        }[];
+        tags?: string[];
+      }
+    | {
+        type: 'exercises';
+        description: string;
+        exerciseType: string;
+        questionsAndAnswers: {
+          question: string;
+          answer: string;
+        }[];
+        tags?: string[];
+      }
+    | {
+        type: 'quizzes';
+        description: string;
+        questionsAndAnswers: {
+          question: string;
+          answer: string;
+        }[];
+        tags?: string[];
+      }
+    | {
+        type: 'reviews';
+        description: string;
+        questionsAndAnswers: {
+          question: string;
+          answer: string;
+        }[];
+        tags?: string[];
+      }
+    | {
+        type: 'summaries';
+        description: string;
+        questionsAndAnswers: {
+          question: string;
+          answer: string;
+        }[];
+        tags?: string[];
+      }
+    | {
+        type: 'games';
+        description: string;
+        questionsAndAnswers: {
+          question: string;
+          answer: string;
+        }[];
+        tags?: string[];
+      }
+    | {
+        type: 'songs';
+        description: string;
+        lyrics: string;
+        translation: string;
         audio: string;
-      }[];
-      questionsAndAnswers: {
-        question: string;
-        answer: string;
-      }[];
-      tags: string[];
-    };
-  };
+        video: string;
+        vocabulary: {
+          word: string;
+          definition: string;
+          ipa?: string;
+          image?: string;
+          audio?: string;
+        }[];
+        questionsAndAnswers: {
+          question: string;
+          answer: string;
+        }[];
+        tags?: string[];
+      };
 
   @Prop({ enum: LessonSkill })
   skillFocus?: LessonSkill;
@@ -459,7 +357,7 @@ export const LessonSchema = SchemaFactory.createForClass(Lesson);
 const LessonModel = model<Lesson>('Lesson', LessonSchema);
 
 LessonSchema.pre('validate', async function (next) {
-  this.slug = await generateSlug(LessonModel, this.title);
+  this.slug = await generateSlug(this.constructor as Model<Lesson>, this.title);
   next();
 });
 

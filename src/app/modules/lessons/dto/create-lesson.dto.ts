@@ -8,8 +8,10 @@ import {
   ValidateNested,
   Min,
   Max,
+  IsObject,
+  IsNotEmpty,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   LessonType,
@@ -30,6 +32,10 @@ class VocabularyWordDto {
 }
 
 class VocabularyContentDto {
+  @ApiProperty({ description: 'Content type', example: 'vocabulary' })
+  @IsString()
+  type: 'vocabulary';
+
   @ApiProperty({
     description: 'Vocabulary description',
     example: 'Basic greetings vocabulary',
@@ -68,6 +74,10 @@ class GrammarExampleDto {
 }
 
 class GrammarContentDto {
+  @ApiProperty({ description: 'Content type', example: 'grammar' })
+  @IsString()
+  type: 'grammar';
+
   @ApiProperty({
     description: 'Grammar description',
     example: 'Present simple tense',
@@ -100,6 +110,10 @@ class GrammarContentDto {
 }
 
 class DialogueContentDto {
+  @ApiProperty({ description: 'Content type', example: 'dialogue' })
+  @IsString()
+  type: 'dialogue';
+
   @ApiProperty({
     description: 'Dialogue description',
     example: 'Greeting conversation',
@@ -150,6 +164,10 @@ class QuestionAnswerDto {
 }
 
 class ReadingContentDto {
+  @ApiProperty({ description: 'Content type', example: 'reading' })
+  @IsString()
+  type: 'reading';
+
   @ApiProperty({
     description: 'Reading description',
     example: 'Short passage about daily routine',
@@ -185,6 +203,10 @@ class ReadingContentDto {
 }
 
 class ExerciseContentDto {
+  @ApiProperty({ description: 'Content type', example: 'exercises' })
+  @IsString()
+  type: 'exercises';
+
   @ApiProperty({
     description: 'Exercise description',
     example: 'Fill in the blanks',
@@ -194,7 +216,7 @@ class ExerciseContentDto {
 
   @ApiProperty({ description: 'Exercise type', example: 'fill-in-blank' })
   @IsString()
-  type: string;
+  exerciseType: string;
 
   @ApiProperty({
     description: 'Questions and answers',
@@ -217,6 +239,10 @@ class ExerciseContentDto {
 }
 
 class QuizContentDto {
+  @ApiProperty({ description: 'Content type', example: 'quizzes' })
+  @IsString()
+  type: 'quizzes';
+
   @ApiProperty({
     description: 'Quiz description',
     example: 'End of lesson quiz',
@@ -245,6 +271,10 @@ class QuizContentDto {
 }
 
 class ReviewContentDto {
+  @ApiProperty({ description: 'Content type', example: 'reviews' })
+  @IsString()
+  type: 'reviews';
+
   @ApiProperty({
     description: 'Review description',
     example: 'Review key points',
@@ -273,6 +303,10 @@ class ReviewContentDto {
 }
 
 class SummaryContentDto {
+  @ApiProperty({ description: 'Content type', example: 'summaries' })
+  @IsString()
+  type: 'summaries';
+
   @ApiProperty({
     description: 'Summary description',
     example: 'Lesson summary',
@@ -301,6 +335,10 @@ class SummaryContentDto {
 }
 
 class GameContentDto {
+  @ApiProperty({ description: 'Content type', example: 'games' })
+  @IsString()
+  type: 'games';
+
   @ApiProperty({
     description: 'Game description',
     example: 'Vocabulary matching game',
@@ -363,6 +401,10 @@ class SongVocabularyWordDto {
 }
 
 class SongContentDto {
+  @ApiProperty({ description: 'Content type', example: 'songs' })
+  @IsString()
+  type: 'songs';
+
   @ApiProperty({
     description: 'Song description',
     example: 'Hello song for kids',
@@ -427,88 +469,18 @@ class SongContentDto {
   tags?: string[];
 }
 
-class LessonContentDto {
-  @ApiPropertyOptional({
-    description: 'Vocabulary content',
-    type: VocabularyContentDto,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => VocabularyContentDto)
-  vocabulary?: VocabularyContentDto;
-
-  @ApiPropertyOptional({
-    description: 'Grammar content',
-    type: GrammarContentDto,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => GrammarContentDto)
-  grammar?: GrammarContentDto;
-
-  @ApiPropertyOptional({
-    description: 'Dialogue content',
-    type: DialogueContentDto,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => DialogueContentDto)
-  dialogue?: DialogueContentDto;
-
-  @ApiPropertyOptional({
-    description: 'Reading content',
-    type: ReadingContentDto,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => ReadingContentDto)
-  reading?: ReadingContentDto;
-
-  @ApiPropertyOptional({
-    description: 'Exercise content',
-    type: ExerciseContentDto,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => ExerciseContentDto)
-  exercises?: ExerciseContentDto;
-
-  @ApiPropertyOptional({ description: 'Quiz content', type: QuizContentDto })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => QuizContentDto)
-  quizzes?: QuizContentDto;
-
-  @ApiPropertyOptional({
-    description: 'Review content',
-    type: ReviewContentDto,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => ReviewContentDto)
-  reviews?: ReviewContentDto;
-
-  @ApiPropertyOptional({
-    description: 'Summary content',
-    type: SummaryContentDto,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => SummaryContentDto)
-  summaries?: SummaryContentDto;
-
-  @ApiPropertyOptional({ description: 'Game content', type: GameContentDto })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => GameContentDto)
-  games?: GameContentDto;
-
-  @ApiPropertyOptional({ description: 'Song content', type: SongContentDto })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => SongContentDto)
-  songs?: SongContentDto;
-}
+// Union type cho content - mỗi bài học chỉ có 1 loại content
+type LessonContentDto =
+  | VocabularyContentDto
+  | GrammarContentDto
+  | DialogueContentDto
+  | ReadingContentDto
+  | ExerciseContentDto
+  | QuizContentDto
+  | ReviewContentDto
+  | SummaryContentDto
+  | GameContentDto
+  | SongContentDto;
 
 export class CreateLessonDto {
   @ApiProperty({ description: 'Lesson title', example: 'Lesson 1: Greetings' })
@@ -535,6 +507,10 @@ export class CreateLessonDto {
     enum: LessonType,
     example: LessonType.VOCABULARY,
   })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') return value.toLowerCase();
+    return value;
+  })
   @IsEnum(LessonType)
   type: LessonType;
 
@@ -542,6 +518,10 @@ export class CreateLessonDto {
     description: 'Lesson level',
     enum: LessonLevel,
     example: LessonLevel.A1,
+  })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') return value.toUpperCase();
+    return value;
   })
   @IsEnum(LessonLevel)
   level: LessonLevel;
@@ -552,6 +532,11 @@ export class CreateLessonDto {
     minimum: 0,
   })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    const num = Number(value);
+    return isNaN(num) ? value : num;
+  })
   @IsNumber()
   @Min(0)
   orderIndex?: number;
@@ -560,9 +545,21 @@ export class CreateLessonDto {
   @IsMongoId()
   unit: string;
 
-  @ApiProperty({ description: 'Lesson content', type: LessonContentDto })
-  @ValidateNested()
-  @Type(() => LessonContentDto)
+  @ApiProperty({
+    description: 'Lesson content - chỉ chứa 1 loại content dựa vào type của lesson',
+  })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  })
+  @IsNotEmpty()
+  @IsObject()
   content: LessonContentDto;
 
   @ApiPropertyOptional({
@@ -571,6 +568,11 @@ export class CreateLessonDto {
     example: LessonSkill.VOCABULARY,
   })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (!value) return undefined;
+    if (typeof value === 'string') return value.toLowerCase();
+    return value;
+  })
   @IsEnum(LessonSkill)
   skillFocus?: LessonSkill;
 
@@ -581,6 +583,11 @@ export class CreateLessonDto {
     maximum: 1000,
   })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    const num = Number(value);
+    return isNaN(num) ? value : num;
+  })
   @IsNumber()
   @Min(0)
   @Max(1000)
@@ -592,6 +599,19 @@ export class CreateLessonDto {
     example: ['https://example.com/worksheet.pdf'],
   })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (!value) return undefined;
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [value];
+      } catch {
+        return [value];
+      }
+    }
+    return value;
+  })
   @IsArray()
   @IsString({ each: true })
   materials?: string[];
@@ -626,6 +646,19 @@ export class CreateLessonDto {
     example: ['A1', 'greetings', 'vocabulary'],
   })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (!value) return undefined;
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [value];
+      } catch {
+        return [value];
+      }
+    }
+    return value;
+  })
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
@@ -635,20 +668,10 @@ export class CreateLessonDto {
     enum: LessonStatus,
     example: LessonStatus.ACTIVE,
   })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') return value.toLowerCase();
+    return value;
+  })
   @IsEnum(LessonStatus)
   isActive: LessonStatus;
-
-  @ApiProperty({
-    description: 'Creator user ID',
-    example: '507f1f77bcf86cd799439011',
-  })
-  @IsMongoId()
-  createdBy: string;
-
-  @ApiProperty({
-    description: 'Updater user ID',
-    example: '507f1f77bcf86cd799439011',
-  })
-  @IsMongoId()
-  updatedBy: string;
 }

@@ -34,6 +34,7 @@ export class LessonsService {
   ) {}
 
   async createLesson(
+    userId: string,
     createLessonDto: CreateLessonDto,
     session?: ClientSession,
     files?: {
@@ -56,12 +57,12 @@ export class LessonsService {
     }
     try {
       const user = await this.usersService.findUserById(
-        createLessonDto.createdBy,
+        userId
       );
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      const unit = await this.unitsService.findUnitById(createLessonDto.unit);
+      const unit = await this.unitsService.findUnitById(createLessonDto.unit.toString());
       if (!unit) {
         throw new NotFoundException('Unit not found');
       }
@@ -109,11 +110,13 @@ export class LessonsService {
           materials = [...urls, ...materials];
         }
 
+        // Xử lý file uploads cho content type 'songs'
         if (
-          files.contentSongsAudio ||
-          files.contentSongsVideo ||
-          (files.contentSongsVocabularyImage?.length ?? 0) > 0 ||
-          (files.contentSongsVocabularyAudio?.length ?? 0) > 0
+          createLessonDto.content?.type === 'songs' &&
+          (files.contentSongsAudio ||
+            files.contentSongsVideo ||
+            (files.contentSongsVocabularyImage?.length ?? 0) > 0 ||
+            (files.contentSongsVocabularyAudio?.length ?? 0) > 0)
         ) {
           const uploadMany = async (list: MulterFile[], folder: string) => {
             const urls: string[] = [];
@@ -124,44 +127,44 @@ export class LessonsService {
             return urls;
           };
 
-          if (files.contentSongsAudio && createLessonDto.content?.songs) {
+          if (files.contentSongsAudio) {
             const u = await this.cloudflareService.uploadFile(
               files.contentSongsAudio,
               'lessons/content/songs-audio',
             );
-            createLessonDto.content.songs.audio = u.fileUrl;
+            (createLessonDto.content as any).audio = u.fileUrl;
           }
-          if (files.contentSongsVideo && createLessonDto.content?.songs) {
+          if (files.contentSongsVideo) {
             const u = await this.cloudflareService.uploadFile(
               files.contentSongsVideo,
               'lessons/content/songs-video',
             );
-            createLessonDto.content.songs.video = u.fileUrl;
+            (createLessonDto.content as any).video = u.fileUrl;
           }
           if (
             (files.contentSongsVocabularyImage?.length ?? 0) > 0 &&
-            createLessonDto.content?.songs?.vocabulary?.length
+            (createLessonDto.content as any).vocabulary?.length
           ) {
             const imageUrls = await uploadMany(
               files.contentSongsVocabularyImage,
               'lessons/content/songs-vocabulary-images',
             );
-            const vocab = createLessonDto.content!.songs!.vocabulary;
+            const vocab = (createLessonDto.content as any).vocabulary;
             for (let i = 0; i < imageUrls.length && i < vocab.length; i++) {
-              (vocab[i] as any).image = imageUrls[i];
+              vocab[i].image = imageUrls[i];
             }
           }
           if (
             (files.contentSongsVocabularyAudio?.length ?? 0) > 0 &&
-            createLessonDto.content?.songs?.vocabulary?.length
+            (createLessonDto.content as any).vocabulary?.length
           ) {
             const audioUrls = await uploadMany(
               files.contentSongsVocabularyAudio,
               'lessons/content/songs-vocabulary-audios',
             );
-            const vocab = createLessonDto.content!.songs!.vocabulary;
+            const vocab = (createLessonDto.content as any).vocabulary;
             for (let i = 0; i < audioUrls.length && i < vocab.length; i++) {
-              (vocab[i] as any).audio = audioUrls[i];
+              vocab[i].audio = audioUrls[i];
             }
           }
         }
@@ -293,16 +296,6 @@ export class LessonsService {
     }
     try {
       const lesson = await this.findLessonById(id, mongooseSession);
-
-      // Validate updatedBy if provided
-      if (updateLessonDto.updatedBy) {
-        const user = await this.usersService.findUserById(
-          updateLessonDto.updatedBy,
-        );
-        if (!user) {
-          throw new NotFoundException('User not found');
-        }
-      }
 
       const updatedLesson = await this.lessonModel
         .findByIdAndUpdate(id, updateLessonDto, {

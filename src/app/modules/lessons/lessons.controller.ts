@@ -10,6 +10,7 @@ import {
   Body,
   Get,
   Post,
+  Req,
 } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { LessonsService } from './lessons.service';
@@ -51,11 +52,11 @@ export class LessonsController {
       'Create a new lesson (form-data + thumbnail, audioIntro, videoIntro, materials, content files)',
   })
   @ApiBody({
-    description: 'Create a new lesson',
+    description: 'Create a new lesson - Mỗi lesson chỉ có 1 loại content duy nhất',
     type: CreateLessonDto,
     examples: {
-      normal: {
-        summary: 'Example of a normal lesson',
+      vocabularyLesson: {
+        summary: 'Example of a vocabulary lesson',
         value: {
           title: 'Lesson 1: Greetings',
           slug: 'lesson-1-greetings',
@@ -65,27 +66,14 @@ export class LessonsController {
           orderIndex: 1,
           unit: '507f1f77bcf86cd799439011',
           content: {
-            vocabulary: {
-              description: 'Basic greetings vocabulary',
-              words: [
-                { word: 'hello', definition: 'xin chào' },
-                { word: 'hi', definition: 'chào' },
-                { word: 'goodbye', definition: 'tạm biệt' },
-              ],
-              tags: ['greetings', 'basic'],
-            },
-            grammar: {
-              description: 'Present simple tense',
-              rule: 'Subject + Verb (s/es) + Object',
-              examples: [
-                {
-                  example: 'I play football.',
-                  translation: 'Tôi chơi bóng đá.',
-                },
-                { example: 'She reads books.', translation: 'Cô ấy đọc sách.' },
-              ],
-              tags: ['grammar', 'tenses'],
-            },
+            type: 'vocabulary',
+            description: 'Basic greetings vocabulary',
+            words: [
+              { word: 'hello', definition: 'xin chào' },
+              { word: 'hi', definition: 'chào' },
+              { word: 'goodbye', definition: 'tạm biệt' },
+            ],
+            tags: ['greetings', 'basic'],
           },
           skillFocus: LessonSkill.VOCABULARY,
           estimatedDuration: 30,
@@ -95,8 +83,61 @@ export class LessonsController {
           videoIntro: 'https://example.com/intro.mp4',
           tags: ['A1', 'greetings', 'vocabulary'],
           isActive: LessonStatus.ACTIVE,
-          createdBy: '507f1f77bcf86cd799439011',
-          updatedBy: '507f1f77bcf86cd799439011',
+        },
+      },
+      grammarLesson: {
+        summary: 'Example of a grammar lesson',
+        value: {
+          title: 'Lesson 2: Present Simple',
+          slug: 'lesson-2-present-simple',
+          description: 'Learn present simple tense',
+          type: LessonType.GRAMMAR,
+          level: LessonLevel.A1,
+          orderIndex: 2,
+          unit: '507f1f77bcf86cd799439011',
+          content: {
+            type: 'grammar',
+            description: 'Present simple tense',
+            rule: 'Subject + Verb (s/es) + Object',
+            examples: [
+              {
+                example: 'I play football.',
+                translation: 'Tôi chơi bóng đá.',
+              },
+              { example: 'She reads books.', translation: 'Cô ấy đọc sách.' },
+            ],
+            tags: ['grammar', 'tenses'],
+          },
+          skillFocus: LessonSkill.GRAMMAR,
+          estimatedDuration: 45,
+          tags: ['A1', 'grammar', 'present-simple'],
+          isActive: LessonStatus.ACTIVE,
+        },
+      },
+      readingLesson: {
+        summary: 'Example of a reading lesson',
+        value: {
+          title: 'Lesson 3: Daily Routine',
+          slug: 'lesson-3-daily-routine',
+          description: 'Read about daily routines',
+          type: LessonType.READING,
+          level: LessonLevel.A1,
+          orderIndex: 3,
+          unit: '507f1f77bcf86cd799439011',
+          content: {
+            type: 'reading',
+            description: 'Short passage about daily routine',
+            passage: 'Every morning, I wake up at 7 AM. I brush my teeth and have breakfast...',
+            questionsAndAnswers: [
+              { question: 'What time does he wake up?', answer: '7 AM' },
+              { question: 'What does he do after waking up?', answer: 'Brush teeth and have breakfast' },
+            ],
+            tags: ['reading', 'daily-routine'],
+          },
+          skillFocus: LessonSkill.READING,
+          estimatedDuration: 30,
+          tags: ['A1', 'reading', 'daily-routine'],
+          isActive: LessonStatus.ACTIVE,
         },
       },
     },
@@ -113,6 +154,7 @@ export class LessonsController {
   createLesson(
     @Body() createLessonDto: CreateLessonDto,
     @UploadedFiles() files?: any[],
+    @Req() req?: any,
   ) {
     const thumbnail = files?.find((f) => f.fieldname === 'thumbnail');
     const audioIntro = files?.find((f) => f.fieldname === 'audioIntro');
@@ -131,7 +173,7 @@ export class LessonsController {
     const contentSongsVocabularyAudio =
       files?.filter((f) => f.fieldname === 'content_songs_vocabulary_audio') ??
       [];
-    return this.lessonsService.createLesson(createLessonDto, undefined, {
+    return this.lessonsService.createLesson(req.user.userId, createLessonDto, undefined, {
       thumbnail,
       audioIntro,
       videoIntro,
