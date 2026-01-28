@@ -23,6 +23,7 @@ import * as XLSX from 'xlsx';
 import { validate } from 'class-validator';
 import { plainToClass } from 'class-transformer';
 import { StudentImportRowDto, ImportStudentsDto, ImportStudentsResultDto, ImportStudentDetailDto } from './dto/import-students.dto';
+import { emailInformationQueue } from 'src/app/jobs/queues/email-information.queue';
 
 type PaginatedUsers = {
   data: UserDocument[];
@@ -358,13 +359,13 @@ export class UsersService {
       // 1. Parse Excel file
       const workbook = XLSX.read(file.buffer);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      
+
       if (!worksheet) {
         throw new BadRequestException('Excel file is empty');
       }
 
       const rows = XLSX.utils.sheet_to_json(worksheet) as Record<string, unknown>[];
-      
+
       if (!rows || rows.length === 0) {
         throw new BadRequestException('No data found in Excel file');
       }
@@ -372,14 +373,14 @@ export class UsersService {
       // 2. Validate group exists & teacher has permission
       const groupModel = this.connection.model('Group');
       const group = await groupModel.findById(importDto.groupId).session(session);
-      
+
       if (!group) {
         throw new NotFoundException('Group not found');
       }
 
       // Check if teacher is owner or admin
       const user = await this.userModel.findById(teacherId).session(session);
-      if (!user) {  
+      if (!user) {
         throw new NotFoundException('User not found');
       }
       if (user.role === UserRole.TEACHER && group.createdBy.toString() !== teacherId) {
@@ -439,7 +440,7 @@ export class UsersService {
           let usernameExists = await this.userModel
             .findOne({ username })
             .session(session);
-          
+
           let counter = 1;
           while (usernameExists) {
             username = `${baseUsername}${counter}`;
@@ -478,13 +479,13 @@ export class UsersService {
 
           // Send invite email if enabled
           if (sendEmail) {
-            // TODO: Send email with login credentials
-            // await this.mailService.sendStudentImportEmail({
-            //   email: studentData.email,
-            //   username,
-            //   password: generatedPassword,
-            //   groupName: group.name
-            // });
+            await emailInformationQueue.add('email-information', {
+              email: savedUser.email,
+              fullname: savedUser.fullname,
+              username: savedUser.username,
+              password: generatedPassword,
+              year: new Date().getFullYear(),
+            });
           }
 
           detail.userId = savedUser._id.toString();
@@ -509,6 +510,8 @@ export class UsersService {
       this.logger.log(
         `Imported students: ${successCount} success, ${failedCount} failed, ${skippedCount} skipped`,
       );
+
+
 
       return {
         success: successCount,
