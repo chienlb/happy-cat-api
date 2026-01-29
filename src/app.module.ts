@@ -38,6 +38,7 @@ import { PronunciationsModule } from './app/modules/pronunciations/pronunciation
 import { LessonProgressModule } from './app/modules/lesson-progress/lesson-progress.module';
 import { UnitProgressModule } from './app/modules/unit-progress/unit-progress.module';
 import { OtpsModule } from './app/modules/otps/otps.module';
+import { ChatbotModule } from './app/modules/chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { OtpsModule } from './app/modules/otps/otps.module';
     LessonProgressModule,
     UnitProgressModule,
     OtpsModule,
+    ChatbotModule,
   ],
   controllers: [AppController],
   providers: [AppService],

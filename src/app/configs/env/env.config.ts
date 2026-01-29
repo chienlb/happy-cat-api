@@ -85,6 +85,7 @@ export const envSchema = z.object({
   OPEN_ROUTER_API: z.string().optional(),
   AZURE_SPEECH_KEY: z.string().optional(),
   AZURE_SPEECH_REGION: z.string().optional(),
+  GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
 });
 
 export type Env = z.infer<typeof envSchema>;
