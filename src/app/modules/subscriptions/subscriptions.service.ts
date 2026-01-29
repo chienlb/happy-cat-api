@@ -21,14 +21,15 @@ export class SubscriptionsService {
     private usersService: UsersService,
     private packagesService: PackagesService,
     private readonly redisService: RedisService,
-  ) {}
+  ) { }
 
   async createSubscription(
+    userId: string,
     createSubscriptionDto: CreateSubscriptionDto,
   ): Promise<SubscriptionDocument> {
     try {
       const user = await this.usersService.findUserById(
-        createSubscriptionDto.userId,
+        userId,
       );
       if (!user) {
         throw new NotFoundException('User not found');
@@ -44,6 +45,8 @@ export class SubscriptionsService {
         userId: user._id,
         packageId: packageItem._id,
         status: SubscriptionStatus.PENDING,
+        startDate: new Date(),
+        endDate: new Date(new Date().setDate(new Date().getDate() + packageItem.durationInDays)),
       });
       return await newSubscription.save();
     } catch (error) {

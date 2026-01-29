@@ -9,15 +9,14 @@ import { SubscriptionStatus } from '../schema/subscription.schema';
 
 export class CreateSubscriptionDto {
   @IsMongoId()
-  userId: string;
-
-  @IsMongoId()
   packageId: string;
 
   @IsDateString()
+  @IsOptional()
   startDate: string;
 
   @IsDateString()
+  @IsOptional()
   endDate: string;
 
   @IsEnum(SubscriptionStatus)

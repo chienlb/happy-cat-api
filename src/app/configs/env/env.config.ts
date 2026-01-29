@@ -63,6 +63,7 @@ export const envSchema = z.object({
   VNPAY_HASH_SECRET: z.string().optional(),
   VNPAY_API_URL: z.string().optional(),
   VNPAY_RETURN_URL: z.string().optional(),
+  VNPAY_IPN_URL: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),

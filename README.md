@@ -217,6 +217,7 @@ OPEN_ROUTER_API=your-open-router-api-key
 Chạy API bằng Docker. **Cần file `.env`** ở thư mục gốc (xem [Cấu hình môi trường](#-cấu-hình-môi-trường)); file `.env` không được đưa vào image (bảo mật).
 
 **MongoDB và Redis** phải chạy sẵn (trên host hoặc container khác). Trong `.env`, `MONGODB_URI` và `REDIS_URL` cần trỏ đúng:
+
 - Chạy Docker trên **Windows/macOS**: dùng `host.docker.internal` thay cho `localhost`, ví dụ:
   - `MONGODB_URI=mongodb://host.docker.internal:27017/spnc_db`
   - `REDIS_URL=redis://host.docker.internal:6379`

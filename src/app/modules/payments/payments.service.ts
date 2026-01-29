@@ -42,7 +42,7 @@ export class PaymentsService {
     @InjectModel(Purchase.name) private purchaseModel: Model<PurchaseDocument>,
     @InjectModel(Package.name) private packageModel: Model<PackageDocument>,
     @InjectConnection() private readonly connection: Connection,
-  ) {}
+  ) { }
 
   private sortParams(params: Record<string, any>) {
     return Object.keys(params)
@@ -53,11 +53,26 @@ export class PaymentsService {
       }, {});
   }
 
-  private signData(secret: string, params: any): string {
-    const signData = qs.stringify(params, { encode: false });
+  private signData(secret: string, params: Record<string, string | number>): string {
+    // HMAC-SHA256: sắp xếp params tăng dần, tạo chuỗi key=value&..., hash bằng secret
+    // Nếu VNPay yêu cầu SHA512 thì đổi 'sha256' thành 'sha512'
+    const sortedKeys = Object.keys(params).sort();
+    let hashData = '';
+
+    for (let i = 0; i < sortedKeys.length; i++) {
+      const key = sortedKeys[i];
+      const value = String(params[key]);
+
+      if (i === 0) {
+        hashData += `${key}=${value}`;
+      } else {
+        hashData += `&${key}=${value}`;
+      }
+    }
+
     return crypto
-      .createHmac('sha512', secret)
-      .update(Buffer.from(signData))
+      .createHmac('sha256', secret)
+      .update(Buffer.from(hashData, 'utf-8'))
       .digest('hex');
   }
 
@@ -73,24 +88,26 @@ export class PaymentsService {
     );
   }
 
-  async createPayment(dto: CreatePaymentDto, req: Request) {
+  async createPayment(userId: string, dto: CreatePaymentDto, req: Request) {
     const env = envSchema.parse(process.env);
-    const clientIp = getClientIp(req);
+    const clientIp = getClientIp(req) || '127.0.0.1';
     const now = new Date();
     const orderId = now.getTime().toString();
+    const expireDate = new Date(now.getTime() + 15 * 60 * 1000);
 
-    const params = {
+    const params: Record<string, string | number> = {
       vnp_Version: '2.1.0',
       vnp_Command: 'pay',
-      vnp_TmnCode: env.VNPAY_TMN_CODE,
+      vnp_TmnCode: env.VNPAY_TMN_CODE ?? '',
       vnp_Amount: dto.amount * 100,
       vnp_CurrCode: dto.currency,
       vnp_TxnRef: orderId,
-      vnp_OrderInfo: dto.description ?? `Thanh toán đơn hàng ${orderId}`,
+      vnp_OrderInfo: (dto.description ?? `Thanh toan don hang ${orderId}`).replace(/[^\w\s\-.,]/g, ''),
       vnp_OrderType: 'other',
-      vnp_ReturnUrl: env.VNPAY_RETURN_URL,
+      vnp_ReturnUrl: env.VNPAY_RETURN_URL ?? '',
       vnp_IpAddr: clientIp,
       vnp_CreateDate: this.formatDate(now),
+      vnp_ExpireDate: this.formatDate(expireDate),
       vnp_Locale: 'vn',
     };
 
@@ -107,7 +124,7 @@ export class PaymentsService {
     })}`;
 
     await this.paymentModel.create({
-      userId: dto.userId,
+      userId: userId,
       amount: dto.amount,
       currency: dto.currency,
       method: dto.method,

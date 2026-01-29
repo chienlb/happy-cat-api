@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  Req,
 } from '@nestjs/common';
 import { PackagesService } from './packages.service';
 import { CreatePackageDto } from './dto/create-package.dto';
@@ -28,7 +29,7 @@ import { UseGuards } from '@nestjs/common';
 @ApiTags('Packages')
 @Controller('packages')
 export class PackagesController {
-  constructor(private readonly packagesService: PackagesService) {}
+  constructor(private readonly packagesService: PackagesService) { }
 
   @Post()
   @UseGuards(AuthGuard('jwt'))
@@ -59,8 +60,8 @@ export class PackagesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async createPackage(@Body() createPackageDto: CreatePackageDto) {
-    return this.packagesService.createPackage(createPackageDto);
+  async createPackage(@Body() createPackageDto: CreatePackageDto, @Req() req: Request) {
+    return this.packagesService.createPackage((req as any).user.userId, createPackageDto);
   }
 
   @Get(':id')

@@ -15,19 +15,21 @@ export class PackagesService {
     private packageRepository: Model<PackageDocument>,
     private usersService: UsersService,
     private readonly redisService: RedisService,
-  ) {}
+  ) { }
 
   async createPackage(
+    userId: string,
     createPackageDto: CreatePackageDto,
   ): Promise<PackageDocument> {
     try {
-      const user = await this.usersService.findUserById(
-        createPackageDto.createdBy as string,
-      );
+      const user = await this.usersService.findUserById(userId);
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      const newPackage = new this.packageRepository(createPackageDto);
+      const newPackage = new this.packageRepository({
+        ...createPackageDto,
+        createdBy: userId,
+      });
       return await newPackage.save();
     } catch (error) {
       throw new Error('Failed to create package: ' + (error?.message || error));

@@ -9,9 +9,6 @@ import {
 import { PaymentMethod } from '../schema/payment.schema';
 
 export class CreatePaymentDto {
-  @IsMongoId()
-  @IsNotEmpty()
-  userId: string;
 
   @IsMongoId()
   @IsOptional()

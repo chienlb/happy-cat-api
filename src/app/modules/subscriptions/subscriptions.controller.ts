@@ -7,6 +7,8 @@ import {
   Param,
   Patch,
   Delete,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { SubscriptionsService } from './subscriptions.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
@@ -20,11 +22,17 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { PaginationDto } from '../pagination/pagination.dto';
+import { RolesGuard } from 'src/app/common/guards/role.guard';
+import { Roles } from 'src/app/common/decorators/role.decorator';
+import { UserRole } from '../users/schema/user.schema';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
 export class SubscriptionsController {
-  constructor(private readonly subscriptionsService: SubscriptionsService) {}
+  constructor(private readonly subscriptionsService: SubscriptionsService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create a subscription' })
@@ -54,8 +62,8 @@ export class SubscriptionsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  create(@Body() createSubscriptionDto: CreateSubscriptionDto) {
-    return this.subscriptionsService.createSubscription(createSubscriptionDto);
+  create(@Body() createSubscriptionDto: CreateSubscriptionDto, @Req() req: Request) {
+    return this.subscriptionsService.createSubscription((req as any).user.userId, createSubscriptionDto);
   }
 
   @Get()

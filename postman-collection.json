@@ -9,7 +9,10 @@
     { "key": "baseUrl", "value": "http://localhost:3000/api/v1" },
     { "key": "token", "value": "" },
     { "key": "userId", "value": "" },
-    { "key": "groupId", "value": "" }
+    { "key": "groupId", "value": "" },
+    { "key": "subscriptionId", "value": "" },
+    { "key": "packageId", "value": "" },
+    { "key": "paymentId", "value": "" }
   ],
   "item": [
     {
@@ -393,7 +396,10 @@
           "request": {
             "method": "PUT",
             "url": "{{baseUrl}}/provinces/:id",
-            "body": { "mode": "raw", "raw": "{\"provinceName\": \"Updated\", \"region\": \"north\", \"country\": \"Vietnam\"}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\"provinceName\": \"Updated\", \"region\": \"north\", \"country\": \"Vietnam\"}"
+            }
           }
         },
         {
@@ -595,7 +601,10 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": "{{baseUrl}}/group-messages/:id",
-            "body": { "mode": "raw", "raw": "{ \"content\": \"Updated\", \"type\": \"text\" }" }
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"content\": \"Updated\", \"type\": \"text\" }"
+            }
           }
         },
         {
@@ -1386,7 +1395,7 @@
             "url": "{{baseUrl}}/packages",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Basic\",\n  \"description\": \"Basic package\",\n  \"type\": \"basic\",\n  \"durationInDays\": 30,\n  \"price\": 100000,\n  \"currency\": \"VND\",\n  \"features\": [\"feature1\"],\n  \"isActive\": true,\n  \"createdBy\": \"\"\n}"
+              "raw": "{\n  \"name\": \"Gói Standard\",\n  \"description\": \"Gói học 30 ngày\",\n  \"type\": \"standard\",\n  \"durationInDays\": 30,\n  \"price\": 100000,\n  \"currency\": \"VND\",\n  \"features\": [\"Truy cập bài học\", \"Làm bài tập\"],\n  \"isActive\": true\n}"
             }
           }
         },
@@ -1480,34 +1489,45 @@
           "name": "Create Subscription",
           "request": {
             "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/subscriptions",
             "body": {
               "mode": "raw",
-              "raw": "{ \"userId\": \"\", \"packageId\": \"\", \"startDate\": \"2024-01-01T00:00:00Z\", \"endDate\": \"2024-02-01T00:00:00Z\", \"status\": \"active\", \"autoRenew\": true, \"paymentId\": \"\" }"
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"packageId\": \"{{packageId}}\",\n  \"startDate\": \"2024-01-01T00:00:00.000Z\",\n  \"endDate\": \"2024-02-01T00:00:00.000Z\",\n  \"status\": \"active\",\n  \"autoRenew\": true,\n  \"paymentId\": \"{{paymentId}}\"\n}"
             }
           }
         },
         {
           "name": "List Subscriptions",
-          "request": { "method": "GET", "url": "{{baseUrl}}/subscriptions" }
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/subscriptions?page=1&limit=10"
+          }
         },
         {
           "name": "Get Subscription",
-          "request": { "method": "GET", "url": "{{baseUrl}}/subscriptions/:id" }
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/subscriptions/{{subscriptionId}}"
+          }
         },
         {
           "name": "Update Subscription",
           "request": {
             "method": "PATCH",
-            "url": "{{baseUrl}}/subscriptions/:id",
-            "body": { "mode": "raw", "raw": "{ \"status\": \"canceled\" }" }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/subscriptions/{{subscriptionId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"cancelled\"\n}"
+            }
           }
         },
         {
           "name": "Delete Subscription",
           "request": {
             "method": "DELETE",
-            "url": "{{baseUrl}}/subscriptions/:id"
+            "url": "{{baseUrl}}/subscriptions/{{subscriptionId}}"
           }
         }
       ]
@@ -1526,18 +1546,26 @@
             "url": "{{baseUrl}}/payments/create",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": \"<userId>\",\n  \"subscriptionId\": \"<subscriptionId>\",\n  \"method\": \"vnpay\",\n  \"amount\": 100000,\n  \"currency\": \"VND\",\n  \"description\": \"Thanh toan goi hoc\"\n}"
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"subscriptionId\": \"{{subscriptionId}}\",\n  \"method\": \"vnpay\",\n  \"amount\": 100000,\n  \"currency\": \"VND\",\n  \"description\": \"Thanh toan goi hoc\"\n}"
             }
           }
         },
         {
           "name": "Payment Return",
-          "request": { "method": "GET", "url": "{{baseUrl}}/payments/return" }
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/payments/return"
+          }
         },
         {
           "name": "Payment Webhook",
           "request": {
             "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
             "url": "{{baseUrl}}/payments/webhook",
             "body": { "mode": "raw", "raw": "{}" }
           }
@@ -2002,7 +2030,11 @@
               "mode": "formdata",
               "formdata": [
                 { "key": "audio", "type": "file", "src": "" },
-                { "key": "referenceText", "value": "Good morning", "type": "text" },
+                {
+                  "key": "referenceText",
+                  "value": "Good morning",
+                  "type": "text"
+                },
                 { "key": "language", "value": "en-US", "type": "text" }
               ]
             },
@@ -2049,7 +2081,10 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": "{{baseUrl}}/pronunciation/update?id=<id>",
-            "body": { "mode": "raw", "raw": "{\n  \"text\": \"Hello\",\n  \"minScore\": 85\n}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Hello\",\n  \"minScore\": 85\n}"
+            }
           }
         },
         {
@@ -2105,7 +2140,10 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": "{{baseUrl}}/lesson-prgress/:lessonId",
-            "body": { "mode": "raw", "raw": "{\n  \"progress\": 100,\n  \"status\": \"completed\"\n}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"progress\": 100,\n  \"status\": \"completed\"\n}"
+            }
           }
         },
         {
