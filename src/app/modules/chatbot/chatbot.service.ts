@@ -1,7 +1,8 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
+import type { GenerateContentConfig } from '@google/genai';
 import { ConfigService } from '@nestjs/config';
 import { Conversation, ConversationDocument } from './schema/conversation.schema';
 import { ChatDto } from './dto/chat.dto';
@@ -10,8 +11,8 @@ import { CreateConversationDto } from './dto/create-conversation.dto';
 @Injectable()
 export class ChatbotService {
   private readonly logger = new Logger(ChatbotService.name);
-  private genAI: GoogleGenerativeAI;
-  private model: any;
+  private genAI: GoogleGenAI;
+  private readonly modelName = 'gemini-2.5-flash';
   private readonly systemInstruction = `
 Bạn là Happy Cat - trợ lý AI thông minh và thân thiện trên nền tảng học tiếng Anh dành cho học sinh tiểu học (6-11 tuổi).
 
@@ -84,11 +85,8 @@ Hãy luôn nhớ: Bạn là người bạn đáng tin cậy giúp các em yêu t
       throw new Error('GEMINI_API_KEY is not configured');
     }
     
-    this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ 
-      model: 'gemini-pro',
-      systemInstruction: this.systemInstruction,
-    });
+    this.genAI = new GoogleGenAI({ apiKey });
+
   }
 
   /**
@@ -184,18 +182,19 @@ Hãy luôn nhớ: Bạn là người bạn đáng tin cậy giúp các em yêu t
       }
 
       // Tạo chat session với lịch sử
-      const chat = this.model.startChat({
-        history: history,
-        generationConfig: {
+      const chat = this.genAI.chats.create({
+        model: this.modelName,
+        config: {
+          systemInstruction: this.systemInstruction,
           maxOutputTokens: 1000,
           temperature: 0.7,
         },
+        history: history,
       });
 
       // Gửi tin nhắn và nhận phản hồi
-      const result = await chat.sendMessage(chatDto.message);
-      const response = await result.response;
-      const text = response.text();
+      const result = await chat.sendMessage({ message: chatDto.message });
+      const text = result.text || '';
 
       // Lưu tin nhắn vào database nếu có conversation
       if (conversation) {
@@ -254,21 +253,25 @@ Hãy luôn nhớ: Bạn là người bạn đáng tin cậy giúp các em yêu t
         }));
       }
 
-      const chat = this.model.startChat({
-        history: history,
-        generationConfig: {
+      const chat = this.genAI.chats.create({
+        model: this.modelName,
+        config: {
+          systemInstruction: this.systemInstruction,
           maxOutputTokens: 1000,
           temperature: 0.7,
         },
+        history: history,
       });
 
-      const result = await chat.sendMessageStream(chatDto.message);
+      const result = await chat.sendMessageStream({ message: chatDto.message });
       let fullResponse = '';
 
-      for await (const chunk of result.stream) {
-        const chunkText = chunk.text();
+      for await (const chunk of result) {
+        const chunkText = chunk.text || '';
         fullResponse += chunkText;
-        yield chunkText;
+        if (chunkText) {
+          yield chunkText;
+        }
       }
 
       // Lưu tin nhắn sau khi stream xong
