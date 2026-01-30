@@ -559,16 +559,36 @@ export class AuthsService implements OnModuleInit {
 
       let user = await this.userModel.findOne({ googleId });
 
-      const password = randomUUID().substring(0, 10);
-      const hashedPassword = await bcrypt.hash(password, 10);
+      if (!user && email) {
+        user = await this.userModel.findOne({ email });
+        if (user && !user.googleId) {
+          user.googleId = googleId;
+          user.typeAccount = UserTypeAccount.GOOGLE;
+          if (avatar) user.avatar = avatar;
+          if (fullname) user.fullname = fullname;
+          await user.save();
+        }
+      }
 
       if (!user) {
+        const password = randomUUID().substring(0, 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const baseUsername = (email?.split('@')[0] || 'user').toLowerCase();
+        let username = baseUsername;
+
+        // Ensure unique username
+        let suffix = 0;
+        while (await this.userModel.findOne({ username })) {
+          suffix += 1;
+          username = `${baseUsername}${suffix}`;
+        }
+
         user = await this.userModel.create({
           googleId,
           email,
           fullname,
           avatar,
-          username: email.split('@')[0],
+          username,
           password: hashedPassword,
           role: UserRole.STUDENT,
           status: UserStatus.ACTIVE,

@@ -78,6 +78,8 @@ export interface IUser {
   parent?: Types.ObjectId; // Phụ huynh của người dùng
   teacher?: Types.ObjectId; // Giáo viên của người dùng
   typeAccount: UserTypeAccount; // Loại hình tài khoản của người dùng
+  googleId?: string; // Google ID nếu đăng nhập bằng Google
+  facebookId?: string; // Facebook ID nếu đăng nhập bằng Facebook
   accountPackage: PackageType; // Gói tài khoản của người dùng
   isVerify: boolean; // Trạng thái xác thực của người dùng
   codeVerify?: string; // Mã xác minh (OTP) nếu có
@@ -157,6 +159,12 @@ export class User implements IUser {
 
   @Prop({ enum: UserTypeAccount, default: UserTypeAccount.EMAIL })
   typeAccount: UserTypeAccount;
+
+  @Prop({ type: String })
+  googleId?: string;
+
+  @Prop({ type: String })
+  facebookId?: string;
 
   @Prop({ enum: PackageType, default: PackageType.FREE })
   accountPackage: PackageType;

@@ -6,7 +6,6 @@ import {
   Get,
   UseGuards,
   Req,
-  Res,
   BadRequestException,
   HttpException,
 } from '@nestjs/common';
@@ -339,7 +338,7 @@ export class AuthsController {
   @ApiOperation({ summary: 'Google callback' })
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  async googleCallback(@Req() req, @Res() res) {
+  async googleCallback(@Req() req) {
     const { accessToken, refreshToken } =
       await this.authsService.loginWithGoogle(req.user);
 
@@ -363,7 +362,7 @@ export class AuthsController {
   @ApiOperation({ summary: 'Facebook callback' })
   @Get('facebook/callback')
   @UseGuards(AuthGuard('facebook'))
-  async facebookCallback(@Req() req, @Res() res) {
+  async facebookCallback(@Req() req) {
     const { accessToken, refreshToken } =
       await this.authsService.loginWithFacebook(req.user);
     return ok(
