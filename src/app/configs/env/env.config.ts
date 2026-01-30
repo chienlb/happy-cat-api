@@ -87,6 +87,10 @@ export const envSchema = z.object({
   AZURE_SPEECH_KEY: z.string().optional(),
   AZURE_SPEECH_REGION: z.string().optional(),
   GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
+  VNPAY_TMN_CODE: z.string().optional(),
+  VNPAY_HASH_SECRET: z.string().optional(),
+  VNPAY_RETURN_URL: z.string().optional(),
+  VNPAY_API_URL: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -5,6 +5,7 @@ export type PaymentDocument = HydratedDocument<Payment>;
 
 export enum PaymentMethod {
   PAYPAL = 'paypal', // PayPal
+  VNPAY = 'vnpay', // VNPay
   MOMO = 'momo', // MoMo
   STRIPE = 'stripe', // Stripe
 }

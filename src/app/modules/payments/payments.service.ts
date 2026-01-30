@@ -36,6 +36,9 @@ import {
   OrderApplicationContextUserAction,
   Environment,
 } from '@paypal/paypal-server-sdk';
+import * as crypto from 'crypto';
+import * as qs from 'qs';
+import { getClientIp } from 'request-ip';
 
 @Injectable()
 export class PaymentsService {
@@ -53,7 +56,7 @@ export class PaymentsService {
     @InjectConnection() private readonly connection: Connection,
   ) {
     const env = envSchema.parse(process.env);
-    
+
     // Initialize PayPal client
     this.paypalClient = new Client({
       clientCredentialsAuthCredentials: {
@@ -62,11 +65,240 @@ export class PaymentsService {
       },
       environment: env.PAYPAL_MODE === 'live' ? Environment.Production : Environment.Sandbox,
     });
-    
+
     this.ordersController = new OrdersController(this.paypalClient);
   }
 
+  // VNPay helper methods
+  private sortObject(obj: Record<string, any>) {
+    const sorted: Record<string, string> = {};
+    const keys = Object.keys(obj).sort();
+
+    for (const key of keys) {
+      // VNPAY demo: encodeURIComponent và đổi %20 thành '+'
+      sorted[key] = encodeURIComponent(String(obj[key])).replace(/%20/g, '+');
+    }
+    return sorted;
+  }
+
+  private buildSignDataNoEncode(params: Record<string, string | number>) {
+    const sorted = this.sortObject(params);
+    return qs.stringify(sorted, { encode: false });
+  }
+
+  private signVNPay(secretKey: string, vnpParamsEncoded: Record<string, string>) {
+    const signData = qs.stringify(vnpParamsEncoded, { encode: false });
+    this.logger.log(`[DEBUG] VNPay signData: ${signData}`);
+
+    return crypto
+      .createHmac('sha512', secretKey)
+      .update(Buffer.from(signData, 'utf-8'))
+      .digest('hex');
+  }
+
+  private formatDate(date: Date) {
+    const pad = (n: number) => (n < 10 ? '0' + n : n);
+    return (
+      date.getFullYear().toString() +
+      pad(date.getMonth() + 1) +
+      pad(date.getDate()) +
+      pad(date.getHours()) +
+      pad(date.getMinutes()) +
+      pad(date.getSeconds())
+    );
+  }
+
+  private verifyChecksum(query: any, env: any) {
+    const secureHash = query.vnp_SecureHash;
+
+    // Create a copy to avoid mutating original query
+    const vnpParams = { ...query };
+    delete vnpParams.vnp_SecureHash;
+    delete vnpParams.vnp_SecureHashType;
+
+    const sorted = this.sortObject(vnpParams);
+    const signed = this.signVNPay(env.VNPAY_HASH_SECRET, sorted);
+
+    this.logger.log(`[DEBUG] VNPay verification - Expected hash: ${secureHash}`);
+    this.logger.log(`[DEBUG] VNPay verification - Calculated hash: ${signed}`);
+    this.logger.log(`[DEBUG] VNPay params: ${JSON.stringify(sorted)}`);
+
+    return secureHash === signed;
+  }
+
   async createPayment(userId: string, dto: CreatePaymentDto, req: Request) {
+    const env = envSchema.parse(process.env);
+
+    // Route to appropriate payment method
+    if (dto.method === 'vnpay') {
+      return this.createVNPayPayment(userId, dto, req);
+    } else if (dto.method === 'paypal') {
+      return this.createPayPalPayment(userId, dto, req);
+    } else {
+      throw new BadRequestException(`Payment method ${dto.method} not supported`);
+    }
+  }
+
+  private verifyVNPayReturn(query: any, hashSecret: string) {
+    const receivedHash = String(query?.vnp_SecureHash ?? '').toLowerCase();
+    if (!receivedHash) return false;
+
+    const vnpParams: Record<string, any> = { ...query };
+    delete vnpParams.vnp_SecureHash;
+    delete vnpParams.vnp_SecureHashType;
+
+    // Ensure scalar values (Express can parse arrays)
+    for (const k of Object.keys(vnpParams)) {
+      const v = vnpParams[k];
+      if (Array.isArray(v)) vnpParams[k] = v[0];
+      // normalize undefined/null to empty? generally not needed; better to delete
+      if (vnpParams[k] === undefined || vnpParams[k] === null) delete vnpParams[k];
+    }
+
+    const calculated = this.signVNPay(hashSecret, vnpParams).toLowerCase();
+
+    this.logger.log(`[DEBUG] VNPay verify - received:   ${receivedHash}`);
+    this.logger.log(`[DEBUG] VNPay verify - calculated: ${calculated}`);
+    this.logger.log(`[DEBUG] VNPay verify params: ${JSON.stringify(this.sortObject(vnpParams))}`);
+
+    return receivedHash === calculated;
+  }
+
+  // =========================
+  // CREATE VNPAY PAYMENT (FULL)
+  // =========================
+
+  /**
+   * Creates VNPay payment URL
+   * - Uses encode:false for both signing and URL building (like VNPAY sample)
+   * - Amount is integer = amount*100
+   */
+  public async createVNPayPayment(userId: string, dto: any, req: Request) {
+    const env = envSchema.parse(process.env);
+
+    const clientIp = getClientIp(req) || req.ip || '127.0.0.1';
+    const now = new Date();
+    const orderId = now.getTime().toString();
+    const expireDate = new Date(now.getTime() + 15 * 60 * 1000);
+
+    // Sanitize OrderInfo similar to your approach
+    const orderInfoRaw = dto.description ?? `Thanh toan don hang ${orderId}`;
+    const orderInfo = String(orderInfoRaw).replace(/[^\w\s\-.,]/g, '');
+
+    const params: Record<string, string | number> = {
+      vnp_Version: '2.1.0',
+      vnp_Command: 'pay',
+      vnp_TmnCode: env.VNPAY_TMN_CODE ?? '',
+      vnp_Amount: Math.round(Number(dto.amount) * 100), // IMPORTANT: integer
+      vnp_CurrCode: 'VND',
+      vnp_IpAddr: String(clientIp),
+      vnp_Locale: 'vn',
+      vnp_OrderInfo: orderInfo,
+      vnp_OrderType: 'other',
+      vnp_ReturnUrl: env.VNPAY_RETURN_URL ?? '',
+      vnp_CreateDate: this.formatDate(now),
+      vnp_ExpireDate: this.formatDate(expireDate),
+      vnp_TxnRef: orderId,
+      // Optional:
+      // vnp_BankCode: dto.bankCode ?? ''
+    };
+
+    // Remove optional empty fields (important to avoid signing empty keys)
+    Object.keys(params).forEach((k) => {
+      const v = params[k];
+      if (v === '' || v === undefined || v === null) delete params[k];
+    });
+
+    const sorted = this.sortObject(params);
+
+    const secureHash = this.signVNPay(env.VNPAY_HASH_SECRET ?? '', sorted);
+
+    // Build payment URL EXACTLY like sample: encode:false
+    const paymentUrl =
+      `${env.VNPAY_API_URL}?` +
+      qs.stringify({ ...sorted, vnp_SecureHash: secureHash }, { encode: false });
+
+    this.logger.log(`[DEBUG] VNPay paymentUrl: ${paymentUrl}`);
+
+    // Save payment (keep your schema logic)
+    await this.paymentModel.create({
+      userId,
+      amount: dto.amount,
+      currency: 'VND',
+      method: 'vnpay',
+      description: dto.description,
+      transactionId: orderId,
+      status: PaymentStatus.PENDING,
+      subscriptionId: dto.subscriptionId,
+    });
+
+    return { paymentUrl, orderId };
+  }
+
+  // =========================
+  // HANDLE VNPAY RETURN (FULL)
+  // =========================
+
+  public async handleVNPayReturn(query: any, session?: any) {
+    if (this.connection.readyState !== 1) {
+      throw new BadRequestException('Database not ready.');
+    }
+
+    const mongooseSession = session ?? (await this.connection.startSession());
+    const isNewSession = !session;
+
+    if (isNewSession) mongooseSession.startTransaction();
+
+    try {
+      const env = envSchema.parse(process.env);
+
+      const txnRef = query?.vnp_TxnRef;
+      if (!txnRef) throw new BadRequestException('Missing vnp_TxnRef');
+
+      this.logger.log(`[DEBUG] VNPay return txnRef: ${txnRef}`);
+      this.logger.log(`[DEBUG] VNPay return query: ${JSON.stringify(query)}`);
+
+      const ok = this.verifyVNPayReturn(query, env.VNPAY_HASH_SECRET ?? '');
+      if (!ok) {
+        throw new BadRequestException('Invalid VNPay checksum');
+      }
+
+      // VNPAY success: ResponseCode=00 and TransactionStatus=00 (recommended)
+      const success =
+        String(query.vnp_ResponseCode) === '00' &&
+        String(query.vnp_TransactionStatus ?? '00') === '00';
+
+      // Update payment status
+      const payment = await this.paymentModel.findOneAndUpdate(
+        { transactionId: txnRef },
+        {
+          status: success ? PaymentStatus.SUCCESS : PaymentStatus.FAILED,
+          paidAt: new Date(),
+        },
+        { new: true, session: mongooseSession },
+      );
+
+      if (!payment) {
+        throw new NotFoundException(`Payment not found for transaction: ${txnRef}`);
+      }
+
+      // Activate services if successful
+      if (success) {
+        await this.activateServices(txnRef, mongooseSession);
+      }
+
+      if (isNewSession) await mongooseSession.commitTransaction();
+      return { success, data: payment };
+    } catch (err: any) {
+      if (isNewSession) await mongooseSession.abortTransaction();
+      this.logger.error(`[ERROR] handleVNPayReturn: ${err.message}`, err.stack);
+      throw err;
+    } finally {
+      if (isNewSession) await mongooseSession.endSession();
+    }
+  }
+
+  private async createPayPalPayment(userId: string, dto: CreatePaymentDto, req: Request) {
     const env = envSchema.parse(process.env);
     const now = new Date();
     const orderId = now.getTime().toString();
@@ -166,14 +398,14 @@ export class PaymentsService {
         .session(mongooseSession);
 
       let packageId = subscriptionActive?.packageId;
-      
+
       if (!purchase && payment.subscriptionId) {
         // Create purchase if it doesn't exist (subscriptionId contains packageId)
         purchase = await this.purchaseModel.create(
           [
             {
               userId: payment.userId,
-              packageId: packageId!,  
+              packageId: packageId!,
               transactionId: transactionId,
               amount: payment.amount,
               currency: payment.currency,
@@ -244,10 +476,10 @@ export class PaymentsService {
       } else {
         // Only create new subscription if it doesn't exist at all
         const existingSubscription = await this.subscriptionModel
-          .findOne({ 
-            userId: payment.userId, 
+          .findOne({
+            userId: payment.userId,
             packageId: purchase.packageId,
-            status: SubscriptionStatus.PENDING 
+            status: SubscriptionStatus.PENDING
           })
           .session(mongooseSession);
 
@@ -261,7 +493,7 @@ export class PaymentsService {
             ),
           );
           await existingSubscription.save({ session: mongooseSession });
-          
+
           this.logger.log(
             `[DEBUG] Existing subscription updated to ACTIVE for transaction ID: ${transactionId}`,
           );
@@ -290,6 +522,17 @@ export class PaymentsService {
   }
 
   async handleReturn(query: any, session?: ClientSession) {
+    // Check if it's VNPay or PayPal based on query parameters
+    if (query.vnp_TxnRef) {
+      return this.handleVNPayReturn(query, session);
+    } else if (query.token) {
+      return this.handlePayPalReturn(query, session);
+    } else {
+      throw new BadRequestException('Invalid payment return parameters');
+    }
+  }
+
+  private async handlePayPalReturn(query: any, session?: ClientSession) {
     if (this.connection.readyState !== 1) {
       throw new BadRequestException('Database not ready.');
     }
@@ -331,6 +574,17 @@ export class PaymentsService {
       if (!payment) {
         throw new NotFoundException(`Payment not found for token: ${token}`);
       }
+
+      const subscription = await this.subscriptionModel
+        .findById(payment.subscriptionId)
+        .session(mongooseSession);
+
+      if (!subscription){
+        throw new NotFoundException(`Subscription not found for ID: ${payment.subscriptionId}`);
+      }
+
+      subscription.status = success ? SubscriptionStatus.ACTIVE : SubscriptionStatus.CANCELLED;
+      await subscription.save({ session: mongooseSession });
 
       this.logger.log(`[DEBUG] Payment status updated to ${payment.status}`);
 
@@ -427,6 +681,93 @@ export class PaymentsService {
       if (isNewSession) {
         await mongooseSession.endSession();
       }
+    }
+  }
+
+  async handleVNPayIPN(body: any) {
+    if (this.connection.readyState !== 1) {
+      throw new BadRequestException('Database not ready.');
+    }
+
+    const session = await this.connection.startSession();
+    session.startTransaction();
+
+    try {
+      const env = envSchema.parse(process.env);
+
+      this.logger.log(`[DEBUG] VNPay IPN received - vnp_TxnRef: ${body.vnp_TxnRef}`);
+
+      // Verify checksum
+      if (!this.verifyChecksum(body, env)) {
+        this.logger.error(`[ERROR] VNPay IPN - Invalid checksum for transaction: ${body.vnp_TxnRef}`);
+        await session.abortTransaction();
+        await session.endSession();
+        return { RspCode: '97', Message: 'Invalid checksum' };
+      }
+
+      const orderId = body.vnp_TxnRef;
+      const responseCode = body.vnp_ResponseCode;
+      const transactionStatus = body.vnp_TransactionStatus;
+
+      // Find payment
+      const payment = await this.paymentModel.findOne(
+        { transactionId: orderId }
+      ).session(session);
+
+      if (!payment) {
+        this.logger.warn(`[WARNING] VNPay IPN - Payment not found for transaction: ${orderId}`);
+        await session.abortTransaction();
+        await session.endSession();
+        return { RspCode: '01', Message: 'Order not found' };
+      }
+
+      // Check if already processed
+      if (payment.status === PaymentStatus.SUCCESS) {
+        this.logger.log(`[DEBUG] VNPay IPN - Transaction already processed: ${orderId}`);
+        await session.abortTransaction();
+        await session.endSession();
+        return { RspCode: '00', Message: 'Success' };
+      }
+
+      // Process based on transaction status
+      if (responseCode === '00' && transactionStatus === '00') {
+        // Payment successful
+        payment.status = PaymentStatus.SUCCESS;
+        payment.paidAt = new Date();
+        await payment.save({ session });
+
+        this.logger.log(`[DEBUG] VNPay IPN - Payment marked SUCCESS for transaction: ${orderId}`);
+
+        // Activate services
+        await this.activateServices(orderId, session);
+
+        this.logger.log(`[DEBUG] VNPay IPN - Services activated for transaction: ${orderId}`);
+
+        await session.commitTransaction();
+        await session.endSession();
+
+        return { RspCode: '00', Message: 'Success' };
+      } else {
+        // Payment failed
+        payment.status = PaymentStatus.FAILED;
+        payment.paidAt = new Date();
+        await payment.save({ session });
+
+        this.logger.log(
+          `[DEBUG] VNPay IPN - Payment marked FAILED for transaction: ${orderId}, responseCode: ${responseCode}`,
+        );
+
+        await session.commitTransaction();
+        await session.endSession();
+
+        return { RspCode: '00', Message: 'Success' };
+      }
+    } catch (error) {
+      await session.abortTransaction();
+      await session.endSession();
+
+      this.logger.error(`[ERROR] VNPay IPN exception: ${error.message}`, error.stack);
+      return { RspCode: '99', Message: 'System error' };
     }
   }
 }

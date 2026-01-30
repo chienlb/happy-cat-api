@@ -82,4 +82,11 @@ export class PaymentsController {
   async handleWebhook(@Body() body: any, @Req() req: Request) {
     return this.paymentsService.handleWebhook(body);
   }
+
+  @Post('vnpay-ipn')
+  @ApiOperation({ summary: 'VNPay IPN handler' })
+  @ApiResponse({ status: 200, description: 'IPN processed successfully' })
+  async handleVNPayIPN(@Body() body: any) {
+    return this.paymentsService.handleVNPayIPN(body);
+  }
 }
