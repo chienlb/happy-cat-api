@@ -564,6 +564,7 @@ export class AuthsService implements OnModuleInit {
         if (user && !user.googleId) {
           user.googleId = googleId;
           user.typeAccount = UserTypeAccount.GOOGLE;
+          user.isVerify = true;
           if (avatar) user.avatar = avatar;
           if (fullname) user.fullname = fullname;
           await user.save();
@@ -593,7 +594,13 @@ export class AuthsService implements OnModuleInit {
           role: UserRole.STUDENT,
           status: UserStatus.ACTIVE,
           typeAccount: UserTypeAccount.GOOGLE,
+          isVerify: true,
         });
+      }
+
+      if (user && !user.isVerify) {
+        user.isVerify = true;
+        await user.save();
       }
 
       const accessToken = jwt.sign(
@@ -662,12 +669,16 @@ export class AuthsService implements OnModuleInit {
           email,
           fullname,
           avatar,
-          username: email.split('@')[0],
+          username: email?.split('@')[0] || 'user',
           password: hashedPassword,
           role: UserRole.STUDENT,
           status: UserStatus.ACTIVE,
           typeAccount: UserTypeAccount.FACEBOOK,
+          isVerify: true,
         });
+      } else if (!user.isVerify) {
+        user.isVerify = true;
+        await user.save();
       }
       const accessToken = jwt.sign(
         { userId: user._id.toString(), role: user.role },
