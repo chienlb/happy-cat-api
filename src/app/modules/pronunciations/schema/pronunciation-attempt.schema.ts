@@ -18,7 +18,7 @@ export interface IPronunciationAttempt {
   exerciseId: Types.ObjectId; // Bài tập đã làm
 
   // Audio của user
-  userAudio: string; // URL audio file từ Cloudflare R2
+  userAudio?: string; // URL audio file từ Cloudflare R2
   audioDuration?: number; // Thời lượng audio (giây)
 
   // Kết quả chấm điểm
@@ -61,8 +61,8 @@ export class PronunciationAttempt implements IPronunciationAttempt {
   @Prop({ type: Types.ObjectId, ref: 'PronunciationExercise', required: true })
   exerciseId: Types.ObjectId;
 
-  @Prop({ required: true })
-  userAudio: string;
+  @Prop({ default: '' })
+  userAudio?: string;
 
   @Prop()
   audioDuration?: number;

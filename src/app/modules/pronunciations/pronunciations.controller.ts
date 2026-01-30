@@ -123,8 +123,26 @@ export class PronunciationController {
     @Req() req: any,
     @Param('exerciseId') exerciseId: string,
   ) {
+    console.log('=== PRONUNCIATION ASSESS REQUEST ===');
+    console.log('File received:', {
+      exists: !!file,
+      originalname: file?.originalname,
+      mimetype: file?.mimetype,
+      size: file?.size,
+      bufferLength: file?.buffer?.length,
+      fieldname: file?.fieldname,
+    });
+    console.log('Body:', assessDto);
+    console.log('ExerciseId:', exerciseId);
+    
     if (!file?.buffer) {
       throw new BadRequestException('Missing audio file (field: audio)');
+    }
+    if (!file.buffer.length) {
+      throw new BadRequestException('Empty audio file');
+    }
+    if (!file.mimetype?.startsWith('audio/')) {
+      throw new BadRequestException('Invalid audio file');
     }
     if (!assessDto.referenceText?.trim()) {
       throw new BadRequestException('Missing referenceText');
@@ -135,6 +153,7 @@ export class PronunciationController {
         audioBuffer: file.buffer,
         referenceText: assessDto.referenceText.trim(),
         language: assessDto.language || 'en-US',
+        contentType: file.mimetype,
       },
       req.user.userId,
       exerciseId,

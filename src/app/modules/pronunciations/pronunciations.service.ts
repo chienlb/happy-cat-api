@@ -25,6 +25,7 @@ import {
   PronunciationAttemptDocument,
   PronunciationAttemptStatus,
 } from './schema/pronunciation-attempt.schema';
+import { GoogleGenAI } from '@google/genai';
 
 const env = envSchema.parse(process.env);
 
@@ -32,10 +33,13 @@ type AssessInput = {
   audioBuffer: Buffer;
   referenceText: string;
   language: string; // e.g. en-US
+  contentType?: string;
 };
 
 @Injectable()
 export class PronunciationService {
+  private genAI: GoogleGenAI;
+
   constructor(
     @InjectModel(PronunciationExercise.name)
     private pronunciationExerciseModel: Model<PronunciationExerciseDocument>,
@@ -45,7 +49,13 @@ export class PronunciationService {
     private usersService: UsersService,
     private lessonService: LessonsService,
     private unitsService: UnitsService,
-  ) {}
+  ) {
+    const apiKey = env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY is not configured');
+    }
+    this.genAI = new GoogleGenAI({ apiKey });
+  }
 
   async assessShortAudio(
     input: AssessInput,
@@ -61,7 +71,25 @@ export class PronunciationService {
       );
     }
 
-    const { audioBuffer, referenceText, language } = input;
+    const { audioBuffer, referenceText, language, contentType } = input;
+
+    // Validate WAV format
+    const isRIFF = audioBuffer.toString('ascii', 0, 4) === 'RIFF';
+    const isWAVE = audioBuffer.toString('ascii', 8, 12) === 'WAVE';
+    
+    console.log('Audio debug:', {
+      size: audioBuffer.length,
+      contentType,
+      first4Bytes: audioBuffer.toString('hex', 0, 4),
+      isRIFF,
+      isWAVE,
+    });
+
+    if (!isRIFF || !isWAVE) {
+      throw new BadRequestException(
+        'Audio must be WAV PCM format (RIFF/WAVE). Current file is not valid WAV. Please convert audio to WAV PCM 16kHz mono on client before uploading.',
+      );
+    }
 
     // Pronunciation Assessment header (Base64 JSON)
     const pronParams = {
@@ -88,7 +116,8 @@ export class PronunciationService {
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'audio/wav; codecs=audio/pcm; samplerate=16000',
+        'Content-Type':
+          contentType || 'audio/wav; codecs=audio/pcm; samplerate=16000',
         'Ocp-Apim-Subscription-Key': env.AZURE_SPEECH_KEY,
         'Pronunciation-Assessment': pronHeader,
       },
@@ -121,26 +150,45 @@ export class PronunciationService {
 
     const best = json?.NBest?.[0];
 
+    // Analyze with Gemini AI
+    const aiAnalysis = await this.analyzeWithGemini(best, referenceText);
+
+    // Prepare word-level feedback
+    const wordLevelFeedback = best?.Words?.map((w: any) => ({
+      word: w.Word,
+      score: w.AccuracyScore || 0,
+      issues: w.ErrorType !== 'None' ? [w.ErrorType] : [],
+    })) || [];
+
+    // Calculate scores
+    const pronScore = best?.PronScore || 0;
+    const accuracy = best?.AccuracyScore || 0;
+    const fluency = best?.FluencyScore || 0;
+    const completeness = best?.CompletenessScore || 0;
+    const overallScore = Math.round((pronScore + accuracy + fluency + completeness) / 4);
+
+    // Create and save pronunciation attempt
     const pronunciationAttempt = await this.pronunciationAttemptModel.create({
       userId: new Types.ObjectId(userId),
       exerciseId: new Types.ObjectId(exerciseId),
       userAudio: '',
-      audioDuration: 0,
-      score: 0,
-      accuracy: 0,
-      fluency: 0,
-      completeness: 0,
-      overallScore: 0,
-      feedback: '',
-      wordLevelFeedback: [],
+      audioDuration: json?.Duration ? json.Duration / 10000000 : 0, // Convert to seconds
+      score: pronScore,
+      accuracy: accuracy,
+      fluency: fluency,
+      completeness: completeness,
+      overallScore: overallScore,
+      feedback: aiAnalysis,
+      wordLevelFeedback: wordLevelFeedback,
       phonemeFeedback: [],
-      status: PronunciationAttemptStatus.PENDING,
+      status: PronunciationAttemptStatus.SCORED,
       attemptNumber: 1,
-      isPassed: false,
+      isPassed: overallScore >= 60, // Pass threshold
       timeSpent: 0,
     });
 
     return {
+      attemptId: pronunciationAttempt._id,
       status: json?.RecognitionStatus,
       recognizedText: best?.Display ?? json?.DisplayText ?? '',
       scores: best
@@ -151,11 +199,76 @@ export class PronunciationService {
             prosody: best.ProsodyScore,
             completeness: best.CompletenessScore,
             confidence: best.Confidence,
+            overallScore: overallScore,
           }
         : null,
       words: best?.Words ?? [],
+      aiAnalysis,
       raw: json,
     };
+  }
+
+  /**
+   * Analyze pronunciation results with Gemini AI
+   */
+  private async analyzeWithGemini(
+    pronunciationData: any,
+    referenceText: string,
+  ): Promise<string> {
+    try {
+      const prompt = `Bạn là chuyên gia đánh giá phát âm tiếng Anh cho học sinh tiểu học. Hãy phân tích kết quả phát âm sau và đưa ra nhận xét CHI TIẾT, DÀI, dễ hiểu cho học sinh:
+
+**Văn bản chuẩn:** "${referenceText}"
+**Văn bản nhận diện:** "${pronunciationData?.Display || 'N/A'}"
+
+**Điểm số:**
+- Tổng điểm phát âm: ${pronunciationData?.PronScore || 0}/100
+- Độ chính xác: ${pronunciationData?.AccuracyScore || 0}/100
+- Độ trôi chảy: ${pronunciationData?.FluencyScore || 0}/100
+- Ngữ điệu: ${pronunciationData?.ProsodyScore || 0}/100
+- Độ hoàn chỉnh: ${pronunciationData?.CompletenessScore || 0}/100
+
+**Chi tiết từng từ:**
+${pronunciationData?.Words?.map((w: any) => `- "${w.Word}": ${w.AccuracyScore}/100 (${w.ErrorType})`).join('\n') || 'Không có dữ liệu'}
+
+Hãy viết phản hồi bằng tiếng Việt, DÀI VÀ CHI TIẾT (10-15 câu), thân thiện và khích lệ. Bao gồm:
+
+**1. Lời chào và tổng quan (2-3 câu):**
+- Chào mừng và động viên
+- Nhận xét tổng quan về điểm số
+
+**2. Phân tích chi tiết từng chỉ số (5-7 câu):**
+- Độ chính xác: Nhận xét cụ thể, giải thích ý nghĩa
+- Độ trôi chảy: Đánh giá tốc độ và sự mượt mà
+- Ngữ điệu: Đánh giá cao trầm, nhấn nhá
+- Độ hoàn chỉnh: Đánh giá việc đọc đủ từ
+
+**3. Phân tích từng từ (3-4 câu):**
+- Khen ngợi những từ phát âm tốt
+- Chỉ ra từ nào cần cải thiện và lý do
+- Gợi ý cách phát âm đúng cho từ khó
+
+**4. Lời khuyên và động viên (2-3 câu):**
+- Gợi ý cụ thể để cải thiện
+- Động viên tiếp tục luyện tập
+- Lời khen và khích lệ cuối cùng
+
+Sử dụng emoji phù hợp 😊 🎉 ⭐ 👍 💪 và ngôn ngữ dễ hiểu, sinh động cho trẻ em.`;
+
+      const chat = this.genAI.chats.create({
+        model: 'gemini-2.5-flash',
+        config: {
+          maxOutputTokens: 1500,
+          temperature: 0.8,
+        },
+      });
+
+      const result = await chat.sendMessage({ message: prompt });
+      return result.text || 'Không thể tạo phân tích.';
+    } catch (error) {
+      console.error('Gemini analysis error:', error);
+      return 'Phân tích tự động tạm thời không khả dụng.';
+    }
   }
 
   async createPronunciationExercise(
