@@ -37,7 +37,7 @@ import express from 'express';
 @UseGuards(AuthGuard('jwt'))
 @Roles(UserRole.ADMIN)
 export class BadgesController {
-  constructor(private readonly badgesService: BadgesService) {}
+  constructor(private readonly badgesService: BadgesService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create a new badge (form-data)' })
@@ -66,18 +66,13 @@ export class BadgesController {
     @Body() createBadgeDto: CreateBadgeDto,
     @Req() req: any,
   ) {
-    const user = req.user; // hoặc interface JwtPayload
-    console.log(user);
-
-    // if (!user || !user._id) {
-    //   throw new BadRequestException('User not found');
-    // }
-
+    const userId = (req as any).user.userId;
     return this.badgesService.createBadge(
+      userId,
       {
         ...createBadgeDto,
-        createdBy: user?.userId,
-        updatedBy: user?.userId,
+        createdBy: userId,
+        updatedBy: userId,
       },
       file,
     );

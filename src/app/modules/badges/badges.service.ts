@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Badge, BadgeDocument } from './schema/badge.schema';
 import { UsersService } from '../users/users.service';
 import { CreateBadgeDto } from './dto/create-badge.dto';
@@ -15,9 +15,10 @@ export class BadgesService {
     private usersService: UsersService,
     private readonly redisService: RedisService,
     private readonly cloudflareService: CloudflareService,
-  ) {}
+  ) { }
 
   async createBadge(
+    userId: string,
     createBadgeDto: CreateBadgeDto,
     file?: any,
   ): Promise<BadgeDocument> {
@@ -38,14 +39,14 @@ export class BadgesService {
       }
 
       const user = await this.usersService.findUserById(
-        createBadgeDto.createdBy?.toString() || '',
+        userId,
       );
       if (!user) {
         throw new BadRequestException('User not found');
       }
 
-      createBadgeDto.createdBy = user._id;
-      createBadgeDto.updatedBy = user._id;
+      createBadgeDto.createdBy = new Types.ObjectId(userId);
+      createBadgeDto.updatedBy = new Types.ObjectId(userId);
 
       return await this.badgeModel.create(createBadgeDto);
     } catch (error) {

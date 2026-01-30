@@ -25,13 +25,9 @@ export class AssignmentsService {
     private notificationJobsService: NotificationJobsService,
   ) { }
 
-  async create(createAssignmentDto: CreateAssignmentDto, file?: any) {
-    const user = await this.usersService.findUserById(
-      createAssignmentDto.createdBy,
-    );
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+  async create(userId: string, createAssignmentDto: CreateAssignmentDto, file?: any) {
+    const user = await this.usersService.findUserById(userId);
+    if (!user) throw new NotFoundException('User not found');
 
     if (
       !createAssignmentDto.classId ||
@@ -58,7 +54,7 @@ export class AssignmentsService {
     const assignment = new this.assignmentModel({
       ...createAssignmentDto,
       attachments: attachmentUrl ? [attachmentUrl] : [],
-      createdBy: user._id,
+      createdBy: userId,
     });
 
     const saved = await assignment.save();
@@ -73,21 +69,17 @@ export class AssignmentsService {
     return saved;
   }
 
-  async updateAssignment(id: string, updateAssignmentDto: UpdateAssignmentDto) {
+  async updateAssignment(id: string, userId: string, updateAssignmentDto: UpdateAssignmentDto) {
     try {
-      const user = await this.usersService.findUserById(
-        updateAssignmentDto.updatedBy || '',
-      );
-      if (!user) {
-        throw new NotFoundException('User not found');
-      }
+      const user = await this.usersService.findUserById(userId);
+      if (!user) throw new NotFoundException('User not found');
       const assignment = await this.assignmentModel.findById(id);
       if (!assignment) {
         throw new NotFoundException('Assignment not found');
       }
       await assignment.updateOne({
         ...updateAssignmentDto,
-        ...(updateAssignmentDto.updatedBy && { updatedBy: user._id }),
+        ...(updateAssignmentDto.updatedBy && { updatedBy: userId }),
       });
       return assignment;
     } catch (error) {
@@ -95,17 +87,15 @@ export class AssignmentsService {
     }
   }
 
-  async deleteAssignment(id: string, updatedBy: string) {
+  async deleteAssignment(id: string, userId: string) {
     try {
-      const user = await this.usersService.findUserById(updatedBy || '');
-      if (!user) {
-        throw new NotFoundException('User not found');
-      }
+      const user = await this.usersService.findUserById(userId);
+      if (!user) throw new NotFoundException('User not found');
       const assignment = await this.assignmentModel.findById(id);
       if (!assignment) {
         throw new NotFoundException('Assignment not found');
       }
-      await assignment.updateOne({ isDeleted: true, updatedBy: user._id });
+      await assignment.updateOne({ isDeleted: true, updatedBy: userId });
       return assignment;
     } catch (error) {
       throw new BadRequestException('Failed to delete assignment', error);
