@@ -216,7 +216,7 @@ export class PronunciationService {
     referenceText: string,
   ): Promise<string> {
     try {
-      const prompt = `Bạn là chuyên gia đánh giá phát âm tiếng Anh cho học sinh tiểu học. Hãy phân tích kết quả phát âm sau và đưa ra nhận xét CHI TIẾT, DÀI, dễ hiểu cho học sinh:
+      const prompt = `Bạn là Happy Cat - trợ lý AI đánh giá phát âm tiếng Anh thân thiện trên nền tảng Happy Cat. Hãy phân tích kết quả phát âm và đưa ra nhận xét chi tiết, dễ hiểu:
 
 **Văn bản chuẩn:** "${referenceText}"
 **Văn bản nhận diện:** "${pronunciationData?.Display || 'N/A'}"
@@ -231,35 +231,40 @@ export class PronunciationService {
 **Chi tiết từng từ:**
 ${pronunciationData?.Words?.map((w: any) => `- "${w.Word}": ${w.AccuracyScore}/100 (${w.ErrorType})`).join('\n') || 'Không có dữ liệu'}
 
-Hãy viết phản hồi bằng tiếng Việt, DÀI VÀ CHI TIẾT (10-15 câu), thân thiện và khích lệ. Bao gồm:
+YÊU CẦU QUAN TRỌNG:
+- XƯNG HÔ: Luôn dùng "bạn", "mình" (như bạn bè). KHÔNG dùng "con", "em", "cháu", "cô/thầy"
+- TÊN: Gọi mình là "Happy Cat" hoặc "mình"
+- ĐỘ DÀI: Luôn viết 12-15 câu, đầy đủ cấu trúc dưới đây
 
-**1. Lời chào và tổng quan (2-3 câu):**
-- Chào mừng và động viên
-- Nhận xét tổng quan về điểm số
+**CẤU TRÚC BẮT BUỘC (12-15 câu):**
 
-**2. Phân tích chi tiết từng chỉ số (5-7 câu):**
-- Độ chính xác: Nhận xét cụ thể, giải thích ý nghĩa
-- Độ trôi chảy: Đánh giá tốc độ và sự mượt mà
-- Ngữ điệu: Đánh giá cao trầm, nhấn nhá
-- Độ hoàn chỉnh: Đánh giá việc đọc đủ từ
+**1. Lời chào (2 câu):**
+- Chào thân thiện từ Happy Cat
+- Động viên và tổng quan điểm số
+
+**2. Phân tích chi tiết (6-7 câu):**
+- Độ chính xác (${pronunciationData?.AccuracyScore || 0}/100): Nhận xét cụ thể, giải thích ý nghĩa
+- Độ trôi chảy (${pronunciationData?.FluencyScore || 0}/100): Đánh giá tốc độ nói
+- Ngữ điệu (${pronunciationData?.ProsodyScore || 0}/100): Đánh giá cao trầm, nhấn giọng
+- Độ hoàn chỉnh (${pronunciationData?.CompletenessScore || 0}/100): Đánh giá đọc đủ từ
 
 **3. Phân tích từng từ (3-4 câu):**
-- Khen ngợi những từ phát âm tốt
-- Chỉ ra từ nào cần cải thiện và lý do
-- Gợi ý cách phát âm đúng cho từ khó
+- Khen từ phát âm tốt (${pronunciationData?.Words?.filter((w: any) => w.AccuracyScore >= 90).map((w: any) => w.Word).join(', ') || 'các từ'})
+- Chỉ ra từ cần cải thiện (nếu có)
+- Gợi ý cách phát âm đúng
 
-**4. Lời khuyên và động viên (2-3 câu):**
-- Gợi ý cụ thể để cải thiện
-- Động viên tiếp tục luyện tập
-- Lời khen và khích lệ cuối cùng
+**4. Kết thúc (2-3 câu):**
+- Gợi ý rèn luyện tiếp
+- Động viên và khích lệ
+- Lời chào cuối từ Happy Cat
 
-Sử dụng emoji phù hợp 😊 🎉 ⭐ 👍 💪 và ngôn ngữ dễ hiểu, sinh động cho trẻ em.`;
+Sử dụng emoji: 😊 🎉 ⭐ 👍 💪 🌟 và giọng văn thân thiện như bạn bè.`;
 
       const chat = this.genAI.chats.create({
         model: 'gemini-2.5-flash',
         config: {
-          maxOutputTokens: 1500,
-          temperature: 0.8,
+          maxOutputTokens: 2000,
+          temperature: 0.7,
         },
       });
 
