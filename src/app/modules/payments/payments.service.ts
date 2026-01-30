@@ -12,11 +12,8 @@ import {
   PaymentStatus,
 } from './schema/payment.schema';
 import { CreatePaymentDto } from './dto/create-payment.dto';
-import { getClientIp } from 'request-ip';
 import { Request } from 'express';
 import { envSchema } from 'src/app/configs/env/env.config';
-import * as crypto from 'crypto';
-import * as qs from 'qs';
 import {
   Subscription,
   SubscriptionDocument,
@@ -29,10 +26,22 @@ import {
 } from '../purchases/schema/purchase.schema';
 import { User, UserDocument } from '../users/schema/user.schema';
 import { Package, PackageDocument } from '../packages/schema/package.schema';
+import {
+  Client,
+  OrdersController,
+  OrderRequest,
+  AmountWithBreakdown,
+  CheckoutPaymentIntent,
+  OrderApplicationContextLandingPage,
+  OrderApplicationContextUserAction,
+  Environment,
+} from '@paypal/paypal-server-sdk';
 
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
+  private paypalClient: Client;
+  private ordersController: OrdersController;
 
   constructor(
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
@@ -42,114 +51,88 @@ export class PaymentsService {
     @InjectModel(Purchase.name) private purchaseModel: Model<PurchaseDocument>,
     @InjectModel(Package.name) private packageModel: Model<PackageDocument>,
     @InjectConnection() private readonly connection: Connection,
-  ) { }
-
-  private sortParams(params: Record<string, any>) {
-    return Object.keys(params)
-      .sort()
-      .reduce((acc, key) => {
-        acc[key] = params[key];
-        return acc;
-      }, {});
-  }
-
-  private signData(secret: string, params: Record<string, string | number>): string {
-    // HMAC-SHA256: sắp xếp params tăng dần, tạo chuỗi key=value&..., hash bằng secret
-    // Nếu VNPay yêu cầu SHA512 thì đổi 'sha256' thành 'sha512'
-    const sortedKeys = Object.keys(params).sort();
-    let hashData = '';
-
-    for (let i = 0; i < sortedKeys.length; i++) {
-      const key = sortedKeys[i];
-      const value = String(params[key]);
-
-      if (i === 0) {
-        hashData += `${key}=${value}`;
-      } else {
-        hashData += `&${key}=${value}`;
-      }
-    }
-
-    return crypto
-      .createHmac('sha256', secret)
-      .update(Buffer.from(hashData, 'utf-8'))
-      .digest('hex');
-  }
-
-  private formatDate(date: Date) {
-    const pad = (n: number) => (n < 10 ? '0' + n : n);
-    return (
-      date.getFullYear().toString() +
-      pad(date.getMonth() + 1) +
-      pad(date.getDate()) +
-      pad(date.getHours()) +
-      pad(date.getMinutes()) +
-      pad(date.getSeconds())
-    );
+  ) {
+    const env = envSchema.parse(process.env);
+    
+    // Initialize PayPal client
+    this.paypalClient = new Client({
+      clientCredentialsAuthCredentials: {
+        oAuthClientId: env.PAYPAL_CLIENT_ID ?? '',
+        oAuthClientSecret: env.PAYPAL_CLIENT_SECRET ?? '',
+      },
+      environment: env.PAYPAL_MODE === 'live' ? Environment.Production : Environment.Sandbox,
+    });
+    
+    this.ordersController = new OrdersController(this.paypalClient);
   }
 
   async createPayment(userId: string, dto: CreatePaymentDto, req: Request) {
     const env = envSchema.parse(process.env);
-    const clientIp = getClientIp(req) || '127.0.0.1';
     const now = new Date();
     const orderId = now.getTime().toString();
-    const expireDate = new Date(now.getTime() + 15 * 60 * 1000);
 
-    const params: Record<string, string | number> = {
-      vnp_Version: '2.1.0',
-      vnp_Command: 'pay',
-      vnp_TmnCode: env.VNPAY_TMN_CODE ?? '',
-      vnp_Amount: dto.amount * 100,
-      vnp_CurrCode: dto.currency,
-      vnp_TxnRef: orderId,
-      vnp_OrderInfo: (dto.description ?? `Thanh toan don hang ${orderId}`).replace(/[^\w\s\-.,]/g, ''),
-      vnp_OrderType: 'other',
-      vnp_ReturnUrl: env.VNPAY_RETURN_URL ?? '',
-      vnp_IpAddr: clientIp,
-      vnp_CreateDate: this.formatDate(now),
-      vnp_ExpireDate: this.formatDate(expireDate),
-      vnp_Locale: 'vn',
-    };
+    try {
+      // Create PayPal order
+      const orderRequest: OrderRequest = {
+        intent: CheckoutPaymentIntent.Capture,
+        purchaseUnits: [
+          {
+            amount: {
+              currencyCode: dto.currency,
+              value: dto.amount.toFixed(2),
+            } as AmountWithBreakdown,
+            description: dto.description ?? `Order ${orderId}`,
+            referenceId: orderId,
+          },
+        ],
+        applicationContext: {
+          returnUrl: env.PAYPAL_RETURN_URL ?? 'http://localhost:5173/payment/callback',
+          cancelUrl: env.PAYPAL_CANCEL_URL ?? 'http://localhost:5173/payment/cancel',
+          brandName: 'English Learning Platform',
+          landingPage: OrderApplicationContextLandingPage.Billing,
+          userAction: OrderApplicationContextUserAction.PayNow,
+        },
+      };
 
-    this.logger.log(`[DEBUG] Params: ${JSON.stringify(params)}`);
+      const { result, ...httpResponse } = await this.ordersController.createOrder({
+        body: orderRequest,
+      });
 
-    const sorted = this.sortParams(params);
-    const secureHash = this.signData(env.VNPAY_HASH_SECRET ?? '', sorted);
+      if (!result.id) {
+        throw new BadRequestException('Failed to create PayPal order');
+      }
 
-    this.logger.log(`[DEBUG] Secure hash: ${secureHash}`);
+      // Find approval URL
+      const approvalUrl = result.links?.find((link) => link.rel === 'approve')?.href;
 
-    const paymentUrl = `${env.VNPAY_API_URL}?${qs.stringify({
-      ...sorted,
-      vnp_SecureHash: secureHash,
-    })}`;
+      if (!approvalUrl) {
+        throw new BadRequestException('No approval URL found in PayPal response');
+      }
 
-    await this.paymentModel.create({
-      userId: userId,
-      amount: dto.amount,
-      currency: dto.currency,
-      method: dto.method,
-      description: dto.description,
-      transactionId: orderId,
-      status: PaymentStatus.PENDING,
-    });
+      // Save payment to database
+      await this.paymentModel.create({
+        userId: userId,
+        amount: dto.amount,
+        currency: dto.currency,
+        method: dto.method,
+        description: dto.description,
+        transactionId: result.id,
+        status: PaymentStatus.PENDING,
+        subscriptionId: dto.subscriptionId, // Store packageId in subscriptionId field
+      });
 
-    this.logger.log(
-      `[DEBUG] Payment created successfully for transaction ID: ${orderId}`,
-    );
+      this.logger.log(
+        `[DEBUG] PayPal order created successfully with ID: ${result.id}`,
+      );
 
-    return { paymentUrl };
-  }
-
-  private verifyChecksum(query: any, env: any) {
-    const secureHash = query.vnp_SecureHash;
-
-    delete query.vnp_SecureHash;
-    delete query.vnp_SecureHashType;
-
-    const sorted = this.sortParams(query);
-    const signed = this.signData(env.VNPAY_HASH_SECRET, sorted);
-
-    return secureHash === signed;
+      return { paymentUrl: approvalUrl, orderId: result.id };
+    } catch (error) {
+      this.logger.error(`[ERROR] Failed to create PayPal order: ${error.message}`, error.stack);
+      if (error.result) {
+        this.logger.error(`[ERROR] PayPal API Response: ${JSON.stringify(error.result)}`);
+      }
+      throw new BadRequestException(`Failed to create payment: ${error.message}`);
+    }
   }
 
   private async activateServices(
@@ -167,19 +150,67 @@ export class PaymentsService {
       mongooseSession.startTransaction();
     }
     try {
-      // Find purchase
-      const purchase = await this.purchaseModel
-        .findOne({ paymentId: transactionId })
+      // Find payment
+      const payment = await this.paymentModel
+        .findOne({ transactionId })
         .session(mongooseSession);
-      if (!purchase) throw new NotFoundException('Purchase not found');
+      if (!payment) throw new NotFoundException('Payment not found');
 
-      // Update purchase status
-      purchase.status = PurchaseStatus.SUCCESS;
-      await purchase.save({ session: mongooseSession });
+      // Find or create purchase
+      let purchase = await this.purchaseModel
+        .findOne({ transactionId })
+        .session(mongooseSession);
 
-      this.logger.log(
-        `[DEBUG] Purchase updated status to SUCCESS for transaction ID: ${transactionId}`,
-      );
+      let subscriptionActive = await this.subscriptionModel
+        .findOne({ _id: payment.subscriptionId })
+        .session(mongooseSession);
+
+      let packageId = subscriptionActive?.packageId;
+      
+      if (!purchase && payment.subscriptionId) {
+        // Create purchase if it doesn't exist (subscriptionId contains packageId)
+        purchase = await this.purchaseModel.create(
+          [
+            {
+              userId: payment.userId,
+              packageId: packageId!,  
+              transactionId: transactionId,
+              amount: payment.amount,
+              currency: payment.currency,
+              status: PurchaseStatus.SUCCESS,
+            },
+          ],
+          { session: mongooseSession },
+        ).then((docs) => docs[0]);
+
+        this.logger.log(
+          `[DEBUG] Purchase created for transaction ID: ${transactionId}, packageId: ${payment.subscriptionId}`,
+        );
+
+        if (subscriptionActive) {
+          subscriptionActive.status = SubscriptionStatus.ACTIVE;
+          await subscriptionActive.save({ session: mongooseSession });
+        }
+
+      } else if (purchase) {
+        // Update existing purchase
+        purchase.status = PurchaseStatus.SUCCESS;
+        await purchase.save({ session: mongooseSession });
+
+        this.logger.log(
+          `[DEBUG] Purchase updated status to SUCCESS for transaction ID: ${transactionId}`,
+        );
+      }
+
+      if (!purchase) {
+        this.logger.warn(
+          `[WARNING] No purchase found and subscriptionId is missing for transaction: ${transactionId}`,
+        );
+        if (isNewSession) {
+          await mongooseSession.commitTransaction();
+        }
+        return { payment };
+      }
 
       // Find user
       const user = await this.userModel
@@ -197,32 +228,55 @@ export class PaymentsService {
 
       // Set user package
       user.accountPackage = packageResult.type;
-
       await user.save({ session: mongooseSession });
 
       this.logger.log(
         `[DEBUG] User updated package to ${packageResult.type} for transaction ID: ${transactionId}`,
       );
 
-      // Subscription (optional)
-      const subscription = await this.subscriptionModel
-        .findOne({ paymentId: transactionId })
-        .session(mongooseSession);
-      if (subscription) {
-        subscription.status = SubscriptionStatus.ACTIVE;
-        subscription.startDate = new Date();
-        subscription.endDate = new Date(
-          new Date().setDate(
-            new Date().getDate() + packageResult.durationInDays,
-          ),
+      // Subscription was already updated above if it existed
+      // Check if subscription exists by subscriptionId or paymentId
+      if (subscriptionActive) {
+        // Already updated subscription status above
+        this.logger.log(
+          `[DEBUG] Subscription already updated for transaction ID: ${transactionId}`,
         );
-        await subscription.save({ session: mongooseSession });
+      } else {
+        // Only create new subscription if it doesn't exist at all
+        const existingSubscription = await this.subscriptionModel
+          .findOne({ 
+            userId: payment.userId, 
+            packageId: purchase.packageId,
+            status: SubscriptionStatus.PENDING 
+          })
+          .session(mongooseSession);
+
+        if (existingSubscription) {
+          // Update existing pending subscription
+          existingSubscription.status = SubscriptionStatus.ACTIVE;
+          existingSubscription.startDate = new Date();
+          existingSubscription.endDate = new Date(
+            new Date().setDate(
+              new Date().getDate() + packageResult.durationInDays,
+            ),
+          );
+          await existingSubscription.save({ session: mongooseSession });
+          
+          this.logger.log(
+            `[DEBUG] Existing subscription updated to ACTIVE for transaction ID: ${transactionId}`,
+          );
+        } else {
+          // Create new subscription only if no subscription exists
+          this.logger.log(
+            `[DEBUG] No subscription found, skipping creation (subscription should be created when user selects package)`,
+          );
+        }
       }
 
       if (isNewSession) {
         await mongooseSession.commitTransaction();
       }
-      return { purchase, user, subscription };
+      return { purchase, user, subscription: subscriptionActive };
     } catch (error) {
       if (isNewSession) {
         await mongooseSession.abortTransaction();
@@ -247,23 +301,26 @@ export class PaymentsService {
       mongooseSession.startTransaction();
     }
     try {
-      const env = envSchema.parse(process.env);
+      const { token, PayerID } = query;
 
-      if (!this.verifyChecksum(query, env)) {
-        return { success: false, message: 'Invalid checksum' };
+      if (!token) {
+        throw new BadRequestException('Missing PayPal token');
       }
 
-      const success = query.vnp_ResponseCode === '00';
+      this.logger.log(`[DEBUG] Processing PayPal return for token: ${token}`);
 
-      if (success) {
-        await this.activateServices(query.vnp_TxnRef, mongooseSession);
-        this.logger.log(
-          `[DEBUG] Purchase activated successfully for transaction ID: ${query.vnp_TxnRef}`,
-        );
-      }
+      // Capture the order
+      const { result, ...httpResponse } = await this.ordersController.captureOrder({
+        id: token,
+      });
 
+      this.logger.log(`[DEBUG] PayPal capture response status: ${result.status}`);
+
+      const success = result.status === 'COMPLETED';
+
+      // Update payment status FIRST
       const payment = await this.paymentModel.findOneAndUpdate(
-        { transactionId: query.vnp_TxnRef },
+        { transactionId: token },
         {
           status: success ? PaymentStatus.SUCCESS : PaymentStatus.FAILED,
           paidAt: new Date(),
@@ -271,11 +328,32 @@ export class PaymentsService {
         { new: true, session: mongooseSession },
       );
 
+      if (!payment) {
+        throw new NotFoundException(`Payment not found for token: ${token}`);
+      }
+
+      this.logger.log(`[DEBUG] Payment status updated to ${payment.status}`);
+
+      // Then activate services if successful
+      if (success) {
+        await this.activateServices(token, mongooseSession);
+        this.logger.log(
+          `[DEBUG] Services activated successfully for PayPal order: ${token}`,
+        );
+      }
+
+      if (isNewSession) {
+        await mongooseSession.commitTransaction();
+        this.logger.log(`[DEBUG] Transaction committed for token: ${token}`);
+      }
+
       return { success, data: payment };
     } catch (error) {
       if (isNewSession) {
         await mongooseSession.abortTransaction();
+        this.logger.error(`[ERROR] Transaction aborted for handleReturn: ${error.message}`);
       }
+      this.logger.error(`[ERROR] Failed to handle return: ${error.message}`, error.stack);
       throw new Error('Failed to handle return: ' + error.message);
     } finally {
       if (isNewSession) {
@@ -284,7 +362,7 @@ export class PaymentsService {
     }
   }
 
-  async handleWebhook(query: any, session?: ClientSession) {
+  async handleWebhook(body: any, session?: ClientSession) {
     if (this.connection.readyState !== 1) {
       throw new BadRequestException('Database not ready.');
     }
@@ -296,36 +374,54 @@ export class PaymentsService {
       mongooseSession.startTransaction();
     }
     try {
-      const env = envSchema.parse(process.env);
+      // PayPal webhook event
+      const { event_type, resource } = body;
 
-      if (!this.verifyChecksum(query, env)) {
-        return { RspCode: '97', Message: 'Invalid checksum' };
-      }
+      this.logger.log(`[DEBUG] PayPal webhook event: ${event_type}`);
 
-      const success = query.vnp_ResponseCode === '00';
+      if (event_type === 'PAYMENT.CAPTURE.COMPLETED') {
+        const orderId = resource.id;
+        const success = resource.status === 'COMPLETED';
 
-      if (success) {
-        await this.activateServices(query.vnp_TxnRef, mongooseSession);
-        this.logger.log(
-          `[DEBUG] Purchase activated successfully for transaction ID: ${query.vnp_TxnRef}`,
-        );
-      }
+        this.logger.log(`[DEBUG] Processing capture for order: ${orderId}, status: ${resource.status}`);
 
-      await this.paymentModel
-        .findOneAndUpdate(
-          { transactionId: query.vnp_TxnRef },
+        // Update payment status FIRST
+        const payment = await this.paymentModel.findOneAndUpdate(
+          { transactionId: orderId },
           {
             status: success ? PaymentStatus.SUCCESS : PaymentStatus.FAILED,
             paidAt: new Date(),
           },
-        )
-        .session(mongooseSession);
+          { new: true, session: mongooseSession },
+        );
 
-      return { RspCode: '00', Message: 'Confirm Success' };
+        if (!payment) {
+          this.logger.warn(`[WARNING] Payment not found for order: ${orderId}`);
+        } else {
+          this.logger.log(`[DEBUG] Payment status updated to ${payment.status} for order: ${orderId}`);
+        }
+
+        // Then activate services if successful
+        if (success && payment) {
+          await this.activateServices(orderId, mongooseSession);
+          this.logger.log(
+            `[DEBUG] Services activated successfully for PayPal order: ${orderId}`,
+          );
+        }
+      }
+
+      if (isNewSession) {
+        await mongooseSession.commitTransaction();
+        this.logger.log(`[DEBUG] Webhook transaction committed`);
+      }
+
+      return { success: true, message: 'Webhook processed' };
     } catch (error) {
       if (isNewSession) {
         await mongooseSession.abortTransaction();
+        this.logger.error(`[ERROR] Webhook transaction aborted: ${error.message}`);
       }
+      this.logger.error(`[ERROR] Failed to handle webhook: ${error.message}`, error.stack);
       throw new Error('Failed to handle webhook: ' + error.message);
     } finally {
       if (isNewSession) {

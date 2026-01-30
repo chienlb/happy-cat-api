@@ -60,7 +60,7 @@ export class PaymentsController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Handle return payment' })
+  @ApiOperation({ summary: 'Handle PayPal payment return' })
   @ApiQuery({ name: 'query', type: Object })
   @ApiResponse({ status: 200, description: 'Payment returned successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
@@ -76,32 +76,10 @@ export class PaymentsController {
     }
   }
 
-  @Get('ipn')
-  @ApiOperation({ summary: 'VNPay IPN (GET) – URL đăng ký với VNPay' })
-  @ApiQuery({ name: 'query', type: Object })
-  async handleIpnGet(@Query() query: any) {
-    return this.paymentsService.handleWebhook(query);
-  }
-
-  @Post('ipn')
-  @ApiOperation({ summary: 'VNPay IPN (POST) – URL đăng ký với VNPay' })
-  @ApiQuery({ name: 'query', type: Object })
-  async handleIpn(@Query() query: any) {
-    return this.paymentsService.handleWebhook(query);
-  }
-
-  @Get('webhook')
-  @ApiOperation({ summary: 'VNPay IPN (GET) – alias của /ipn' })
-  @ApiQuery({ name: 'query', type: Object })
-  async handleWebhookGet(@Query() query: any) {
-    return this.paymentsService.handleWebhook(query);
-  }
-
   @Post('webhook')
-  @ApiOperation({ summary: 'VNPay IPN (POST) – alias của /ipn' })
-  @ApiQuery({ name: 'query', type: Object })
-  @ApiResponse({ status: 200, description: 'IPN xử lý thành công (VNPay cần RspCode + Message)' })
-  async handleWebhook(@Query() query: any, @Req() req: Request) {
-    return this.paymentsService.handleWebhook(query);
+  @ApiOperation({ summary: 'PayPal webhook handler' })
+  @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
+  async handleWebhook(@Body() body: any, @Req() req: Request) {
+    return this.paymentsService.handleWebhook(body);
   }
 }

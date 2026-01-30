@@ -36,6 +36,7 @@
     "@nestjs/platform-socket.io": "^11.1.9",
     "@nestjs/swagger": "^11.2.1",
     "@nestjs/websockets": "^11.1.9",
+    "@paypal/paypal-server-sdk": "^2.2.0",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
     "bullmq": "^5.66.0",

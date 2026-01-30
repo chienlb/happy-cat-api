@@ -563,29 +563,29 @@ sequenceDiagram
     participant FE as Frontend
     participant API as API Server
     participant DB as Database
-    participant VNP as VNPay/Stripe
+    participant PP as PayPal
     
     U->>FE: Chọn gói PREMIUM
     FE->>API: POST /payments/create
     API->>DB: Create payment record (PENDING)
     DB-->>API: Payment ID
-    API->>VNP: Create payment URL
-    VNP-->>API: Payment URL + Token
+    API->>PP: Create PayPal order
+    PP-->>API: Order ID + Approval URL
     API-->>FE: Redirect URL
-    FE-->>U: Redirect to VNPay
+    FE-->>U: Redirect to PayPal
     
-    U->>VNP: Nhập thông tin thanh toán
-    VNP->>VNP: Xử lý thanh toán
-    VNP->>API: IPN Callback (webhook)
+    U->>PP: Nhập thông tin thanh toán
+    PP->>PP: Xử lý thanh toán
+    PP->>API: Webhook notification
     API->>DB: Update payment (SUCCESS)
     DB-->>API: Updated
     API->>DB: Create subscription
     DB-->>API: Subscription created
     API->>DB: Update user accountPackage
     DB-->>API: User updated
-    API-->>VNP: IPN Response (OK)
+    API-->>PP: Webhook acknowledged
     
-    VNP-->>U: Redirect về success page
+    PP-->>U: Redirect về success page
     U->>FE: Return to app
     FE->>API: GET /subscriptions/my-subscription
     API->>DB: Query subscription
@@ -639,7 +639,7 @@ POST `/payments/create`
 ```json
 {
   "packageId": "2",
-  "method": "VNPAY",
+  "method": "PAYPAL",
   "returnUrl": "https://app.com/payment/callback"
 }
 ```
@@ -655,7 +655,7 @@ const payment = await Payment.create({
   packageId: package.id,
   amount: package.price,
   currency: package.currency,
-  method: "VNPAY",
+  method: "PAYPAL",
   status: "PENDING",
   transactionId: null,
   metadata: {
@@ -664,51 +664,54 @@ const payment = await Payment.create({
   }
 });
 
-// 3. Create VNPay payment URL
-const vnpayUrl = createVNPayUrl({
+// 3. Create PayPal order
+const paypalOrder = await createPayPalOrder({
   amount: payment.amount,
-  orderInfo: `Payment for ${package.name}`,
-  orderId: payment.id,
+  currency: payment.currency,
+  description: `Payment for ${package.name}`,
+  referenceId: payment.id,
   returnUrl: returnUrl,
-  ipAddr: req.ip
+  cancelUrl: cancelUrl
 });
 
-// 4. Return payment URL
-return { paymentUrl: vnpayUrl, paymentId: payment.id };
+// 4. Return approval URL
+return { paymentUrl: paypalOrder.approvalUrl, orderId: paypalOrder.id };
 ```
 
-**C. User thanh toán trên VNPay**
+**C. User thanh toán trên PayPal**
 
-1. Redirect đến VNPay
-2. User nhập thông tin thẻ
-3. VNPay xử lý giao dịch
-4. VNPay gọi IPN callback về server
+1. Redirect đến PayPal
+2. User đăng nhập và xác nhận thanh toán
+3. PayPal xử lý giao dịch
+4. PayPal gọi webhook về server
 
-**D. IPN Callback (Webhook)**
+**D. Webhook**
 
-POST `/payments/vnpay-ipn`
+POST `/payments/webhook`
 ```json
 {
-  "vnp_TmnCode": "XXX",
-  "vnp_Amount": "19900000",
-  "vnp_BankCode": "NCB",
-  "vnp_TransactionNo": "14123456",
-  "vnp_ResponseCode": "00",
-  "vnp_SecureHash": "..."
+  "event_type": "PAYMENT.CAPTURE.COMPLETED",
+  "resource": {
+    "id": "CAPTURE-123",
+    "status": "COMPLETED",
+    "amount": {
+      "currency_code": "USD",
+      "value": "199.00"
+    }
+  }
 }
 ```
 
 **Server xử lý:**
 ```typescript
-// 1. Verify signature
-const isValid = verifyVNPaySignature(data, vnp_SecureHash);
-if (!isValid) return { code: "97", message: "Invalid signature" };
+// 1. Verify webhook signature (PayPal provides webhook verification)
+const isValid = verifyPayPalWebhook(headers, body);
+if (!isValid) return { error: "Invalid webhook signature" };
 
 // 2. Update payment
-const payment = await Payment.findById(orderId);
-if (vnp_ResponseCode === "00") {
+const payment = await Payment.findOne({ transactionId: resource.id });
+if (resource.status === "COMPLETED") {
   payment.status = "SUCCESS";
-  payment.transactionId = vnp_TransactionNo;
   payment.paidAt = new Date();
   await payment.save();
   
