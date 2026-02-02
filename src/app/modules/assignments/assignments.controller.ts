@@ -9,6 +9,8 @@ import {
   Delete,
   Get,
   Query,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { AssignmentsService } from './assignments.service';
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
@@ -23,11 +25,17 @@ import {
 import { Assignment } from './schema/assignment.schema';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UpdateAssignmentDto } from './dto/update-assignment.dto';
+import { CurrentUser } from 'src/app/common/decorators/current-user.decorator';
+import { UserRole } from '../users/schema/user.schema';
+import { AuthGuard } from '@nestjs/passport';
+import { Roles } from 'src/app/common/decorators/role.decorator';
 
 @Controller('assignments')
 @ApiTags('Assignments')
+@UseGuards(AuthGuard('jwt'))
+@Roles(UserRole.ADMIN, UserRole.TEACHER)
 export class AssignmentsController {
-  constructor(private readonly assignmentsService: AssignmentsService) {}
+  constructor(private readonly assignmentsService: AssignmentsService) { }
 
   @Post()
   @UseInterceptors(FileInterceptor('file'))
@@ -74,8 +82,9 @@ export class AssignmentsController {
   async create(
     @Body() createAssignmentDto: CreateAssignmentDto,
     @UploadedFile() file: any,
+    @Req() req: Request,
   ) {
-    return this.assignmentsService.create(createAssignmentDto, file);
+    return this.assignmentsService.create((req as any).user.userId, createAssignmentDto, file);
   }
 
   @Put(':id')
@@ -101,8 +110,9 @@ export class AssignmentsController {
   async update(
     @Param('id') id: string,
     @Body() updateAssignmentDto: UpdateAssignmentDto,
+    @Req() req: Request,
   ) {
-    return this.assignmentsService.updateAssignment(id, updateAssignmentDto);
+    return this.assignmentsService.updateAssignment(id, (req as any).user.userId, updateAssignmentDto);
   }
 
   @Delete(':id')
@@ -116,8 +126,8 @@ export class AssignmentsController {
     status: 400,
     description: 'Bad request',
   })
-  async delete(@Param('id') id: string, @Body() updatedBy: string) {
-    return this.assignmentsService.deleteAssignment(id, updatedBy);
+  async delete(@Param('id') id: string, @Req() req: Request) {
+    return this.assignmentsService.deleteAssignment(id, (req as any).user.userId);
   }
 
   @Get(':id')

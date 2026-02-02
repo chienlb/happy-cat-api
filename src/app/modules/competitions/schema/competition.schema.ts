@@ -35,7 +35,6 @@ export interface ICompetition {
   name: string; // Tên cuộc thi
   description?: string; // Mô tả chi tiết
   type: CompetitionType; // Loại cuộc thi
-  subject?: string; // Môn thi (nếu có)
   startTime: Date; // Thời gian bắt đầu
   endTime: Date; // Thời gian kết thúc
   createdBy?: Types.ObjectId; // ID người tạo
