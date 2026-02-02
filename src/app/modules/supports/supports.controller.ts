@@ -1,4 +1,4 @@
-import { Controller, Param } from '@nestjs/common';
+import { Controller, Param, Req, UploadedFile } from '@nestjs/common';
 import { SupportsService } from './supports.service';
 import { CreateSupportDto } from './dto/create-support.dto';
 import { Body, Get, Post, Put } from '@nestjs/common';
@@ -40,7 +40,11 @@ export class SupportsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  createSupport(@Body() createSupportDto: CreateSupportDto) {
+  createSupport(@Body() createSupportDto: CreateSupportDto, @Req() req: any, @UploadedFile() file: any) {
+    if (file) {
+      createSupportDto.attachments = [file.filename];
+    }
+    createSupportDto.userId = req.user.userId;
     return this.supportsService.createSupport(createSupportDto);
   }
 
