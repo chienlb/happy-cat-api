@@ -16,6 +16,7 @@ import { Model } from 'mongoose';
 import { AssignmentsService } from '../assignments/assignments.service';
 import { UsersService } from '../users/users.service';
 import { RedisService } from 'src/app/configs/redis/redis.service';
+import { CloudflareService } from '../cloudflare/cloudflare.service';
 
 @Injectable()
 export class SubmissionsService {
@@ -25,10 +26,12 @@ export class SubmissionsService {
     private assignmentsService: AssignmentsService,
     private usersService: UsersService,
     private readonly redisService: RedisService,
+    private readonly cloudflareService: CloudflareService,
   ) {}
 
   async createSubmission(
     createSubmissionDto: CreateSubmissionDto,
+    files?: any[],
   ): Promise<SubmissionDocument> {
     try {
       const assignment = await this.assignmentsService.getAssignmentById(
@@ -59,10 +62,23 @@ export class SubmissionsService {
         throw new BadRequestException('Student answers are required');
       }
 
+      // Upload files to Cloudflare R2 if provided
+      let attachments = createSubmissionDto.attachments || [];
+      if (files && files.length > 0) {
+        const uploadedFiles = await Promise.all(
+          files.map((file) =>
+            this.cloudflareService.uploadFile(file, 'submissions'),
+          ),
+        );
+        const fileUrls = uploadedFiles.map((uploaded) => uploaded.fileUrl);
+        attachments = [...attachments, ...fileUrls];
+      }
+
       const submission = new this.submissionModel({
         ...createSubmissionDto,
         assignmentId: assignment._id,
         studentId: student._id,
+        attachments: attachments,
         status: SubmissionStatus.SUBMITTED,
       });
       return submission.save();

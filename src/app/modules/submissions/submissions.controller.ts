@@ -1,7 +1,8 @@
 import { Controller, Delete, Param } from '@nestjs/common';
 import { SubmissionsService } from './submissions.service';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
-import { Body, Post, Get, Put } from '@nestjs/common';
+import { Body, Post, Get, Put, UseInterceptors, UploadedFiles } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiOperation,
@@ -9,6 +10,7 @@ import {
   ApiBody,
   ApiParam,
   ApiQuery,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { SubmissionDocument } from './schema/submission.schema';
 import { UpdateSubmissionDto } from './dto/update-submission.dto';
@@ -19,7 +21,9 @@ export class SubmissionsController {
   constructor(private readonly submissionsService: SubmissionsService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a submission' })
+  @UseInterceptors(FilesInterceptor('files', 10))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Create a submission with file upload' })
   @ApiBody({
     type: CreateSubmissionDto,
     description: 'The submission data',
@@ -53,8 +57,9 @@ export class SubmissionsController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   async createSubmission(
     @Body() createSubmissionDto: CreateSubmissionDto,
+    @UploadedFiles() files?: any[],
   ): Promise<SubmissionDocument> {
-    return this.submissionsService.createSubmission(createSubmissionDto);
+    return this.submissionsService.createSubmission(createSubmissionDto, files);
   }
 
   @Get(':id')

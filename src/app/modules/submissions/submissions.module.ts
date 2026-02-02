@@ -7,6 +7,7 @@ import { AssignmentsModule } from '../assignments/assignments.module';
 import { UsersModule } from '../users/users.module';
 import { RedisModule } from 'src/app/configs/redis/redis.module';
 import { RedisService } from 'src/app/configs/redis/redis.service';
+import { CloudflareService } from '../cloudflare/cloudflare.service';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { RedisService } from 'src/app/configs/redis/redis.service';
     RedisModule,
   ],
   controllers: [SubmissionsController],
-  providers: [SubmissionsService, RedisService],
+  providers: [SubmissionsService, RedisService, CloudflareService],
   exports: [SubmissionsService, MongooseModule],
 })
 export class SubmissionsModule {}
