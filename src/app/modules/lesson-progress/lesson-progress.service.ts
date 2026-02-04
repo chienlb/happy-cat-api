@@ -18,6 +18,9 @@ import { UpdateLessonProgressDto } from './dto/update-lesson-progress.dto';
 import { LessonDocument } from '../lessons/schema/lesson.schema';
 import { UnitsService } from '../units/units.service';
 import { Types } from 'mongoose';
+import { BadgesService } from '../badges/badges.service';
+import { UserBadgesService } from '../user-badges/user-badges.service';
+import { UserDocument } from '../users/schema/user.schema';
 
 @Injectable()
 export class LessonProgressService {
@@ -28,6 +31,8 @@ export class LessonProgressService {
     @Inject(forwardRef(() => LessonsService))
     private readonly lessonsService: LessonsService,
     private readonly unitsService: UnitsService,
+    private readonly badgesService: BadgesService,
+    private readonly userBadgesService: UserBadgesService,
   ) {}
 
   async createLessonPrgress(
@@ -52,6 +57,10 @@ export class LessonProgressService {
       user.streakDays = user.streakDays ? user.streakDays + 1 : 1;
       user.totalLessonsCompleted = user.totalLessonsCompleted ? user.totalLessonsCompleted + 1 : 1;
       await user.save();
+      
+      // Check and award badges based on user achievements
+      await this.checkAndAwardBadges(user);
+      
       const lessonProgress = new this.lessonProgressModel(
         createLessonProgressDto,
       );
@@ -213,6 +222,93 @@ export class LessonProgressService {
       return lessonProgress;
     } catch (error) {
       throw new Error('Failed to get lesson by user id: ' + error.message);
+    }
+  }
+
+  /**
+   * Check user achievements and automatically award badges
+   * @param user - The user document to check badges for
+   */
+  private async checkAndAwardBadges(user: UserDocument): Promise<void> {
+    try {
+      // Lấy tất cả badges đang active từ database
+      const allBadges = await this.badgesService.findAllBadges(1, 1000);
+      
+      for (const badge of allBadges.badges) {
+        if (!badge.isActive) continue;
+
+        // Check if user already has this badge
+        const existingUserBadge = await this.userBadgesService
+          .findUserBadgesByUserId(user._id.toString(), {
+            page: 1,
+            limit: 1000,
+            sort: 'createdAt',
+            order: 'desc',
+          });
+
+        const alreadyHasBadge = existingUserBadge.userBadges.some(
+          (ub) => ub.badgeId.toString() === badge._id.toString(),
+        );
+
+        if (alreadyHasBadge) continue;
+
+        // Check badge conditions based on triggerEvent
+        let shouldAward = false;
+        let reason = '';
+
+        switch (badge.triggerEvent) {
+          case 'complete_lesson':
+            if ((user.totalLessonsCompleted ?? 0) >= (badge.requiredValue || 1)) {
+              shouldAward = true;
+              reason = `Hoàn thành ${user.totalLessonsCompleted ?? 0} bài học`;
+            }
+            break;
+
+          case 'login_streak':
+            if ((user.streakDays ?? 0) >= (badge.requiredValue || 1)) {
+              shouldAward = true;
+              reason = `Duy trì học ${user.streakDays ?? 0} ngày liên tiếp`;
+            }
+            break;
+
+          case 'reach_exp':
+            if ((user.exp ?? 0) >= (badge.requiredValue || 0)) {
+              shouldAward = true;
+              reason = `Đạt ${user.exp ?? 0} điểm kinh nghiệm`;
+            }
+            break;
+
+          case 'reach_level':
+            if ((user.progressLevel ?? 0) >= (badge.requiredValue || 0)) {
+              shouldAward = true;
+              reason = `Đạt cấp độ ${user.progressLevel ?? 0}`;
+            }
+            break;
+
+          default:
+            // Custom logic or manual award only
+            break;
+        }
+
+        // Award the badge if conditions are met
+        if (shouldAward) {
+          await this.userBadgesService.createUserBadge({
+            userId: user._id.toString(),
+            badgeId: badge._id.toString(),
+            awardedAt: new Date(),
+            reason: reason,
+          });
+
+          // Optionally award bonus XP for getting badge
+          user.exp = (user.exp || 0) + 100;
+          await user.save();
+
+          console.log(`Badge "${badge.name}" awarded to user ${user.username}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking and awarding badges:', error.message);
+      // Don't throw error to prevent lesson progress creation from failing
     }
   }
 }

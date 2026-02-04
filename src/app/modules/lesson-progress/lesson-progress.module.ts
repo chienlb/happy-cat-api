@@ -9,6 +9,8 @@ import {
 import { UsersModule } from '../users/users.module';
 import { LessonsModule } from '../lessons/lessons.module';
 import { UnitsModule } from '../units/units.module';
+import { BadgesModule } from '../badges/badges.module';
+import { UserBadgesModule } from '../user-badges/user-badges.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { UnitsModule } from '../units/units.module';
     UsersModule,
     forwardRef(() => LessonsModule),
     UnitsModule,
+    BadgesModule,
+    UserBadgesModule,
   ],
   controllers: [LessonPrgressController],
   providers: [LessonProgressService],
