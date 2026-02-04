@@ -50,6 +50,7 @@ export class LessonProgressService {
         ? user.exp + createLessonProgressDto.progress * 10
         : createLessonProgressDto.progress * 10;
       user.streakDays = user.streakDays ? user.streakDays + 1 : 1;
+      user.totalLessonsCompleted = user.totalLessonsCompleted ? user.totalLessonsCompleted + 1 : 1;
       await user.save();
       const lessonProgress = new this.lessonProgressModel(
         createLessonProgressDto,

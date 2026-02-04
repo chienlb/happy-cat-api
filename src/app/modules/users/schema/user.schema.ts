@@ -87,6 +87,7 @@ export interface IUser {
   exp?: number; // Số kinh nghiệm của người dùng
   streakDays?: number; // Số ngày liên tiếp hoạt động của người dùng
   progressLevel?: number; // Cấp độ tiến bộ của người dùng
+  totalLessonsCompleted?: number; // Tổng số bài học đã hoàn thành
   theme?: UserTheme; // Chủ đề giao diện của người dùng
   currency?: string; // Loại tiền tệ ưa thích của người dùng
   enableNotifications?: boolean; // Trạng thái kích hoạt thông báo trên website
@@ -192,6 +193,9 @@ export class User implements IUser {
 
   @Prop({ default: 0 })
   progressLevel?: number;
+
+  @Prop({ default: 0 })
+  totalLessonsCompleted?: number;
 
   @Prop({ enum: UserTheme, default: UserTheme.LIGHT })
   theme?: UserTheme;
