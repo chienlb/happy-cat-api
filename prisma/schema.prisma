@@ -64,6 +64,13 @@ enum PackageType {
   VIP
 }
 
+enum UserRole {
+  ADMIN
+  TEACHER
+  STUDENT
+  PARENT
+}
+
 
 model User {
   id                       String   @id @default(cuid())
@@ -110,9 +117,53 @@ model User {
   @@index([username])
 }
 
-enum UserRole {
-  ADMIN
-  TEACHER
-  STUDENT
-  PARENT
+model Token {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String
+  deviceId  String
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([token])
+}
+
+model Unit {
+  id                String   @id @default(cuid())
+  name              String
+  description       String?
+  topic             String
+  slug              String   @unique
+  difficulty        UnitDifficulty @default(EASY)
+  orderIndex        Int      @default(0)
+  totalLessons      Int
+  objectives        String[]
+  materials         Json?
+  prerequisites     String[] @relation("UnitPrerequisites")
+  estimatedDuration  Int?
+  thumbnail         String?
+  banner            String?
+  tags              String[]
+  isActive          UnitStatus @default(ACTIVE)
+  createdById      String
+  updatedById      String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([slug])
+}
+
+enum UnitStatus {
+  ACTIVE
+  INACTIVE
+  DELETE
+}
+
+enum UnitDifficulty {
+  EASY
+  MEDIUM
+  HARD
 }
