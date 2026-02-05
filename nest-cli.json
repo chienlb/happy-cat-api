@@ -12,6 +12,10 @@
       {
         "include": "app/assets/**/*",
         "outDir": "dist"
+      },
+      {
+        "include": "generated/**/*",
+        "outDir": "dist"
       }
     ],
     "watchAssets": true

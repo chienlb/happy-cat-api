@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider     = "prisma-client-js"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  BLOCKED
+  DELETED
+}
+
+enum UserTypeAccount {
+  EMAIL
+  GOOGLE
+  FACEBOOK
+  OTHER
+}
+
+enum UserGender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum UserLanguage {
+  VI
+  EN
+}
+
+enum UserTheme {
+  LIGHT
+  DARK
+}
+
+enum UserFont {
+  DEFAULT
+  SERIF
+  SANS_SERIF
+}
+
+enum UserCurrency {
+  VND
+  USD
+  EUR
+  JPY
+}
+
+enum PackageType {
+  FREE
+  STANDARD
+  PREMIUM
+  VIP
+}
+
+enum UserRole {
+  ADMIN
+  TEACHER
+  STUDENT
+  PARENT
+}
+
+model User {
+  id                       String          @id @default(cuid())
+  fullname                 String
+  username                 String          @unique
+  email                    String          @unique
+  password                 String
+  birthDate                DateTime?
+  role                     UserRole
+  slug                     String          @unique
+  avatar                   String?
+  cover                    String?
+  phone                    String
+  gender                   UserGender
+  language                 UserLanguage?
+  province                 String?
+  parentId                 String?
+  teacherId                String?
+  typeAccount              UserTypeAccount
+  googleId                 String?         @unique
+  facebookId               String?         @unique
+  accountPackage           PackageType
+  isVerify                 Boolean         @default(false)
+  codeVerify               String?
+  tokenVerify              String?
+  refCode                  String?         @unique
+  invitedById              String?
+  exp                      Int?            @default(0)
+  streakDays               Int?            @default(0)
+  progressLevel            Int?
+  totalLessonsCompleted    Int?            @default(0)
+  theme                    UserTheme?
+  currency                 UserCurrency?
+  enableNotifications      Boolean?        @default(true)
+  enableNotificationEmails Boolean?        @default(true)
+  status                   UserStatus      @default(ACTIVE)
+  lastLoginAt              DateTime?
+  createdById              String?
+  updatedById              String?
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @updatedAt
+  token                    Token[]
+
+  @@index([email])
+  @@index([username])
+}
+
+model Token {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String
+  deviceId  String
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([token])
+}
+
+model Unit {
+  id                String         @id @default(cuid())
+  name              String
+  description       String?
+  topic             String
+  slug              String         @unique
+  difficulty        UnitDifficulty @default(EASY)
+  orderIndex        Int            @default(0)
+  totalLessons      Int
+  objectives        String[]
+  materials         Json?
+  prerequisites     String[]
+  estimatedDuration Int?
+  thumbnail         String?
+  banner            String?
+  tags              String[]
+  isActive          UnitStatus     @default(ACTIVE)
+  createdById       String
+  updatedById       String
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([slug])
+}
+
+enum UnitStatus {
+  ACTIVE
+  INACTIVE
+  DELETE
+}
+
+enum UnitDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}

@@ -27,7 +27,6 @@ async function bootstrap(): Promise<void> {
     }
     throw e;
   }
-
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   const allowedOrigins: string[] = (() => {

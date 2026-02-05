@@ -39,6 +39,7 @@ import { LessonProgressModule } from './app/modules/lesson-progress/lesson-progr
 import { UnitProgressModule } from './app/modules/unit-progress/unit-progress.module';
 import { OtpsModule } from './app/modules/otps/otps.module';
 import { ChatbotModule } from './app/modules/chatbot/chatbot.module';
+import { PrismaModule } from './app/configs/prisma/prisma.module';
 
 @Module({
   imports: [
@@ -82,8 +83,9 @@ import { ChatbotModule } from './app/modules/chatbot/chatbot.module';
     UnitProgressModule,
     OtpsModule,
     ChatbotModule,
+    PrismaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

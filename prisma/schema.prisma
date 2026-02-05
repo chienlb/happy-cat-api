@@ -6,12 +6,11 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("POSTGRESQL_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 enum UserStatus {
   ACTIVE
@@ -112,6 +111,7 @@ model User {
   updatedById              String?
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @updatedAt
+  token                    Token[]
 
   @@index([email])
   @@index([username])
@@ -142,7 +142,7 @@ model Unit {
   totalLessons      Int
   objectives        String[]
   materials         Json?
-  prerequisites     String[] @relation("UnitPrerequisites")
+  prerequisites     String[]
   estimatedDuration  Int?
   thumbnail         String?
   banner            String?
