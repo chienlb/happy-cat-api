@@ -15,7 +15,7 @@ export class FeedbacksService {
   constructor(
     @InjectModel(Feedback.name) private feedbackModel: Model<FeedbackDocument>,
     private readonly usersService: UsersService,
-  ) {}
+  ) { }
 
   async createFeedback(
     createFeedbackDto: CreateFeedbackDto,
