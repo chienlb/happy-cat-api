@@ -8,6 +8,7 @@ import {
   Put,
   Delete,
   Query,
+  Req,
 } from '@nestjs/common';
 import { FeedbacksService } from './feedbacks.service';
 import { Feedback } from './schema/feedback.schema';
@@ -28,7 +29,7 @@ import { FeedbackType } from './schema/feedback.schema';
 @ApiBearerAuth()
 @Controller('feedbacks')
 export class FeedbacksController {
-  constructor(private readonly feedbacksService: FeedbacksService) {}
+  constructor(private readonly feedbacksService: FeedbacksService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create a new feedback' })
@@ -58,8 +59,14 @@ export class FeedbacksController {
   })
   @ApiResponse({ status: 400, description: 'Bad Request', type: HttpException })
   async createFeedback(
+    @Req() req,
     @Body() createFeedbackDto: CreateFeedbackDto,
   ): Promise<Feedback> {
+    const userId = req.user.userId;
+    if (!userId) {
+      throw new Error("UserId is empty")
+    }
+    createFeedbackDto.userId = userId;
     return this.feedbacksService.createFeedback(createFeedbackDto);
   }
 
