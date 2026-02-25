@@ -41,7 +41,7 @@ export class NotificationsService {
       }
 
       const notification = new this.notificationRepository({
-        userId: user._id,
+        userId: Types.ObjectId.createFromHexString(user._id.toString()),
         senderId: createNotificationDto.senderId
           ? new Types.ObjectId(createNotificationDto.senderId)
           : null,
