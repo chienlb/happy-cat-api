@@ -12,10 +12,14 @@ import { envSchema, type Env } from './app/configs/env/env.config';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { HttpExceptionFilter } from './app/common/filters/http-exception.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { setServers } from "node:dns/promises";
 
 async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap');
 
+  setServers(["1.1.1.1", "8.8.8.8"]);
+
+  
   let env: Env;
   try {
     env = envSchema.parse(process.env);
