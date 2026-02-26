@@ -82,36 +82,6 @@ export class NotificationsController {
     );
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get a notification by id' })
-  @ApiParam({ name: 'id', type: String, description: 'Notification id' })
-  @ApiResponse({
-    status: 200,
-    description: 'Notification fetched successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string' },
-        userId: { type: 'string' },
-        senderId: { type: 'string' },
-        title: { type: 'string' },
-        message: { type: 'string' },
-        type: { type: 'string' },
-        data: { type: 'object' },
-        firebaseToken: { type: 'string' },
-        isRead: { type: 'boolean' },
-        readAt: { type: 'string' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getNotificationById(
-    @Param('id') id: string,
-  ): Promise<NotificationDocument> {
-    return await this.notificationsService.findNotificationById(id);
-  }
-
   @Get('all')
   @ApiOperation({ summary: 'Get all notifications' })
   @ApiQuery({
@@ -308,5 +278,35 @@ export class NotificationsController {
       page,
       limit,
     );
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a notification by id' })
+  @ApiParam({ name: 'id', type: String, description: 'Notification id' })
+  @ApiResponse({
+    status: 200,
+    description: 'Notification fetched successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        userId: { type: 'string' },
+        senderId: { type: 'string' },
+        title: { type: 'string' },
+        message: { type: 'string' },
+        type: { type: 'string' },
+        data: { type: 'object' },
+        firebaseToken: { type: 'string' },
+        isRead: { type: 'boolean' },
+        readAt: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getNotificationById(
+    @Param('id') id: string,
+  ): Promise<NotificationDocument> {
+    return await this.notificationsService.findNotificationById(id);
   }
 }
