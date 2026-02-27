@@ -3,13 +3,6 @@ import { Types, HydratedDocument } from 'mongoose';
 
 export type CompetitionDocument = HydratedDocument<Competition>;
 
-export enum CompetitionType {
-  INDIVIDUAL = 'individual', // Cá nhân
-  CLASS = 'class', // Lớp
-  SCHOOL = 'school', // Trường
-  NATIONWIDE = 'nationwide', // Toàn quốc
-}
-
 export enum CompetitionStatus {
   UPCOMING = 'upcoming', // Sắp diễn ra
   ONGOING = 'ongoing', // Đang diễn ra
@@ -20,9 +13,25 @@ export enum CompetitionStatus {
 export enum CompetitionVisibility {
   PUBLIC = 'public', // Công khai
   PRIVATE = 'private', // Riêng tư
-  CLASS_ONLY = 'class_only', // Chỉ lớp học
-  SCHOOL_ONLY = 'school_only', // Chỉ trường học
 }
+
+export enum QuestionType {
+  MULTIPLE_CHOICE = 'multiple_choice', // Câu hỏi đa lựa chọn
+  TRUE_FALSE = 'true_false', // Câu hỏi đúng sai
+  FILL_IN_THE_BLANK = 'fill_in_the_blank', // Câu hỏi điền vào chỗ trống
+  ESSAY = 'essay', // Câu hỏi tự luận
+}
+
+export interface IQuestion {
+  question: string;
+  media?: string; // Media (ảnh, video, audio)
+  options: string[]; // Danh sách câu trả lời
+  correctAnswer: string; // Câu trả lời đúng
+  score?: number; // Điểm số
+  type: QuestionType; // Loại câu hỏi
+  explanation?: string; // Giải thích
+}
+
 
 export interface CompetitionResult {
   userId: Types.ObjectId; // ID người tham gia
@@ -31,15 +40,24 @@ export interface CompetitionResult {
   submittedAt?: Date; // Thời gian nộp bài (nếu có)
 }
 
+export enum CompetitionType {
+  RANK = 'rank', // Xếp hạng
+  REVIEW = 'review', // Đánh giá
+  TOURNAMENT = 'tournament', // Giải đấu
+}
+
+
 export interface ICompetition {
   name: string; // Tên cuộc thi
   description?: string; // Mô tả chi tiết
   type: CompetitionType; // Loại cuộc thi
+  countQuestion: number; // Số lượng câu hỏi
   startTime: Date; // Thời gian bắt đầu
   endTime: Date; // Thời gian kết thúc
   createdBy?: Types.ObjectId; // ID người tạo
   updatedBy?: Types.ObjectId; // ID người cập nhật gần nhất
   totalParticipants: number; // Tổng số người tham gia
+  listQuestion: IQuestion[]; // Danh sách câu hỏi
   participants?: Types.ObjectId[]; // Danh sách người tham gia
   maxParticipants?: number; // Số lượng người tham gia tối đa
   prize?: string; // Giải thưởng
@@ -61,12 +79,12 @@ export class Competition implements ICompetition {
   @Prop({
     type: String,
     enum: CompetitionType,
-    default: CompetitionType.INDIVIDUAL,
+    default: CompetitionType.RANK,
   })
   type: CompetitionType;
 
-  @Prop()
-  subject?: string;
+  @Prop({ default: 0 })
+  countQuestion: number;
 
   @Prop({ required: true })
   startTime: Date;
@@ -82,6 +100,9 @@ export class Competition implements ICompetition {
 
   @Prop({ default: 0 })
   totalParticipants: number;
+
+  @Prop({ type: [Object], default: [] })
+  listQuestion: IQuestion[];
 
   @Prop({ type: [Types.ObjectId], ref: 'User', default: [] })
   participants?: Types.ObjectId[];

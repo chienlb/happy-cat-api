@@ -45,7 +45,7 @@ export class CompetitionsController {
         value: {
           name: 'Test',
           description: 'Test',
-          type: CompetitionType.INDIVIDUAL,
+          type: CompetitionType.RANK,
           subject: 'Test',
           startTime: new Date(),
           endTime: new Date(),
@@ -244,7 +244,7 @@ export class CompetitionsController {
         value: {
           name: 'Test',
           description: 'Test',
-          type: CompetitionType.INDIVIDUAL,
+          type: CompetitionType.RANK,
           subject: 'Test',
           startTime: new Date(),
           endTime: new Date(),

@@ -40,6 +40,7 @@ import { UnitProgressModule } from './app/modules/unit-progress/unit-progress.mo
 import { OtpsModule } from './app/modules/otps/otps.module';
 import { ChatbotModule } from './app/modules/chatbot/chatbot.module';
 import { AdminModule } from './app/modules/admin/admin.module';
+import { RanksModule } from './app/modules/ranks/ranks.module';
 
 @Module({
   imports: [
@@ -84,6 +85,7 @@ import { AdminModule } from './app/modules/admin/admin.module';
     OtpsModule,
     ChatbotModule,
     AdminModule,
+    RanksModule,
   ],
   controllers: [AppController],
   providers: [AppService],
