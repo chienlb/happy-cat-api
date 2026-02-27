@@ -7,7 +7,6 @@ export enum PaymentMethod {
   PAYPAL = 'paypal', // PayPal
   VNPAY = 'vnpay', // VNPay
   MOMO = 'momo', // MoMo
-  STRIPE = 'stripe', // Stripe
 }
 
 export enum PaymentStatus {
