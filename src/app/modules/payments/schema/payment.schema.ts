@@ -6,7 +6,6 @@ export type PaymentDocument = HydratedDocument<Payment>;
 export enum PaymentMethod {
   PAYPAL = 'paypal', // PayPal
   VNPAY = 'vnpay', // VNPay
-  MOMO = 'momo', // MoMo
 }
 
 export enum PaymentStatus {
@@ -39,7 +38,7 @@ export class Payment implements IPayment {
   @Prop({
     type: String,
     enum: PaymentMethod,
-    default: PaymentMethod.MOMO,
+    default: PaymentMethod.VNPAY,
   })
   method: PaymentMethod;
 
