@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -57,6 +58,7 @@ export class RanksService {
       await rank.save();
       return rank;
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new BadRequestException(error);
     }
   }
@@ -69,6 +71,7 @@ export class RanksService {
       }
       return rank;
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new BadRequestException(error);
     }
   }
@@ -86,6 +89,7 @@ export class RanksService {
         .limit(limit)
         .exec();
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new BadRequestException(error);
     }
   }
@@ -109,6 +113,7 @@ export class RanksService {
 
       return rank;
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new BadRequestException(error);
     }
   }
@@ -121,6 +126,7 @@ export class RanksService {
         .sort({ submittedAt: -1 })
         .exec();
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new BadRequestException(error);
     }
   }
@@ -158,6 +164,7 @@ export class RanksService {
       await existing.save();
       return existing;
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new BadRequestException(error);
     }
   }
@@ -172,6 +179,7 @@ export class RanksService {
       }
       return deleted;
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new BadRequestException(error);
     }
   }

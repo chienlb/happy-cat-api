@@ -63,15 +63,6 @@ export class RanksController {
     return this.ranksService.createRank(body);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get rank by id' })
-  @ApiParam({ name: 'id', type: String, description: 'Rank id' })
-  @ApiResponse({ status: 200, description: 'Rank fetched successfully' })
-  @ApiResponse({ status: 404, description: 'Rank not found' })
-  async getRankById(@Param('id') id: string): Promise<RankDocument> {
-    return this.ranksService.findById(id);
-  }
-
   @Get('competition/:competitionId/leaderboard')
   @ApiOperation({ summary: 'Get leaderboard of a competition' })
   @ApiParam({
@@ -186,6 +177,15 @@ export class RanksController {
   @ApiResponse({ status: 404, description: 'Rank not found' })
   async deleteRank(@Param('id') id: string): Promise<RankDocument> {
     return this.ranksService.deleteRank(id);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get rank by id' })
+  @ApiParam({ name: 'id', type: String, description: 'Rank id' })
+  @ApiResponse({ status: 200, description: 'Rank fetched successfully' })
+  @ApiResponse({ status: 404, description: 'Rank not found' })
+  async getRankById(@Param('id') id: string): Promise<RankDocument> {
+    return this.ranksService.findById(id);
   }
 }
 
