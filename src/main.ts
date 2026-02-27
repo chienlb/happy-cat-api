@@ -13,11 +13,24 @@ import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.int
 import { HttpExceptionFilter } from './app/common/filters/http-exception.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { setServers } from "node:dns/promises";
+import { config } from 'dotenv';
+
+config();
 
 async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap');
 
-  setServers(["1.1.1.1", "8.8.8.8"]);
+  if(process.env.NODE_ENV === 'production') {
+    logger.log('Running in production mode, skipping DNS server configuration');
+  } else {
+    try {
+      setServers(["1.1.1.1", "8.8.8.8"]);
+      logger.log('Custom DNS servers set successfully');
+      logger.log('Running in development mode, using custom DNS servers: [1.1.1.1, 8.8.8.8]');
+    } catch (err) {
+      logger.error('Failed to set custom DNS servers, using system defaults', err);
+    }
+  }
 
   
   let env: Env;
