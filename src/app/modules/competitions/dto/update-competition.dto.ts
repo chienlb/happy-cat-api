@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsEnum,
@@ -8,6 +9,7 @@ import {
   IsNumber,
   Min,
   IsBoolean,
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
@@ -16,6 +18,7 @@ import {
   CompetitionVisibility,
   CompetitionResult,
 } from '../schema/competition.schema';
+import { CreateQuestionDto } from './create-question.dto';
 
 export class UpdateCompetitionDto {
   @IsOptional()
@@ -89,4 +92,14 @@ export class UpdateCompetitionDto {
   @IsOptional()
   @IsBoolean()
   isPublished?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Danh sách câu hỏi của cuộc thi',
+    type: [CreateQuestionDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateQuestionDto)
+  listQuestion?: CreateQuestionDto[];
 }

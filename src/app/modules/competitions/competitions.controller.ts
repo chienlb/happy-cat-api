@@ -8,7 +8,11 @@ import {
   Param,
   Query,
   UseGuards,
+  UploadedFiles,
+  UseInterceptors,
+  Req,
 } from '@nestjs/common';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { CompetitionsService } from './competitions.service';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateCompetitionDto } from './dto/create-competition.dto';
@@ -31,11 +35,11 @@ import { PaginationDto } from '../pagination/pagination.dto';
 
 @Controller('competitions')
 @ApiTags('Competitions')
-@UseGuards(AuthGuard('jwt'))
 export class CompetitionsController {
   constructor(private readonly competitionsService: CompetitionsService) {}
 
   @Post()
+  @UseInterceptors(AnyFilesInterceptor())
   @ApiOperation({ summary: 'Create a new competition' })
   @ApiBody({
     type: CreateCompetitionDto,
@@ -104,57 +108,12 @@ export class CompetitionsController {
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async createCompetition(
     @Body() createCompetitionDto: CreateCompetitionDto,
+    @UploadedFiles() mediaFiles?: any[],
   ): Promise<CompetitionDocument> {
     return await this.competitionsService.createCompetition(
       createCompetitionDto,
+      mediaFiles,
     );
-  }
-
-  @Get(':id')
-  @ApiOperation({ summary: 'Get a competition by id' })
-  @ApiParam({ name: 'id', type: String, description: 'Competition id' })
-  @ApiResponse({
-    status: 200,
-    description: 'Competition fetched successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string' },
-        name: { type: 'string' },
-        description: { type: 'string' },
-        type: { type: 'string' },
-        subject: { type: 'string' },
-        startTime: { type: 'string' },
-        endTime: { type: 'string' },
-        createdBy: { type: 'string' },
-        updatedBy: { type: 'string' },
-        totalParticipants: { type: 'number' },
-        participants: { type: 'array', items: { type: 'string' } },
-        maxParticipants: { type: 'number' },
-        prize: { type: 'string' },
-        status: { type: 'string' },
-        results: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              userId: { type: 'string' },
-              score: { type: 'number' },
-            },
-          },
-        },
-        badgeId: { type: 'string' },
-        visibility: { type: 'string' },
-        isPublished: { type: 'boolean' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getCompetitionById(
-    @Param('id') id: string,
-  ): Promise<CompetitionDocument> {
-    return await this.competitionsService.findCompetitionById(id);
   }
 
   @Get('all')
@@ -406,5 +365,66 @@ export class CompetitionsController {
       page,
       limit,
     );
+  }
+
+  @Post(':id/join')
+  @ApiOperation({ summary: 'Join a competition' })
+  @ApiParam({ name: 'id', type: String, description: 'Competition id' })
+  @ApiResponse({ status: 200, description: 'Competition joined successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async joinCompetition(
+    @Param('id') id: string,
+    @Req() req: Request,
+  ): Promise<CompetitionDocument> {
+    const userId = (req as any).user.userId;
+    return await this.competitionsService.joinCompetition(id, userId);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a competition by id' })
+  @ApiParam({ name: 'id', type: String, description: 'Competition id' })
+  @ApiResponse({
+    status: 200,
+    description: 'Competition fetched successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        name: { type: 'string' },
+        description: { type: 'string' },
+        type: { type: 'string' },
+        subject: { type: 'string' },
+        startTime: { type: 'string' },
+        endTime: { type: 'string' },
+        createdBy: { type: 'string' },
+        updatedBy: { type: 'string' },
+        totalParticipants: { type: 'number' },
+        participants: { type: 'array', items: { type: 'string' } },
+        maxParticipants: { type: 'number' },
+        prize: { type: 'string' },
+        status: { type: 'string' },
+        results: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              userId: { type: 'string' },
+              score: { type: 'number' },
+            },
+          },
+        },
+        badgeId: { type: 'string' },
+        visibility: { type: 'string' },
+        isPublished: { type: 'boolean' },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getCompetitionById(
+    @Param('id') id: string,
+  ): Promise<CompetitionDocument> {
+    return await this.competitionsService.findCompetitionById(id);
   }
 }

@@ -4,6 +4,8 @@ import { CompetitionsController } from './competitions.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Competition, CompetitionSchema } from './schema/competition.schema';
 import { UsersModule } from '../users/users.module';
+import { CloudflareModule } from '../cloudflare/cloudflare.module';
+import { RanksModule } from '../ranks/ranks.module';
 
 @Module({
   imports: [
@@ -11,6 +13,8 @@ import { UsersModule } from '../users/users.module';
       { name: Competition.name, schema: CompetitionSchema },
     ]),
     UsersModule,
+    CloudflareModule,
+    RanksModule,
   ],
   controllers: [CompetitionsController],
   providers: [CompetitionsService],
