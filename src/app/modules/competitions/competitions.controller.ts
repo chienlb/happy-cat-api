@@ -35,6 +35,7 @@ import { PaginationDto } from '../pagination/pagination.dto';
 
 @Controller('competitions')
 @ApiTags('Competitions')
+@UseGuards(AuthGuard('jwt'))
 export class CompetitionsController {
   constructor(private readonly competitionsService: CompetitionsService) {}
 
