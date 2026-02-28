@@ -21,9 +21,9 @@ export class FeedbacksService {
     createFeedbackDto: CreateFeedbackDto,
   ): Promise<Feedback> {
     try {
-      const user = await this.usersService.findUserById(
-        createFeedbackDto.userId.toString(),
-      );
+      const userIdStr =
+        createFeedbackDto.userId?.toString?.() ?? String(createFeedbackDto.userId);
+      const user = await this.usersService.findUserById(userIdStr);
       if (!user) {
         throw new NotFoundException('User not found');
       }

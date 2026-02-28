@@ -1,5 +1,4 @@
 import {
-  IsNotEmpty,
   IsOptional,
   IsEnum,
   IsString,
@@ -10,18 +9,16 @@ import { Types } from 'mongoose';
 import { FeedbackType } from '../schema/feedback.schema';
 
 export class CreateFeedbackDto {
-  @IsNotEmpty()
+  @IsOptional()
   userId: Types.ObjectId;
 
   @IsEnum(FeedbackType)
   type: FeedbackType;
 
   @IsString()
-  @IsNotEmpty()
   title: string;
 
   @IsString()
-  @IsNotEmpty()
   content: string;
 
   @IsOptional()

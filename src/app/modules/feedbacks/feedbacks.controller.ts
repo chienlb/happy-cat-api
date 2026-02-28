@@ -24,10 +24,13 @@ import {
 } from '@nestjs/swagger';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { FeedbackType } from './schema/feedback.schema';
+import { UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Feedbacks')
 @ApiBearerAuth()
 @Controller('feedbacks')
+@UseGuards(AuthGuard('jwt'))
 export class FeedbacksController {
   constructor(private readonly feedbacksService: FeedbacksService) { }
 
@@ -59,10 +62,10 @@ export class FeedbacksController {
   })
   @ApiResponse({ status: 400, description: 'Bad Request', type: HttpException })
   async createFeedback(
-    @Req() req,
+    @Req() req: Request,
     @Body() createFeedbackDto: CreateFeedbackDto,
   ): Promise<Feedback> {
-    const userId = req.user.userId;
+    const userId = (req as any).user.userId;
     if (!userId) {
       throw new Error("UserId is empty")
     }
