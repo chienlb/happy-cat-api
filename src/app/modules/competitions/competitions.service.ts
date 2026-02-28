@@ -286,4 +286,29 @@ export class CompetitionsService {
       throw new BadRequestException(error);
     }
   }
+
+  async submitCompetition(competitionId: string, userId: string, score: number): Promise<CompetitionDocument> {
+    try {
+      const competition = await this.competitionRepository.findByIdAndUpdate(
+        competitionId,
+        { $push: { participants: userId } },
+      );
+      if (!competition) {
+        throw new NotFoundException('Competition not found');
+      }
+      const rank = await this.ranksService.findUserRankInCompetition(competitionId, userId);
+      if (!rank) {
+        throw new NotFoundException('Rank not found');
+      }
+      if (rank.score !== score) {
+        rank.score = score;
+        rank.rank = await this.ranksService.calculateRank(competitionId, score, rank.submittedAt);
+        rank.submittedAt = new Date() ?? undefined;
+        await rank.save();
+      }
+      return competition;
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
 }

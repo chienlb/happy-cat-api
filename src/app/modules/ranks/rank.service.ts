@@ -41,18 +41,20 @@ export class RanksService {
       const competitionId = this.toObjectId(payload.idCompetition);
       const userObjectId = this.toObjectId(payload.userId);
 
-      // Tính rank hiện tại trong cuộc thi dựa trên score
-      const betterCount = await this.rankRepository.countDocuments({
-        idCompetition: competitionId,
-        score: { $gt: payload.score },
-      });
+      // Tính rank: điểm cao hơn xếp trên; cùng điểm thì nộp sớm hơn xếp trên
+      const submittedAt = payload.submittedAt ?? new Date();
+      const rankValue = await this.calculateRank(
+        payload.idCompetition,
+        payload.score,
+        submittedAt,
+      );
 
       const rank = new this.rankRepository({
         idCompetition: competitionId,
         userId: userObjectId,
         score: payload.score,
-        rank: betterCount + 1,
-        submittedAt: payload.submittedAt ?? new Date(),
+        rank: rankValue,
+        submittedAt,
       });
 
       await rank.save();
@@ -143,22 +145,21 @@ export class RanksService {
 
       if (payload.score !== undefined) {
         existing.score = payload.score;
-
-        // Tính lại rank trong cuộc thi sau khi đổi score
-        const betterCount = await this.rankRepository.countDocuments({
-          idCompetition: existing.idCompetition,
-          _id: { $ne: existing._id },
-          score: { $gt: payload.score },
-        });
-        existing.rank = betterCount + 1;
+      }
+      if (payload.submittedAt !== undefined) {
+        existing.submittedAt = payload.submittedAt;
+      }
+      if (payload.score !== undefined || payload.submittedAt !== undefined) {
+        // Tính lại rank: điểm cao hơn xếp trên; cùng điểm thì nộp sớm hơn xếp trên
+        existing.rank = await this.calculateRank(
+          existing.idCompetition.toString(),
+          existing.score,
+          existing.submittedAt,
+        );
       }
 
       if (payload.rank !== undefined) {
         existing.rank = payload.rank;
-      }
-
-      if (payload.submittedAt !== undefined) {
-        existing.submittedAt = payload.submittedAt;
       }
 
       await existing.save();
@@ -178,6 +179,32 @@ export class RanksService {
         throw new NotFoundException('Rank not found');
       }
       return deleted;
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new BadRequestException(error);
+    }
+  }
+
+  async calculateRank(competitionId: string, score: number, submittedAt?: Date): Promise<number> {
+    try {
+      const competitionObjectId = this.toObjectId(competitionId);
+
+      // Điểm cao hơn → xếp trên. Cùng điểm → nộp sớm hơn (submittedAt nhỏ hơn) → xếp trên
+      const betterCondition: Record<string, unknown>[] = [
+        { score: { $gt: score } },
+      ];
+      if (submittedAt != null) {
+        betterCondition.push({
+          score,
+          submittedAt: { $lt: submittedAt },
+        });
+      }
+
+      const betterCount = await this.rankRepository.countDocuments({
+        idCompetition: competitionObjectId,
+        $or: betterCondition,
+      });
+      return betterCount + 1;
     } catch (error) {
       if (error instanceof HttpException) throw error;
       throw new BadRequestException(error);

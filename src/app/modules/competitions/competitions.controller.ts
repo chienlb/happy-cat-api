@@ -368,18 +368,51 @@ export class CompetitionsController {
     );
   }
 
-  @Post(':id/join')
+  @Post('join')
   @ApiOperation({ summary: 'Join a competition' })
-  @ApiParam({ name: 'id', type: String, description: 'Competition id' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['competitionId'],
+      properties: { competitionId: { type: 'string', description: 'Competition id' } },
+    },
+  })
   @ApiResponse({ status: 200, description: 'Competition joined successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async joinCompetition(
-    @Param('id') id: string,
+    @Body() body: { competitionId: string },
     @Req() req: Request,
   ): Promise<CompetitionDocument> {
     const userId = (req as any).user.userId;
-    return await this.competitionsService.joinCompetition(id, userId);
+    return await this.competitionsService.joinCompetition(body.competitionId, userId);
+  }
+
+  @Post('submit')
+  @ApiOperation({ summary: 'Submit a competition' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['competitionId', 'score'],
+      properties: {
+        competitionId: { type: 'string', description: 'Competition id' },
+        score: { type: 'number', description: 'Score' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Competition submitted successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async submitCompetition(
+    @Body() body: { competitionId: string; score: number },
+    @Req() req: Request,
+  ): Promise<CompetitionDocument> {
+    const userId = (req as any).user.userId;
+    return await this.competitionsService.submitCompetition(
+      body.competitionId,
+      userId,
+      body.score,
+    );
   }
 
   @Get(':id')
