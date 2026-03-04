@@ -41,6 +41,7 @@ import { OtpsModule } from './app/modules/otps/otps.module';
 import { ChatbotModule } from './app/modules/chatbot/chatbot.module';
 import { AdminModule } from './app/modules/admin/admin.module';
 import { RanksModule } from './app/modules/ranks/ranks.module';
+import { BlogsModule } from './app/modules/blogs/blogs.module';
 
 @Module({
   imports: [
@@ -86,6 +87,7 @@ import { RanksModule } from './app/modules/ranks/ranks.module';
     ChatbotModule,
     AdminModule,
     RanksModule,
+    BlogsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
