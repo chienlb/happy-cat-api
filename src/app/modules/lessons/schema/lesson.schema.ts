@@ -69,6 +69,7 @@ export interface ILesson {
         words: {
           word: string;
           definition: string;
+          ipa?: string;
         }[];
         tags?: string[];
       }
@@ -76,11 +77,14 @@ export interface ILesson {
         type: 'grammar';
         description: string;
         rule: string;
+        explanation_vi: string;
+        explanation_en: string;
         examples: {
           example: string;
           translation: string;
         }[];
         tags?: string[];
+        commonMistakes?: string[];
       }
     | {
         type: 'dialogue';
@@ -222,6 +226,7 @@ export class Lesson implements ILesson {
         words: {
           word: string;
           definition: string;
+          ipa?: string;
         }[];
         tags?: string[];
       }
@@ -229,11 +234,14 @@ export class Lesson implements ILesson {
         type: 'grammar';
         description: string;
         rule: string;
+        explanation_vi: string;
+        explanation_en: string;
         examples: {
           example: string;
           translation: string;
         }[];
         tags?: string[];
+        commonMistakes?: string[];
       }
     | {
         type: 'dialogue';

@@ -29,6 +29,14 @@ class VocabularyWordDto {
   @ApiProperty({ description: 'Word definition', example: 'xin chào' })
   @IsString()
   definition: string;
+
+  @ApiPropertyOptional({
+    description: 'IPA pronunciation',
+    example: '/həˈloʊ/',
+  })
+  @IsOptional()
+  @IsString()
+  ipa?: string;
 }
 
 class VocabularyContentDto {
@@ -92,11 +100,35 @@ class GrammarContentDto {
   @IsString()
   rule: string;
 
+  @ApiProperty({
+    description: 'Grammar explanation in Vietnamese',
+    example: 'Sử dụng present simple cho các hành động thường xuyên',
+  })
+  @IsString()
+  explanation_vi: string;
+
+  @ApiProperty({
+    description: 'Grammar explanation in English',
+    example: 'Use present simple for habits and routines',
+  })
+  @IsString()
+  explanation_en: string;
+
   @ApiProperty({ description: 'Examples', type: [GrammarExampleDto] })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => GrammarExampleDto)
   examples: GrammarExampleDto[];
+
+  @ApiPropertyOptional({
+    description: 'Common mistakes',
+    type: [String],
+    example: ['I am a student', 'She is a student'],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  commonMistakes?: string[];
 
   @ApiPropertyOptional({
     description: 'Tags',
