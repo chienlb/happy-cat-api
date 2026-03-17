@@ -17,6 +17,7 @@ import { PaginationDto } from '../pagination/pagination.dto';
 import { RedisService } from 'src/app/configs/redis/redis.service';
 import { LessonProgressService } from '../lesson-progress/lesson-progress.service';
 import { CloudflareService } from '../cloudflare/cloudflare.service';
+import { Type } from 'class-transformer/types/decorators/type.decorator';
 
 type MulterFile = { buffer: Buffer; originalname: string; mimetype: string };
 
@@ -239,17 +240,13 @@ export class LessonsService {
 
   async findLessonsByUnitId(
     unitId: string,
-    session?: ClientSession,
   ): Promise<LessonDocument[]> {
     try {
-      if (!Types.ObjectId.isValid(unitId)) {
-        throw new BadRequestException('Invalid unit ID format');
-      }
-      return this.lessonModel
-        .find({ unit: unitId, isActive: LessonStatus.ACTIVE })
+      const lessons = await this.lessonModel
+        .find({ unit: new Types.ObjectId(unitId), isActive: LessonStatus.ACTIVE })
         .sort({ orderIndex: 1 })
-        .session(session || null)
         .exec();
+      return lessons;
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
