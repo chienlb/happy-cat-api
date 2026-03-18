@@ -25,19 +25,20 @@ import { LessonProgressDocument } from './schema/lesson-progress.schema';
 import { UpdateLessonProgressDto } from './dto/update-lesson-progress.dto';
 import { PaginationDto } from '../pagination/pagination.dto';
 import { CreateLessonProgressDto } from './dto/create-lesson-progress.dto';
+import { logger } from 'handlebars';
 
-@Controller('lesson-prgress')
-@ApiTags('Lesson Prgress')
+@Controller('lesson-progress')
+@ApiTags('Lesson Progress')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
-export class LessonPrgressController {
+export class LessonProgressController {
   constructor(private readonly lessonProgressService: LessonProgressService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new lesson prgress' })
+  @ApiOperation({ summary: 'Create a new lesson progress' })
   @ApiBody({
     type: CreateLessonProgressDto,
-    description: 'Create lesson prgress data',
+    description: 'Create lesson progress data',
     examples: {
       example: {
         value: {
@@ -51,7 +52,7 @@ export class LessonPrgressController {
   })
   @ApiResponse({
     status: 201,
-    description: 'Lesson prgress created successfully',
+    description: 'Lesson progress created successfully',
     schema: {
       type: 'object',
       properties: {
@@ -64,16 +65,29 @@ export class LessonPrgressController {
     },
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async createLessonPrgress(
+  async createLessonProgress(
     @Body() createLessonProgressDto: CreateLessonProgressDto,
   ): Promise<LessonProgressDocument> {
-    return await this.lessonProgressService.createLessonPrgress(
+    return await this.lessonProgressService.createLessonProgress(
       createLessonProgressDto,
     );
   }
 
+    @Get('user/:lessonId')
+  async getProgressByUserIdAndLessonId(
+    @Req() req,
+    @Param('lessonId') lessonId: string,
+  ): Promise<LessonProgressDocument> {
+
+    console.log('User ID:', req.user.userId);
+    return await this.lessonProgressService.getProgressByUserIdAndLessonId(
+      req.user.userId,
+      lessonId,
+    );
+  }
+
   @Get('user/:userId')
-  @ApiOperation({ summary: 'Get all lesson prgress by user id' })
+  @ApiOperation({ summary: 'Get all lesson progress by user id' })
   @ApiQuery({
     name: 'page',
     type: Number,
@@ -88,7 +102,7 @@ export class LessonPrgressController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Lesson prgress fetched successfully',
+    description: 'Lesson progress fetched successfully',
     schema: {
       type: 'object',
       properties: {
@@ -115,7 +129,7 @@ export class LessonPrgressController {
     },
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async getLessonPrgressByUserId(
+  async getLessonProgressByUserId(
     @Param('userId') userId: string,
     @Query() paginationDto: PaginationDto,
   ): Promise<{
@@ -127,14 +141,14 @@ export class LessonPrgressController {
     hasPreviousPage: boolean;
     limit: number;
   }> {
-    return await this.lessonProgressService.findLessonPrgressByUserId(
+    return await this.lessonProgressService.findLessonProgressByUserId(
       userId,
       paginationDto,
     );
   }
 
   @Get('lesson/:lessonId')
-  @ApiOperation({ summary: 'Get all lesson prgress by lesson id' })
+  @ApiOperation({ summary: 'Get all lesson progress by lesson id' })
   @ApiQuery({
     name: 'page',
     type: Number,
@@ -149,7 +163,7 @@ export class LessonPrgressController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Lesson prgress fetched successfully',
+    description: 'Lesson progress fetched successfully',
     schema: {
       type: 'object',
       properties: {
@@ -176,7 +190,7 @@ export class LessonPrgressController {
     },
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async getLessonPrgressByLessonId(
+  async getLessonProgressByLessonId(
     @Req() req,
     @Param('lessonId') lessonId: string,
     @Query() paginationDto: PaginationDto,
@@ -189,7 +203,7 @@ export class LessonPrgressController {
     hasPreviousPage: boolean;
     limit: number;
   }> {
-    return await this.lessonProgressService.findLessonPrgressByLessonId(
+    return await this.lessonProgressService.findLessonProgressByLessonId(
       lessonId,
       req.user.id,
       paginationDto,
@@ -197,10 +211,10 @@ export class LessonPrgressController {
   }
 
   @Put(':lessonId')
-  @ApiOperation({ summary: 'Update a lesson prgress' })
+  @ApiOperation({ summary: 'Update a lesson progress' })
   @ApiBody({
     type: UpdateLessonProgressDto,
-    description: 'Update lesson prgress data',
+    description: 'Update lesson progress data',
     examples: {
       example: {
         value: {
@@ -212,7 +226,7 @@ export class LessonPrgressController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Lesson prgress updated successfully',
+    description: 'Lesson progress updated successfully',
     schema: {
       type: 'object',
       properties: {
@@ -225,35 +239,25 @@ export class LessonPrgressController {
     },
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async updateLessonPrgress(
+  async updateLessonProgress(
     @Param('lessonId') lessonId: string,
     @Body() updateLessonProgressDto: UpdateLessonProgressDto,
   ): Promise<LessonProgressDocument> {
-    return await this.lessonProgressService.updateLessonPrgress(
+    return await this.lessonProgressService.updateLessonProgress(
       lessonId,
       updateLessonProgressDto,
     );
   }
 
-  @Get('user/:lessonId')
-  async getProgressByUserIdAndLessonId(
-    @Req() req,
-    @Param('lessonId') lessonId: string,
-  ): Promise<LessonProgressDocument> {
-    return await this.lessonProgressService.getProgressByUserIdAndLessonId(
-      req.user.id,
-      lessonId,
-    );
-  }
 
   @Delete(':lessonId')
-  @ApiOperation({ summary: 'Delete a lesson prgress' })
+  @ApiOperation({ summary: 'Delete a lesson progress' })
   @ApiResponse({
     status: 200,
-    description: 'Lesson prgress deleted successfully',
+    description: 'Lesson progress deleted successfully',
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async deleteLessonPrgress(
+  async deleteLessonProgress(
     @Param('lessonId') lessonId: string,
   ): Promise<void> {
     return await this.lessonProgressService.deleteLessonProgress(lessonId);

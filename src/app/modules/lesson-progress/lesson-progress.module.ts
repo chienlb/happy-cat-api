@@ -1,6 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { LessonProgressService } from './lesson-progress.service';
-import { LessonPrgressController } from './lesson-progress.controller';
+import { LessonProgressController } from './lesson-progress.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import {
   LessonProgress,
@@ -23,7 +23,7 @@ import { UserBadgesModule } from '../user-badges/user-badges.module';
     BadgesModule,
     UserBadgesModule,
   ],
-  controllers: [LessonPrgressController],
+  controllers: [LessonProgressController],
   providers: [LessonProgressService],
   exports: [LessonProgressService, MongooseModule],
 })

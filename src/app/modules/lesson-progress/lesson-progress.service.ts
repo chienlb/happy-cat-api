@@ -35,7 +35,7 @@ export class LessonProgressService {
     private readonly userBadgesService: UserBadgesService,
   ) {}
 
-  async createLessonPrgress(
+  async createLessonProgress( 
     createLessonProgressDto: CreateLessonProgressDto,
   ): Promise<LessonProgressDocument> {
     try {
@@ -70,7 +70,7 @@ export class LessonProgressService {
     }
   }
 
-  async findLessonPrgressByUserId(
+  async findLessonProgressByUserId(
     userId: string,
     paginationDto: PaginationDto,
   ): Promise<{
@@ -123,8 +123,10 @@ export class LessonProgressService {
         throw new NotFoundException('User not found');
       }
 
+      console.log('Finding lesson progress for userId:', userId, 'and lessonId:', lessonId);
+
       const lesson = await this.lessonsService.findLessonById(
-        lessonId.toString(),
+        lessonId,
       );
 
       if (!lesson) {
@@ -132,8 +134,8 @@ export class LessonProgressService {
       }
 
       const lessonProgress = await this.lessonProgressModel.findOne({
-        userId: new Types.ObjectId(userId),
-        lessonId: new Types.ObjectId(lessonId),
+        userId: userId.toString(),
+        lessonId: lessonId.toString(),
       });
 
       if (!lessonProgress) {
@@ -149,7 +151,7 @@ export class LessonProgressService {
     }
   }
 
-  async findLessonPrgressByLessonId(
+  async findLessonProgressByLessonId(
     lessonId: string,
     userId: string,
     paginationDto: PaginationDto,
@@ -196,9 +198,9 @@ export class LessonProgressService {
     }
   }
 
-  async updateLessonPrgress(
+  async updateLessonProgress(
     lessonId: string,
-    updateLessonPrgressDto: UpdateLessonProgressDto,
+    updateLessonProgressDto: UpdateLessonProgressDto,
   ): Promise<LessonProgressDocument> {
     try {
       const lesson = await this.lessonsService.findLessonById(
@@ -209,7 +211,7 @@ export class LessonProgressService {
       }
       const lessonProgress = await this.lessonProgressModel.findByIdAndUpdate(
         lesson._id,
-        updateLessonPrgressDto,
+        updateLessonProgressDto,
         { new: true },
       );
       if (!lessonProgress) {
