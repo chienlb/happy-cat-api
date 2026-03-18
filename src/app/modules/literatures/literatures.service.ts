@@ -133,23 +133,25 @@ export class LiteraturesService {
 
     const sortOrder = paginationDto.order === 'asc' ? 1 : -1;
 
-    const cacheKey = `literatures:isPublished=true:page=${page}:limit=${limit}:sort=${sortField}:order=${sortOrder}`;
+    // const cacheKey = `literatures:isPublished=true:page=${page}:limit=${limit}:sort=${sortField}:order=${sortOrder}`;
 
-    // 3) cache
-    const cached = await this.redisService.get(cacheKey);
-    if (cached) return JSON.parse(cached);
+    // // 3) cache
+    // const cached = await this.redisService.get(cacheKey);
+    // if (cached) return JSON.parse(cached);
 
     const filter = { isPublished: true };
+
+    const test = await this.literatureModel.countDocuments().exec();
+    console.log('Total literatures matching filter:', test);
 
     // 4) query parallel + lean
     const [literatures, total] = await Promise.all([
       this.literatureModel
-        .find(filter)
+        .find()
         .sort({ [sortField]: sortOrder })
         .skip((page - 1) * limit)
         .limit(limit)
-        .lean()
-        .exec(),
+        .lean(),
       this.literatureModel.countDocuments(filter).exec(),
     ]);
 
@@ -173,7 +175,7 @@ export class LiteraturesService {
       prevPage,
     };
 
-    await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+    // await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
     return result;
   }
 
