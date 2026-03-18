@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { LessonProgressService } from './lesson-progress.service';
@@ -176,6 +177,7 @@ export class LessonPrgressController {
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async getLessonPrgressByLessonId(
+    @Req() req,
     @Param('lessonId') lessonId: string,
     @Query() paginationDto: PaginationDto,
   ): Promise<{
@@ -189,6 +191,7 @@ export class LessonPrgressController {
   }> {
     return await this.lessonProgressService.findLessonPrgressByLessonId(
       lessonId,
+      req.user.id,
       paginationDto,
     );
   }

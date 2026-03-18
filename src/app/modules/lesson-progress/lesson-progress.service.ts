@@ -115,6 +115,7 @@ export class LessonProgressService {
 
   async findLessonPrgressByLessonId(
     lessonId: string,
+    userId: string,
     paginationDto: PaginationDto,
   ): Promise<{
     data: LessonProgressDocument[];
@@ -126,9 +127,10 @@ export class LessonProgressService {
     limit: number;
   }> {
     try {
-      const lesson = await this.lessonsService.findLessonById(
-        lessonId.toString(),
-      );
+      const lesson = await this.lessonProgressModel.findOne({
+        userId: new Types.ObjectId(userId),
+        lessonId: new Types.ObjectId(lessonId),
+      });
       if (!lesson) {
         throw new NotFoundException('Lesson not found');
       }
