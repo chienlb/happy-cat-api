@@ -235,6 +235,17 @@ export class LessonPrgressController {
     );
   }
 
+  @Get('user/:lessonId')
+  async getProgressByUserIdAndLessonId(
+    @Req() req,
+    @Param('lessonId') lessonId: string,
+  ): Promise<LessonProgressDocument> {
+    return await this.lessonProgressService.getProgressByUserIdAndLessonId(
+      req.user.id,
+      lessonId,
+    );
+  }
+
   @Delete(':lessonId')
   @ApiOperation({ summary: 'Delete a lesson prgress' })
   @ApiResponse({

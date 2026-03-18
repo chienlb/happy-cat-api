@@ -113,6 +113,42 @@ export class LessonProgressService {
     }
   }
 
+  async getProgressByUserIdAndLessonId(
+    userId: string,
+    lessonId: string,
+  ): Promise<LessonProgressDocument> {
+    try {
+      const user = await this.usersService.findUserById(userId.toString());
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const lesson = await this.lessonsService.findLessonById(
+        lessonId.toString(),
+      );
+
+      if (!lesson) {
+        throw new NotFoundException('Lesson not found');
+      }
+
+      const lessonProgress = await this.lessonProgressModel.findOne({
+        userId: new Types.ObjectId(userId),
+        lessonId: new Types.ObjectId(lessonId),
+      });
+
+      if (!lessonProgress) {
+        throw new NotFoundException('Lesson progress not found');
+      }
+
+      return lessonProgress;
+    } catch (error) {
+      throw new Error(
+        'Failed to get lesson progress by user id and lesson id: ' +
+          error.message,
+      );
+    }
+  }
+
   async findLessonPrgressByLessonId(
     lessonId: string,
     userId: string,
