@@ -313,7 +313,7 @@ export class GroupsService {
 
   async getGroupByName(name: string): Promise<GroupDocument[]> {
     try {
-      const group = await this.groupModel.find({ name });
+      const group = await this.groupModel.find({ groupName: { $regex: name, $options: 'i' } });
       if (!group) {
         throw new NotFoundException('Group not found');
       }
@@ -321,6 +321,25 @@ export class GroupsService {
     }
     catch (error) {
       throw new Error('Failed to get group by name: ' + error.message);
+    }
+  }
+
+  async joinGroupByJoinCode(joinCode: string, userId: string): Promise<GroupDocument> {
+    try {
+      const group = await this.getGroupByJoinCode(joinCode);
+      if (!group) {        throw new NotFoundException('Group not found');
+      } 
+      const user = await this.usersService.findUserById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      if (group.members.includes(user._id)) {
+        throw new BadRequestException('User already in group');
+      }
+      group.members.push(user._id);
+      return group.save();
+    } catch (error) {
+      throw new Error('Failed to join group by join code: ' + error.message);
     }
   }
 }

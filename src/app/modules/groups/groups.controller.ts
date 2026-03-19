@@ -256,4 +256,26 @@ export class GroupsController {
   async getGroupByName(@Param('groupName') groupName: string) {
     return this.groupsService.getGroupByName(groupName);
   }
+
+  @Post('join-code/:joinCode')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Join a group by join code' })
+  @ApiParam({
+    name: 'joinCode',
+    description: 'The join code of the group',
+    type: String,
+  })
+  @ApiResponse({ status: 200, description: 'User joined group successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Group not found' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  async joinGroupByJoinCode(
+    @Param('joinCode') joinCode: string,
+    @Req() req: Request
+  ) {
+    const userId = (req as any).user.userId;
+    return this.groupsService.joinGroupByJoinCode(joinCode, userId);
+  }
 }
