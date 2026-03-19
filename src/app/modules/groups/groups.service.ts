@@ -298,4 +298,29 @@ export class GroupsService {
       throw new Error('Failed to change group visibility: ' + error.message);
     }
   }
+
+  async getGroupByJoinCode(joinCode: string): Promise<GroupDocument> {
+    try {
+      const group = await this.groupModel.findOne({ joinCode });
+      if (!group) {
+        throw new NotFoundException('Group not found');
+      }
+      return group;
+    } catch (error) {
+      throw new Error('Failed to get group by join code: ' + error.message);
+    }
+  }
+
+  async getGroupByName(name: string): Promise<GroupDocument[]> {
+    try {
+      const group = await this.groupModel.find({ name });
+      if (!group) {
+        throw new NotFoundException('Group not found');
+      }
+      return group;
+    }
+    catch (error) {
+      throw new Error('Failed to get group by name: ' + error.message);
+    }
+  }
 }

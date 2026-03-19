@@ -246,4 +246,14 @@ export class GroupsController {
     const visibility = (req as any).user.visibility;
     return this.groupsService.changeGroupVisibility(groupId, visibility);
   }
+
+  @Get('join-code/:joinCode')
+  async getGroupByJoinCode(@Param('joinCode') joinCode: string) {
+    return this.groupsService.getGroupByJoinCode(joinCode);
+  }
+
+  @Get('name/:groupName')
+  async getGroupByName(@Param('groupName') groupName: string) {
+    return this.groupsService.getGroupByName(groupName);
+  }
 }
