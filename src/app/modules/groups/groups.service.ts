@@ -342,4 +342,44 @@ export class GroupsService {
       throw new Error('Failed to join group by join code: ' + error.message);
     }
   }
+
+  async getAllGroupsByUserId(userId: string, paginationDto: PaginationDto): Promise<{
+    data: GroupDocument[];
+    total: number;
+    totalPages: number;
+    nextPage: number;
+    prevPage: number;
+  }> {
+    try {
+      const cacheKey = `groups:user:${userId}:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+      const groups = await this.groupModel
+        .find({ members: userId, isActive: true })
+        .skip((paginationDto.page - 1) * paginationDto.limit)
+        .limit(paginationDto.limit)
+        .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 });
+      const total = await this.groupModel.countDocuments({
+        members: userId,
+        isActive: true,
+      });
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const nextPage =
+        paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+      const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
+      const result = {
+        data: groups,
+        total,
+        totalPages,
+        nextPage: nextPage ?? paginationDto.page,
+        prevPage: prevPage ?? paginationDto.page,
+      };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
+    } catch (error) {
+      throw new Error('Failed to get all groups by user id: ' + error.message);
+    }
+  }
 }

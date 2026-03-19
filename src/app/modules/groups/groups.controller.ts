@@ -71,6 +71,12 @@ export class GroupsController {
     return this.groupsService.createGroup((req as any).user.userId, createGroupDto, avatar, background);
   }
 
+  @Get('user')
+  async getAllGroupsByUserId(@Req() req: Request, @Query() paginationDto: PaginationDto) {
+    const userId = (req as any).user.userId;
+    return this.groupsService.getAllGroupsByUserId(userId, paginationDto);
+  }
+
   @Get(':id')
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get a group by id' })
