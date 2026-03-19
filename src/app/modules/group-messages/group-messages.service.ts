@@ -45,9 +45,11 @@ export class GroupMessagesService {
         throw new NotFoundException('Group not found');
       }
 
-      const userIdObj = user._id;
-      const isMember = group.members?.some((m) => m.equals(userIdObj));
-      const isOwner = group.owner?.equals(userIdObj);
+      const userIdStr = user._id.toString();
+
+      const isMember = group.members?.some((m) => m?.toString() === userIdStr);
+      const ownerId = group.owner?.toString();
+      const isOwner = ownerId === userIdStr;
       if (!isMember && !isOwner) {
         throw new ForbiddenException(
           'Sender must be a member of the group to send messages.',
