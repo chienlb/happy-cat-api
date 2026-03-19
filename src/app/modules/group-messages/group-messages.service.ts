@@ -21,8 +21,8 @@ import { PaginationDto } from '../pagination/pagination.dto';
 @Injectable()
 export class GroupMessagesService {
   constructor(
-    @InjectModel(GroupMessage.name)
-    private groupMessageRepository: Model<GroupMessage>,
+        @InjectModel(GroupMessage.name) private readonly groupMessageModel: Model<GroupMessageDocument>,
+    
     private usersService: UsersService,
     private groupsService: GroupsService,
     private readonly redisService: RedisService,
@@ -79,7 +79,7 @@ export class GroupMessagesService {
         );
         createGroupMessageDto.mentions = mentions;
       }
-      const groupMessage = new this.groupMessageRepository({
+      const groupMessage = new this.groupMessageModel({
         ...createGroupMessageDto,
         senderId: new Types.ObjectId(userId),
         groupId: group._id,
@@ -126,14 +126,14 @@ export class GroupMessagesService {
       if (!group) {
         throw new NotFoundException('Group not found');
       }
-      const messages = await this.groupMessageRepository
-        .find({ groupId: group._id })
+      const messages = await this.groupMessageModel
+        .find({ groupId })
         .skip((paginationDto.page - 1) * paginationDto.limit)
         .limit(paginationDto.limit)
         .sort({ createdAt: paginationDto.order === 'asc' ? 1 : -1 });
-      if (!messages) {
-        throw new NotFoundException('Messages not found');
-      }
+      // if (!messages) {
+      //   throw new NotFoundException('Messages not found');
+      // }
       const result = {
         data: messages,
         total: messages.length,
@@ -163,7 +163,7 @@ export class GroupMessagesService {
       if (cached) {
         return JSON.parse(cached);
       }
-      const message = await this.groupMessageRepository.findById(id);
+      const message = await this.groupMessageModel.findById(id);
       if (!message) {
         throw new NotFoundException('Message not found');
       }
@@ -197,7 +197,7 @@ export class GroupMessagesService {
         throw new NotFoundException('Message not found');
       }
       const updatedMessage =
-        await this.groupMessageRepository.findByIdAndUpdate(
+        await this.groupMessageModel.findByIdAndUpdate(
           id,
           updateGroupMessageDto,
           { new: true },
@@ -230,7 +230,7 @@ export class GroupMessagesService {
       if (!message) {
         throw new NotFoundException('Message not found');
       }
-      await this.groupMessageRepository.findByIdAndUpdate(
+      await this.groupMessageModel.findByIdAndUpdate(
         id,
         { deletedAt: new Date() },
         { new: true },
@@ -269,7 +269,7 @@ export class GroupMessagesService {
       const userObjectId = new Types.ObjectId(userId);
 
       // Chỉ add user vào readBy nếu chưa có
-      const updatedMessage = await this.groupMessageRepository.findByIdAndUpdate(
+      const updatedMessage = await this.groupMessageModel.findByIdAndUpdate(
         id,
         { $addToSet: { readBy: userObjectId } },
         { new: true },
@@ -316,7 +316,7 @@ export class GroupMessagesService {
       const userObjectId = new Types.ObjectId(userId);
 
       // Remove user khỏi readBy array
-      const updatedMessage = await this.groupMessageRepository.findByIdAndUpdate(
+      const updatedMessage = await this.groupMessageModel.findByIdAndUpdate(
         id,
         { $pull: { readBy: userObjectId } },
         { new: true },
@@ -409,14 +409,14 @@ export class GroupMessagesService {
       if (!message) {
         throw new NotFoundException('Message not found');
       }
-      const replies = await this.groupMessageRepository
+      const replies = await this.groupMessageModel
         .find({
           replyTo: message.data._id,
         })
         .skip((paginationDto.page - 1) * paginationDto.limit)
         .limit(paginationDto.limit)
         .sort({ createdAt: paginationDto.order === 'asc' ? 1 : -1 });
-      const total = await this.groupMessageRepository.countDocuments({
+      const total = await this.groupMessageModel.countDocuments({
         replyTo: message.data._id,
       });
       const totalPages = Math.ceil(total / paginationDto.limit);
@@ -453,7 +453,7 @@ export class GroupMessagesService {
       if (!message) {
         throw new NotFoundException('Message not found');
       }
-      const count = await this.groupMessageRepository.countDocuments({
+      const count = await this.groupMessageModel.countDocuments({
         replyTo: message.data._id,
       });
       const result = {
@@ -480,7 +480,7 @@ export class GroupMessagesService {
       if (!group) {
         throw new NotFoundException('Group not found');
       }
-      const count = await this.groupMessageRepository.countDocuments({
+      const count = await this.groupMessageModel.countDocuments({
         groupId: group._id,
         deletedAt: null,
       });
