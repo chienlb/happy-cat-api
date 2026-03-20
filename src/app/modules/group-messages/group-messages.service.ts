@@ -117,17 +117,17 @@ export class GroupMessagesService {
     limit: number;
   }> {
     try {
-      const cacheKey = `group-messages:group-id=${groupId}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
-      }
+      // const cacheKey = `group-messages:group-id=${groupId}`;
+      // const cached = await this.redisService.get(cacheKey);
+      // if (cached) {
+      //   return JSON.parse(cached);
+      // }
       const group = await this.groupsService.findGroupById(groupId);
       if (!group) {
         throw new NotFoundException('Group not found');
       }
       const messages = await this.groupMessageModel
-        .find({ groupId })
+        .find({groupId: new Types.ObjectId(groupId), deletedAt: null})
         .skip((paginationDto.page - 1) * paginationDto.limit)
         .limit(paginationDto.limit)
         .sort({ createdAt: paginationDto.order === 'asc' ? 1 : -1 });
@@ -144,7 +144,7 @@ export class GroupMessagesService {
         hasPreviousPage: paginationDto.page > 1,
         limit: paginationDto.limit,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      // await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new InternalServerErrorException(

@@ -79,7 +79,7 @@ export class GroupMessagesController {
     return this.groupMessagesService.findMessageById(id);
   }
 
-  @Get(':groupId')
+  @Get('/group/:groupId')
   @ApiOperation({ summary: 'Get all group messages by group id' })
   @ApiParam({
     name: 'groupId',
