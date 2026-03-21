@@ -344,7 +344,7 @@ export class AuthsController {
     const { accessToken, refreshToken } =
       await this.authsService.loginWithGoogle(req.user);
 
-    return res.redirect(`http://localhost:4000/oauth-success?accessToken=${accessToken}&refreshToken=${refreshToken}`);
+    return res.redirect(`https://front-end-liart-nine.vercel.app/oauth-success?accessToken=${accessToken}&refreshToken=${refreshToken}`);
   }
 
   @ApiOperation({ summary: 'Google one tap' })
@@ -367,7 +367,7 @@ export class AuthsController {
   async facebookCallback(@Req() req, @Res() res) {
     const { accessToken, refreshToken } =
       await this.authsService.loginWithFacebook(req.user);
-    return res.redirect(`http://localhost:4000/oauth-success?accessToken=${accessToken}&refreshToken=${refreshToken}`);
+    return res.redirect(`https://front-end-liart-nine.vercel.app/oauth-success?accessToken=${accessToken}&refreshToken=${refreshToken}`);
   }
 
   @ApiOperation({ summary: 'Get current user profile' })
