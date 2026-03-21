@@ -36,7 +36,7 @@ export class CommunitesController {
     createCommuniteDto.userId = userId;
 
     if (file) {
-      createCommuniteDto.image = file.filename;
+      createCommuniteDto.file = file;
     }
 
     return this.communitesService.createCommunite(createCommuniteDto);
@@ -61,14 +61,15 @@ export class CommunitesController {
   }
 
   @Post(':id/comment')
+  @UseInterceptors(FileInterceptor('file'))
   async comment(
     @Param('id') id: string,
     @Req() req: Request & { user?: any },
-    @Body() commentDto: { userId: string; content: string; image?: string },
+    @Body() commentDto: { userId: string; content: string; image?: any },
     @UploadedFile() file?: any,
   ): Promise<Communite> {
     if (file) {
-      commentDto.image = file.filename;
+      commentDto.image = file;
     }
     commentDto.userId = req.user?.userId;
     return this.communitesService.comment(id, commentDto);

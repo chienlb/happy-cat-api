@@ -14,12 +14,32 @@ export class CommunitesService {
     private cloudflareService: CloudflareService,
   ) {}
 
-  async createCommunite(createCommuniteDto: CreateCommuniteDto): Promise<Communite> {
-    if (createCommuniteDto.image) {
-      const imageUrl = await this.cloudflareService.uploadImage(createCommuniteDto.image);
-      createCommuniteDto.image = imageUrl as any; // Cast to any to bypass type mismatch
+  private async resolveImageUrl(image?: any): Promise<string | undefined> {
+    if (!image) {
+      return undefined;
     }
-    const createdCommunite = new this.communiteModel(createCommuniteDto);
+
+    // Keep existing URL/path if FE already provides a string.
+    if (typeof image === 'string') {
+      return image;
+    }
+
+    // Upload multipart file object to Cloudflare R2.
+    if (image.buffer && image.originalname && image.mimetype) {
+      return this.cloudflareService.uploadImage(image);
+    }
+
+    return undefined;
+  }
+
+  async createCommunite(createCommuniteDto: CreateCommuniteDto): Promise<Communite> {
+    const imageUrl = await this.resolveImageUrl(
+      createCommuniteDto.file ?? createCommuniteDto.image,
+    );
+    const createdCommunite = new this.communiteModel({
+      ...createCommuniteDto,
+      image: imageUrl,
+    });
     return createdCommunite.save();
   }
 
@@ -37,9 +57,9 @@ export class CommunitesService {
   }
 
   async update(id: string, updateCommuniteDto: UpdateCommuniteDto): Promise<Communite> {
-    if (updateCommuniteDto.image) {
-      const imageUrl = await this.cloudflareService.uploadImage(updateCommuniteDto.image);
-      updateCommuniteDto.image = imageUrl as any; // Cast to any to bypass type mismatch
+    const imageUrl = await this.resolveImageUrl(updateCommuniteDto.image);
+    if (imageUrl) {
+      updateCommuniteDto.image = imageUrl;
     }
     const updatedCommunite = await this.communiteModel.findByIdAndUpdate(id, updateCommuniteDto, { new: true }).exec();
     if (!updatedCommunite) {
@@ -49,10 +69,7 @@ export class CommunitesService {
   }
 
   async comment(id: string, commentDto: { userId: string; content: string; image?: any }): Promise<Communite> {
-    let imageUrl: string | undefined;
-    if (commentDto.image) {
-      imageUrl = await this.cloudflareService.uploadImage(commentDto.image);
-    }
+    const imageUrl = await this.resolveImageUrl(commentDto.image);
 
     const comment = {
       userId: commentDto.userId,

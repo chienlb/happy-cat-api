@@ -13,15 +13,16 @@ class CreateCommentDto {
   userId: string;
 
   @IsString()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') return value;
+    if (value === null || value === undefined) return value;
+    return String(value);
+  })
   content: string;
 
   @IsOptional()
   @IsString()
   image?: string;
-
-  @IsOptional()
-  @Allow()
-  file?: unknown;
 }
 
 export class CreateCommuniteDto {
@@ -30,7 +31,12 @@ export class CreateCommuniteDto {
   userId: string;
 
   @IsString()
-  @Transform(({ value }) => value.toString())
+  @Transform(({ value, obj }) => {
+    const normalized = value ?? obj?.title;
+    if (typeof normalized === 'string') return normalized;
+    if (normalized === null || normalized === undefined) return normalized;
+    return String(normalized);
+  })
   content: string;
 
   @IsOptional()
@@ -40,6 +46,10 @@ export class CreateCommuniteDto {
   @IsOptional()
   @IsString()
   image?: string;
+
+  @IsOptional()
+  @Allow()
+  file?: unknown;
 
   @IsOptional()
   @IsArray()
