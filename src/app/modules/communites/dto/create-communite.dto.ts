@@ -1,5 +1,6 @@
 import { Transform, Type } from 'class-transformer';
 import {
+  Allow,
   IsArray,
   IsBoolean,
   IsOptional,
@@ -17,6 +18,10 @@ class CreateCommentDto {
   @IsOptional()
   @IsString()
   image?: string;
+
+  @IsOptional()
+  @Allow()
+  file?: unknown;
 }
 
 export class CreateCommuniteDto {
