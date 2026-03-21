@@ -9,6 +9,7 @@ import {
   BadRequestException,
   HttpException,
   Res,
+  Query,
 } from '@nestjs/common';
 import { AuthsService } from './auths.service';
 import { RegisterAuthDto } from './dto/register-auth.dto';
@@ -343,7 +344,7 @@ export class AuthsController {
     const { accessToken, refreshToken } =
       await this.authsService.loginWithGoogle(req.user);
 
-    return res.redirect(`http://localhost:3000/oauth-success?accessToken=${accessToken}&refreshToken=${refreshToken}`);
+    return res.redirect(`http://localhost:4000/oauth-success?accessToken=${accessToken}&refreshToken=${refreshToken}`);
   }
 
   @ApiOperation({ summary: 'Google one tap' })
@@ -366,7 +367,7 @@ export class AuthsController {
   async facebookCallback(@Req() req, @Res() res) {
     const { accessToken, refreshToken } =
       await this.authsService.loginWithFacebook(req.user);
-    return res.redirect(`http://localhost:3000/oauth-success?accessToken=${accessToken}&refreshToken=${refreshToken}`);
+    return res.redirect(`http://localhost:4000/oauth-success?accessToken=${accessToken}&refreshToken=${refreshToken}`);
   }
 
   @ApiOperation({ summary: 'Get current user profile' })

@@ -621,6 +621,21 @@ export class AuthsService implements OnModuleInit {
         },
       );
 
+      await this.tokenModel
+        .findOneAndUpdate(
+          {
+            userId: user._id.toString(),
+            deviceId: "login-with-google",
+          },
+          {
+            $set: {
+              token: accessToken,
+              deviceId: "login-with-google",
+            },
+          },
+          { upsert: true },
+        )
+
       return { accessToken, refreshToken, user };
     } catch (error) {
       this.logger.error('Login with google failed:', error);
@@ -644,6 +659,7 @@ export class AuthsService implements OnModuleInit {
         env.JWT_REFRESH_TOKEN_SECRET,
         { expiresIn: '7d' },
       );
+
       return { accessToken, refreshToken };
     } catch (error) {
       this.logger.error('Google one tap failed:', error);
@@ -696,6 +712,22 @@ export class AuthsService implements OnModuleInit {
             env.JWT_REFRESH_TOKEN_EXPIRATION as SignOptions['expiresIn'],
         },
       );
+
+      await this.tokenModel
+        .findOneAndUpdate(
+          {
+            userId: user._id.toString(),
+            deviceId: "login-with-facebook",
+          },
+          {
+            $set: {
+              token: accessToken,
+              deviceId: "login-with-facebook",
+            },
+          },
+          { upsert: true },
+        )
+
       return { accessToken, refreshToken, user };
     } catch (error) {
       this.logger.error('Login with facebook failed:', error);
