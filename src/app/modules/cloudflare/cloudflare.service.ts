@@ -10,9 +10,6 @@ import { envSchema } from 'src/app/configs/env/env.config';
 
 @Injectable()
 export class CloudflareService {
-  uploadImage(cover: any) {
-    throw new Error('Method not implemented.');
-  }
   private readonly logger = new Logger(CloudflareService.name);
   private readonly r2: S3Client;
   private readonly bucket: string;
@@ -37,6 +34,19 @@ export class CloudflareService {
 
     this.bucket = env.R2_BUCKET ?? '';
     this.publicUrl = env.R2_PUBLIC_BASE ?? '';
+  }
+
+  /**
+   * Upload image file and return the public URL
+   */
+  async uploadImage(file: any): Promise<string> {
+    if (!file) {
+      throw new Error('File is required');
+    }
+    // File should be an Express file object with buffer, originalname, and mimetype
+    // or provide these properties directly
+    const result = await this.uploadFile(file, 'images');
+    return result.fileUrl;
   }
 
   /**

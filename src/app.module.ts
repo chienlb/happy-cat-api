@@ -42,6 +42,8 @@ import { ChatbotModule } from './app/modules/chatbot/chatbot.module';
 import { AdminModule } from './app/modules/admin/admin.module';
 import { RanksModule } from './app/modules/ranks/ranks.module';
 import { BlogsModule } from './app/modules/blogs/blogs.module';
+import { CommunitesModule } from './app/modules/communites/communites.module';
+
 
 @Module({
   imports: [
@@ -88,6 +90,7 @@ import { BlogsModule } from './app/modules/blogs/blogs.module';
     AdminModule,
     RanksModule,
     BlogsModule,
+    CommunitesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
