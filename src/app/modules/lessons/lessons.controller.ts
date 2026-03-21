@@ -40,7 +40,7 @@ import { PaginationDto } from '../pagination/pagination.dto';
 @ApiTags('Lessons')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles(UserRole.ADMIN, UserRole.TEACHER)
+@Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT)
 @Controller('lessons')
 export class LessonsController {
   constructor(private readonly lessonsService: LessonsService) {}
