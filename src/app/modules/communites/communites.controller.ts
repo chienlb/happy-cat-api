@@ -17,7 +17,10 @@ import { CreateCommuniteDto } from './dto/create-communite.dto';
 import { UpdateCommuniteDto } from './dto/update-communite.dto';
 import { CommunitesService } from './communites.service';
 import { PaginationDto } from '../pagination/pagination.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { UseGuards } from '@nestjs/common';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller('communites')
 export class CommunitesController {
   constructor(private readonly communitesService: CommunitesService) {}
