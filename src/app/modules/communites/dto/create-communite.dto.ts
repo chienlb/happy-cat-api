@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -24,8 +24,17 @@ export class CreateCommuniteDto {
   @IsString()
   userId: string;
 
+  @Transform(({ value, obj }) => {
+    if (typeof value === 'string' && value.trim()) return value;
+    if (typeof obj?.title === 'string' && obj.title.trim()) return obj.title;
+    return value;
+  })
   @IsString()
   content: string;
+
+  @IsOptional()
+  @IsString()
+  title?: string;
 
   @IsOptional()
   @IsString()
