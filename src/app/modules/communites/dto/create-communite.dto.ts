@@ -24,12 +24,8 @@ export class CreateCommuniteDto {
   @IsString()
   userId: string;
 
-  @Transform(({ value, obj }) => {
-    if (typeof value === 'string' && value.trim()) return value;
-    if (typeof obj?.title === 'string' && obj.title.trim()) return obj.title;
-    return value;
-  })
   @IsString()
+  @Transform(({ value }) => value.toString())
   content: string;
 
   @IsOptional()
