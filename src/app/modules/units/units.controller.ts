@@ -31,7 +31,7 @@ import { PaginationDto } from '../pagination/pagination.dto';
 @ApiTags('Units')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles(UserRole.ADMIN, UserRole.TEACHER)
+@Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT)
 @Controller('units')
 export class UnitsController {
   constructor(private readonly unitsService: UnitsService) {}
