@@ -8,6 +8,7 @@ import { UsersModule } from '../users/users.module';
 import { RedisModule } from 'src/app/configs/redis/redis.module';
 import { RedisService } from 'src/app/configs/redis/redis.service';
 import { CloudflareService } from '../cloudflare/cloudflare.service';
+import { ProgressesModule } from '../progresses/progresses.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { CloudflareService } from '../cloudflare/cloudflare.service';
     AssignmentsModule,
     UsersModule,
     RedisModule,
+    ProgressesModule,
   ],
   controllers: [SubmissionsController],
   providers: [SubmissionsService, RedisService, CloudflareService],

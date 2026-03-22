@@ -8,6 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import {
   LessonProgress,
   LessonProgressDocument,
+  LessonProgressStatus,
 } from './schema/lesson-progress.schema';
 import { Model } from 'mongoose';
 import { LessonsService } from '../lessons/lessons.service';
@@ -21,6 +22,11 @@ import { Types } from 'mongoose';
 import { BadgesService } from '../badges/badges.service';
 import { UserBadgesService } from '../user-badges/user-badges.service';
 import { UserDocument } from '../users/schema/user.schema';
+import {
+  ProgressStatus,
+  ProgressType,
+} from '../progresses/schema/progress.schema';
+import { ProgressesService } from '../progresses/progresses.service';
 
 @Injectable()
 export class LessonProgressService {
@@ -33,6 +39,7 @@ export class LessonProgressService {
     private readonly unitsService: UnitsService,
     private readonly badgesService: BadgesService,
     private readonly userBadgesService: UserBadgesService,
+    private readonly progressesService: ProgressesService,
   ) {}
 
   async createLessonProgress( 
@@ -64,7 +71,11 @@ export class LessonProgressService {
       const lessonProgress = new this.lessonProgressModel(
         createLessonProgressDto,
       );
-      return lessonProgress.save();
+      const savedLessonProgress = await lessonProgress.save();
+
+      await this.syncLearningProgress(createLessonProgressDto);
+
+      return savedLessonProgress;
     } catch (error) {
       throw new Error('Failed to create lesson progress: ' + error.message);
     }
@@ -349,6 +360,33 @@ export class LessonProgressService {
     } catch (error) {
       console.error('Error checking and awarding badges:', error.message);
       // Don't throw error to prevent lesson progress creation from failing
+    }
+  }
+
+  private async syncLearningProgress(
+    createLessonProgressDto: CreateLessonProgressDto,
+  ): Promise<void> {
+    const statusMap: Record<LessonProgressStatus, ProgressStatus> = {
+      [LessonProgressStatus.NOT_STARTED]: ProgressStatus.NOT_STARTED,
+      [LessonProgressStatus.IN_PROGRESS]: ProgressStatus.IN_PROGRESS,
+      [LessonProgressStatus.COMPLETED]: ProgressStatus.COMPLETED,
+    };
+
+    const progressPayload = {
+      userId: createLessonProgressDto.userId.toString(),
+      lessonId: createLessonProgressDto.lessonId.toString(),
+      type: ProgressType.LESSON,
+      progressPercent: createLessonProgressDto.progress,
+      timeSpent: 0,
+      status: statusMap[createLessonProgressDto.status],
+      completedAt: createLessonProgressDto.completedAt,
+      updatedBy: createLessonProgressDto.updatedBy?.toString(),
+    };
+
+    try {
+      await this.progressesService.createProgress(progressPayload);
+    } catch {
+      await this.progressesService.updateProgress(progressPayload);
     }
   }
 }

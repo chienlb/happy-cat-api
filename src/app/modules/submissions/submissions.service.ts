@@ -17,6 +17,11 @@ import { AssignmentsService } from '../assignments/assignments.service';
 import { UsersService } from '../users/users.service';
 import { RedisService } from 'src/app/configs/redis/redis.service';
 import { CloudflareService } from '../cloudflare/cloudflare.service';
+import {
+  ProgressStatus,
+  ProgressType,
+} from '../progresses/schema/progress.schema';
+import { ProgressesService } from '../progresses/progresses.service';
 
 @Injectable()
 export class SubmissionsService {
@@ -27,6 +32,7 @@ export class SubmissionsService {
     private usersService: UsersService,
     private readonly redisService: RedisService,
     private readonly cloudflareService: CloudflareService,
+    private readonly progressesService: ProgressesService,
   ) {}
 
   async createSubmission(
@@ -86,6 +92,12 @@ export class SubmissionsService {
       // Update daily activity streak for submission action.
       this.usersService.updateActivityStreak(student);
       await student.save();
+
+      await this.syncAssignmentProgress({
+        userId: student._id.toString(),
+        assignmentId: assignment._id.toString(),
+        score: savedSubmission.score,
+      });
 
       return savedSubmission;
     } catch (error) {
@@ -210,6 +222,13 @@ export class SubmissionsService {
       if (!submission) {
         throw new NotFoundException('Submission not found');
       }
+
+      await this.syncAssignmentProgress({
+        userId: submission.studentId.toString(),
+        assignmentId: submission.assignmentId.toString(),
+        score,
+      });
+
       return submission;
     } catch (error) {
       throw new Error('Failed to grade submission: ' + error.message);
@@ -233,6 +252,29 @@ export class SubmissionsService {
       return submission;
     } catch (error) {
       throw new Error('Failed to view submission: ' + error.message);
+    }
+  }
+
+  private async syncAssignmentProgress(input: {
+    userId: string;
+    assignmentId: string;
+    score?: number;
+  }): Promise<void> {
+    const progressPayload = {
+      userId: input.userId,
+      assignmentId: input.assignmentId,
+      type: ProgressType.ASSIGNMENT,
+      progressPercent: 100,
+      timeSpent: 0,
+      score: input.score,
+      status: ProgressStatus.COMPLETED,
+      completedAt: new Date(),
+    };
+
+    try {
+      await this.progressesService.createProgress(progressPayload);
+    } catch {
+      await this.progressesService.updateProgress(progressPayload);
     }
   }
 }

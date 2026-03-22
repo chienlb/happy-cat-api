@@ -11,6 +11,7 @@ import { LessonsModule } from '../lessons/lessons.module';
 import { UnitsModule } from '../units/units.module';
 import { BadgesModule } from '../badges/badges.module';
 import { UserBadgesModule } from '../user-badges/user-badges.module';
+import { ProgressesModule } from '../progresses/progresses.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UserBadgesModule } from '../user-badges/user-badges.module';
     UnitsModule,
     BadgesModule,
     UserBadgesModule,
+    ProgressesModule,
   ],
   controllers: [LessonProgressController],
   providers: [LessonProgressService],
