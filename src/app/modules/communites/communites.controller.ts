@@ -79,4 +79,9 @@ export class CommunitesController {
   async like(@Param('id') id: string): Promise<Communite> {
     return this.communitesService.like(id);
   }
+
+  @Get(':user/fullname')
+  async getFullname(@Param('user') userId: string): Promise<string> {
+    return this.communitesService.getFullname(userId);
+  }
 }

@@ -6,12 +6,14 @@ import { CreateCommuniteDto } from './dto/create-communite.dto';
 import { UpdateCommuniteDto } from './dto/update-communite.dto';
 import { CloudflareService } from '../cloudflare/cloudflare.service';
 import { PaginationDto } from '../pagination/pagination.dto';
+import { User, UserDocument } from '../users/schema/user.schema';
 
 @Injectable()
 export class CommunitesService {
   constructor(
     @InjectModel(Communite.name) private communiteModel: Model<CommuniteDocument>,
     private cloudflareService: CloudflareService,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
 
   private async resolveImageUrl(image?: any): Promise<string | undefined> {
@@ -103,5 +105,13 @@ export class CommunitesService {
       throw new Error('Communite not found');
     }
     return updatedCommunite;
+  }
+
+  async getFullname(userId: String): Promise<string> {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user.fullname;
   }
 }
