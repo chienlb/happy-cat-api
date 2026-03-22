@@ -39,6 +39,8 @@ type PaginatedUsers = {
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
+  private static readonly DAY_IN_MS = 24 * 60 * 60 * 1000;
+
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @Inject(forwardRef(() => InvitationCodesService))
@@ -237,6 +239,39 @@ export class UsersService {
         `Failed to find user by ID: ${message}`,
       );
     }
+  }
+
+  /**
+   * Update user daily streak based on the last activity date.
+   * This method is idempotent for multiple activities in the same day.
+   */
+  updateActivityStreak(user: UserDocument): void {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if (!user.lastStreakDate) {
+      user.streakDays = 1;
+      user.lastStreakDate = today;
+      return;
+    }
+
+    const last = new Date(user.lastStreakDate);
+    const lastDay = new Date(last.getFullYear(), last.getMonth(), last.getDate());
+    const diffDays = Math.floor(
+      (today.getTime() - lastDay.getTime()) / UsersService.DAY_IN_MS,
+    );
+
+    if (diffDays <= 0) {
+      return;
+    }
+
+    if (diffDays === 1) {
+      user.streakDays = (user.streakDays ?? 0) + 1;
+    } else {
+      user.streakDays = 1;
+    }
+
+    user.lastStreakDate = today;
   }
 
   async updateUserById(

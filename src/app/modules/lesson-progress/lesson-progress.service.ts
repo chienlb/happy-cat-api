@@ -54,7 +54,7 @@ export class LessonProgressService {
       user.exp = user.exp
         ? user.exp + createLessonProgressDto.progress * 10
         : createLessonProgressDto.progress * 10;
-      user.streakDays = user.streakDays ? user.streakDays + 1 : 1;
+      this.usersService.updateActivityStreak(user);
       user.totalLessonsCompleted = user.totalLessonsCompleted ? user.totalLessonsCompleted + 1 : 1;
       await user.save();
       

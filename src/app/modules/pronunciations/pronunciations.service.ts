@@ -187,6 +187,12 @@ export class PronunciationService {
       timeSpent: 0,
     });
 
+    const user = await this.usersService.findUserById(userId);
+    if (user) {
+      this.usersService.updateActivityStreak(user);
+      await user.save();
+    }
+
     return {
       attemptId: pronunciationAttempt._id,
       status: json?.RecognitionStatus,

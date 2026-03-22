@@ -86,6 +86,7 @@ export interface IUser {
   tokenVerify?: string; // Token xác minh (nếu hệ thống sử dụng)
   exp?: number; // Số kinh nghiệm của người dùng
   streakDays?: number; // Số ngày liên tiếp hoạt động của người dùng
+  lastStreakDate?: Date; // Ngày hoạt động liên tiếp gần nhất của người dùng
   progressLevel?: number; // Cấp độ tiến bộ của người dùng
   totalLessonsCompleted?: number; // Tổng số bài học đã hoàn thành
   theme?: UserTheme; // Chủ đề giao diện của người dùng
@@ -190,6 +191,9 @@ export class User implements IUser {
 
   @Prop({ default: 0 })
   streakDays?: number;
+
+  @Prop()
+  lastStreakDate?: Date;
 
   @Prop({ default: 0 })
   progressLevel?: number;

@@ -81,7 +81,13 @@ export class SubmissionsService {
         attachments: attachments,
         status: SubmissionStatus.SUBMITTED,
       });
-      return submission.save();
+      const savedSubmission = await submission.save();
+
+      // Update daily activity streak for submission action.
+      this.usersService.updateActivityStreak(student);
+      await student.save();
+
+      return savedSubmission;
     } catch (error) {
       throw new Error('Failed to create submission: ' + error.message);
     }

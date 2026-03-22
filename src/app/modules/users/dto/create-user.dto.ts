@@ -125,6 +125,10 @@ export class CreateUserDto {
   streakDays?: number;
 
   @IsOptional()
+  @IsDateString()
+  lastStreakDate?: string;
+
+  @IsOptional()
   @IsNumber()
   progressLevel?: number;
 
