@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ProgressesService } from './progresses.service';
 import { ProgressesController } from './progresses.controller';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -14,7 +14,7 @@ import { RedisService } from 'src/app/configs/redis/redis.service';
     MongooseModule.forFeature([
       { name: Progress.name, schema: ProgressSchema },
     ]),
-    LessonsModule,
+    forwardRef(() => LessonsModule),
     AssignmentsModule,
     UsersModule,
     RedisModule,

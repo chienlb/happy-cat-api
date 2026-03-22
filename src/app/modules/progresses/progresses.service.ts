@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   Progress,
@@ -19,6 +24,7 @@ import { RedisService } from 'src/app/configs/redis/redis.service';
 export class ProgressesService {
   constructor(
     @InjectModel(Progress.name) private progressModel: Model<ProgressDocument>,
+    @Inject(forwardRef(() => LessonsService))
     private readonly lessonsService: LessonsService,
     private readonly assignmentsService: AssignmentsService,
     private readonly usersService: UsersService,

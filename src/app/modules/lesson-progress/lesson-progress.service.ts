@@ -39,6 +39,7 @@ export class LessonProgressService {
     private readonly unitsService: UnitsService,
     private readonly badgesService: BadgesService,
     private readonly userBadgesService: UserBadgesService,
+    @Inject(forwardRef(() => ProgressesService))
     private readonly progressesService: ProgressesService,
   ) {}
 

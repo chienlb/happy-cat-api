@@ -23,7 +23,7 @@ import { ProgressesModule } from '../progresses/progresses.module';
     UnitsModule,
     BadgesModule,
     UserBadgesModule,
-    ProgressesModule,
+    forwardRef(() => ProgressesModule),
   ],
   controllers: [LessonProgressController],
   providers: [LessonProgressService],
