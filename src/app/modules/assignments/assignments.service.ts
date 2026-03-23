@@ -30,10 +30,10 @@ export class AssignmentsService {
     if (!user) throw new NotFoundException('User not found');
 
     if (
-      !createAssignmentDto.classId ||
-      !createAssignmentDto.lessonId ||
-      !createAssignmentDto.dueDate ||
-      !createAssignmentDto.maxScore ||
+      !createAssignmentDto.classId &&
+      !createAssignmentDto.lessonId &&
+      !createAssignmentDto.dueDate &&
+      !createAssignmentDto.maxScore &&
       !createAssignmentDto.type
     ) {
       throw new BadRequestException(

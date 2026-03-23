@@ -2,14 +2,13 @@ import {
   IsString,
   IsOptional,
   IsEnum,
-  IsMongoId,
   IsDateString,
   IsNumber,
   IsArray,
   IsBoolean,
 } from 'class-validator';
 import { AssignmentType } from '../schema/assignment.schema';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class CreateAssignmentDto {
   @IsString()
@@ -24,11 +23,9 @@ export class CreateAssignmentDto {
   type?: AssignmentType;
 
   @IsOptional()
-  @IsMongoId()
   lessonId?: string;
 
   @IsOptional()
-  @IsMongoId()
   classId?: string;
 
   @IsOptional()
@@ -45,14 +42,14 @@ export class CreateAssignmentDto {
   @IsString({ each: true })
   attachments?: string[];
 
-  @IsMongoId()
+  @IsOptional()
   createdBy: string;
 
   @IsOptional()
-  @IsMongoId()
   updatedBy?: string;
 
   @IsOptional()
   @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true ? true : false)
   isPublished?: boolean;
 }
