@@ -13,11 +13,11 @@ export enum SubmissionStatus {
 export interface ISubmission {
   assignmentId: Types.ObjectId; // ID của bài tập
   studentId: Types.ObjectId; // ID của học sinh
-  studentAnswers: Record<string, any>; // Câu trả lời của học sinh
+  studentNotes: string; // Ghi chú của học sinh khi nộp bài
   submittedAt?: Date; // Ngày nộp bài
   score?: number; // Điểm số bài tập
   feedback?: string; // Phản hồi từ giáo viên
-  attachments?: string[]; // Đính kèm (nếu có)
+  attachments: string[]; // Đính kèm (nếu có)
   status: SubmissionStatus; // Trạng thái nộp bài
   gradedBy?: Types.ObjectId; // ID giáo viên chấm bài
 }
@@ -30,8 +30,8 @@ export class Submission implements ISubmission {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   studentId: Types.ObjectId;
 
-  @Prop({ type: MongooseSchema.Types.Mixed, required: true })
-  studentAnswers: Record<string, any>;
+  @Prop({ type: String, required: true }) 
+  studentNotes: string;
 
   @Prop()
   submittedAt?: Date;
@@ -43,7 +43,7 @@ export class Submission implements ISubmission {
   feedback?: string;
 
   @Prop({ type: [String], default: [] })
-  attachments?: string[];
+  attachments: string[];
 
   @Prop({
     type: String,

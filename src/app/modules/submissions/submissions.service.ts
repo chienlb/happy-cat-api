@@ -60,14 +60,6 @@ export class SubmissionsService {
       ) {
         throw new BadRequestException('Submission date is after the due date');
       }
-
-      if (
-        createSubmissionDto.studentAnswers &&
-        Object.keys(createSubmissionDto.studentAnswers).length === 0
-      ) {
-        throw new BadRequestException('Student answers are required');
-      }
-
       // Upload files to Cloudflare R2 if provided
       let attachments = createSubmissionDto.attachments || [];
       if (files && files.length > 0) {

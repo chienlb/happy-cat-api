@@ -17,9 +17,9 @@ export class CreateSubmissionDto {
   @IsNotEmpty()
   studentId: Types.ObjectId;
 
-  @IsObject()
-  @IsNotEmpty()
-  studentAnswers: Record<string, any>;
+  @IsString()
+  @IsOptional()
+  studentNotes?: string;
 
   @IsOptional()
   submittedAt?: Date;
@@ -34,7 +34,7 @@ export class CreateSubmissionDto {
 
   @IsOptional()
   @IsArray()
-  attachments?: string[];
+  attachments?: string[]; 
 
   @IsEnum(SubmissionStatus)
   status: SubmissionStatus;
