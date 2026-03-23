@@ -246,4 +246,15 @@ export class UsersController {
       );
     }
   }
+
+  @Get('/role/:role')
+  @ApiOperation({ summary: 'Get users by role' })
+  @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Users not found.' })
+  @ApiResponse({ status: 500, description: 'Internal server error.' })
+  @ApiParam({ name: 'role', description: 'The role of the users to retrieve' })
+  async getUsersByRole(@Param('role') role: UserRole) {
+    const users = await this.usersService.getUserByRole(role);
+    return ok(users, 'Users retrieved successfully');
+  }
 }
