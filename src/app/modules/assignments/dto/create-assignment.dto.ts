@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { AssignmentType } from '../schema/assignment.schema';
 import { Transform, Type } from 'class-transformer';
+import { Types } from 'mongoose';
 
 export class CreateAssignmentDto {
   @IsString()
@@ -23,10 +24,10 @@ export class CreateAssignmentDto {
   type?: AssignmentType;
 
   @IsOptional()
-  lessonId?: string;
+  lessonId?: Types.ObjectId;
 
   @IsOptional()
-  classId?: string;
+  classId?: Types.ObjectId;
 
   @IsOptional()
   @IsDateString()
@@ -43,7 +44,7 @@ export class CreateAssignmentDto {
   attachments?: string[];
 
   @IsOptional()
-  createdBy: string;
+  createdBy: Types.ObjectId; 
 
   @IsOptional()
   updatedBy?: string;
