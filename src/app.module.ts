@@ -43,6 +43,7 @@ import { AdminModule } from './app/modules/admin/admin.module';
 import { RanksModule } from './app/modules/ranks/ranks.module';
 import { BlogsModule } from './app/modules/blogs/blogs.module';
 import { CommunitesModule } from './app/modules/communites/communites.module';
+import { PracticesModule } from './app/modules/practices/practices.module';
 
 
 @Module({
@@ -91,6 +92,7 @@ import { CommunitesModule } from './app/modules/communites/communites.module';
     RanksModule,
     BlogsModule,
     CommunitesModule,
+    PracticesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
