@@ -12,6 +12,7 @@ import { UsersService } from '../users/users.service';
 import { CloudflareService } from '../cloudflare/cloudflare.service';
 import { UpdateAssignmentDto } from './dto/update-assignment.dto';
 import { NotificationJobsService } from '../notification-jobs/notification-jobs.service';
+import { Type } from 'class-transformer';
 
 @Injectable()
 export class AssignmentsService {
@@ -104,10 +105,7 @@ export class AssignmentsService {
 
   async getAssignmentById(id: string) {
     try {
-      const assignment = await this.assignmentModel.findOne({
-        _id: id,
-        isDeleted: false,
-      });
+      const assignment = await this.assignmentModel.findOne({_id: id});
       if (!assignment) {
         throw new NotFoundException('Assignment not found');
       }

@@ -33,7 +33,7 @@ import { Roles } from 'src/app/common/decorators/role.decorator';
 @Controller('assignments')
 @ApiTags('Assignments')
 @UseGuards(AuthGuard('jwt'))
-@Roles(UserRole.ADMIN, UserRole.TEACHER)
+@Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT)
 export class AssignmentsController {
   constructor(private readonly assignmentsService: AssignmentsService) { }
 
