@@ -13,7 +13,7 @@ export enum SubmissionStatus {
 export interface ISubmission {
   assignmentId: Types.ObjectId; // ID của bài tập
   studentId: Types.ObjectId; // ID của học sinh
-  studentNotes: string; // Ghi chú của học sinh khi nộp bài
+  studentNotes?: string; // Ghi chú của học sinh khi nộp bài
   submittedAt?: Date; // Ngày nộp bài
   score?: number; // Điểm số bài tập
   feedback?: string; // Phản hồi từ giáo viên
@@ -30,8 +30,8 @@ export class Submission implements ISubmission {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   studentId: Types.ObjectId;
 
-  @Prop({ type: String, required: true }) 
-  studentNotes: string;
+  @Prop({ type: String, required: false })
+  studentNotes?: string;
 
   @Prop()
   submittedAt?: Date;
