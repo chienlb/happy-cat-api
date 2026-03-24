@@ -8,7 +8,28 @@ import { Conversation, ConversationDocument } from './schema/conversation.schema
 import { ChatDto } from './dto/chat.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { VocabularyTtsDto } from './dto/vocabulary-tts.dto';
+import { DictionaryPronunciationDto } from './dto/dictionary-pronunciation.dto';
 import { CloudflareService } from '../cloudflare/cloudflare.service';
+
+type DictionarySense = {
+  partOfSpeech: string;
+  meaning: string;
+  level?: string;
+  examples: string[];
+};
+
+type DictionaryDetail = {
+  word: string;
+  ipa: { uk: string; us: string };
+  phoneticSpelling: string;
+  syllables: string[];
+  senses: DictionarySense[];
+  synonyms: string[];
+  antonyms: string[];
+  collocations: string[];
+  phrasalVerbs: string[];
+  note: string;
+};
 
 @Injectable()
 export class ChatbotService {
@@ -409,6 +430,147 @@ Hãy luôn nhớ: Bạn là người bạn đáng tin cậy giúp các em yêu t
     }
   }
 
+  async lookupDictionaryAndPronunciation(dto: DictionaryPronunciationDto): Promise<{
+    word: string;
+    dictionary: DictionaryDetail;
+    pronunciation: {
+      audioUrl: string;
+      mimeType: string;
+      model: string;
+      key: string;
+    };
+  }> {
+    const word = dto.word.trim();
+    if (!word) {
+      throw new BadRequestException('word is required');
+    }
+
+    const targetLanguage = dto.targetLanguage?.trim() || 'vi';
+
+    const prompt = `You are an English learner dictionary API.
+Return ONLY valid JSON with this exact shape:
+{
+  "word": "string",
+  "ipa": { "uk": "string", "us": "string" },
+  "phoneticSpelling": "string",
+  "syllables": ["string"],
+  "senses": [
+    {
+      "partOfSpeech": "string",
+      "meaning": "string",
+      "level": "A1|A2|B1|B2|C1|C2",
+      "examples": ["string"]
+    }
+  ],
+  "synonyms": ["string"],
+  "antonyms": ["string"],
+  "collocations": ["string"],
+  "phrasalVerbs": ["string"],
+  "note": "string"
+}
+
+Rules:
+- Input word: "${word}"
+- Meaning language for each sense.meaning: ${targetLanguage}
+- Provide 2-4 senses with easy explanations for learners.
+- Each sense must include 1-2 short English examples.
+- synonyms and antonyms: 3-8 items each.
+- collocations: 3-8 natural combinations.
+- phrasalVerbs: include only if relevant, otherwise []
+- No markdown, no extra text.`;
+
+    const strictPrompt = `You failed previously. Return STRICT JSON only.
+No empty dictionary fields are allowed.
+No markdown, no explanation.
+
+Use this exact shape and fill meaningful values:
+{
+  "word": "string",
+  "ipa": { "uk": "string", "us": "string" },
+  "phoneticSpelling": "string",
+  "syllables": ["string"],
+  "senses": [
+    {
+      "partOfSpeech": "string",
+      "meaning": "string",
+      "level": "A1|A2|B1|B2|C1|C2",
+      "examples": ["string"]
+    }
+  ],
+  "synonyms": ["string"],
+  "antonyms": ["string"],
+  "collocations": ["string"],
+  "phrasalVerbs": ["string"],
+  "note": "string"
+}
+
+Rules:
+- Input word: "${word}"
+- Meaning language: ${targetLanguage}
+- senses must contain at least 2 items
+- each sense must include examples with at least 1 sentence`;
+
+    let dictionaryData: DictionaryDetail;
+
+    try {
+      dictionaryData = await this.generateDictionaryDataFromPrompt(prompt, word);
+
+      if (!this.isDictionaryDetailUseful(dictionaryData)) {
+        this.logger.warn(
+          `Dictionary data is too empty for word "${word}", retrying with strict prompt`,
+        );
+        dictionaryData = await this.generateDictionaryDataFromPrompt(
+          strictPrompt,
+          word,
+        );
+      }
+
+      if (!this.isDictionaryDetailUseful(dictionaryData)) {
+        const fallbackData = await this.fetchDictionaryFromPublicApi(
+          word,
+          targetLanguage,
+        );
+        if (fallbackData) {
+          this.logger.warn(
+            `Using dictionaryapi.dev fallback for word "${word}"`,
+          );
+          dictionaryData = fallbackData;
+        } else {
+          throw new BadRequestException('Dictionary data is empty after retry');
+        }
+      }
+    } catch (error) {
+      this.logger.error(`Error in dictionary generation: ${error.message}`, error.stack);
+      const fallbackData = await this.fetchDictionaryFromPublicApi(
+        word,
+        targetLanguage,
+      );
+      if (fallbackData) {
+        this.logger.warn(`Recovered dictionary data from fallback for "${word}"`);
+        dictionaryData = fallbackData;
+      } else {
+        throw new BadRequestException('Failed to generate dictionary data');
+      }
+    }
+
+    const pronunciation = await this.generateVocabularyAudio({
+      text: word,
+      voiceName: dto.voiceName,
+      languageCode: dto.languageCode,
+    });
+
+    return {
+      word,
+      dictionary: dictionaryData,
+      pronunciation: {
+        audioUrl: pronunciation.audioUrl,
+        mimeType: pronunciation.mimeType,
+        model: pronunciation.model,
+        key: pronunciation.key,
+      },
+    };
+  }
+
   private wrapPcm16ToWav(
     pcmBuffer: Buffer<ArrayBufferLike>,
     sampleRate: number,
@@ -434,5 +596,237 @@ Hãy luôn nhớ: Bạn là người bạn đáng tin cậy giúp các em yêu t
     wavHeader.writeUInt32LE(pcmBuffer.length, 40);
 
     return Buffer.concat([wavHeader, pcmBuffer]);
+  }
+
+  private async generateDictionaryDataFromPrompt(
+    prompt: string,
+    fallbackWord: string,
+  ): Promise<DictionaryDetail> {
+    const dictResponse = await this.genAI.models.generateContent({
+      model: this.modelName,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: {
+        responseMimeType: 'application/json',
+        temperature: 0.2,
+        maxOutputTokens: 700,
+      } as GenerateContentConfig,
+    });
+
+    const rawText = (dictResponse.text || '{}').trim();
+    const parsed = await this.parseGeminiJson(rawText);
+
+    const sensesRaw = Array.isArray(parsed?.senses) ? parsed.senses : [];
+    const senses: DictionarySense[] = sensesRaw.map((s: any) => ({
+      partOfSpeech: String(s?.partOfSpeech || ''),
+      meaning: String(s?.meaning || ''),
+      level: s?.level ? String(s.level) : undefined,
+      examples: Array.isArray(s?.examples)
+        ? s.examples.map((e: unknown) => String(e))
+        : [],
+    }));
+
+    return {
+      word: String(parsed?.word || fallbackWord),
+      ipa: {
+        uk: String(parsed?.ipa?.uk || ''),
+        us: String(parsed?.ipa?.us || ''),
+      },
+      phoneticSpelling: String(parsed?.phoneticSpelling || ''),
+      syllables: Array.isArray(parsed?.syllables)
+        ? parsed.syllables.map((x: unknown) => String(x))
+        : [],
+      senses,
+      synonyms: Array.isArray(parsed?.synonyms)
+        ? parsed.synonyms.map((x: unknown) => String(x))
+        : [],
+      antonyms: Array.isArray(parsed?.antonyms)
+        ? parsed.antonyms.map((x: unknown) => String(x))
+        : [],
+      collocations: Array.isArray(parsed?.collocations)
+        ? parsed.collocations.map((x: unknown) => String(x))
+        : [],
+      phrasalVerbs: Array.isArray(parsed?.phrasalVerbs)
+        ? parsed.phrasalVerbs.map((x: unknown) => String(x))
+        : [],
+      note: String(parsed?.note || ''),
+    };
+  }
+
+  private isDictionaryDetailUseful(data: DictionaryDetail): boolean {
+    const hasIpa = Boolean(data.ipa.uk || data.ipa.us);
+    const validSenses = data.senses.filter(
+      (s) => s.partOfSpeech.trim() && s.meaning.trim(),
+    );
+    const hasExamples = validSenses.some((s) => s.examples.length > 0);
+    return hasIpa || (validSenses.length > 0 && hasExamples);
+  }
+
+  private async fetchDictionaryFromPublicApi(
+    word: string,
+    targetLanguage: string,
+  ): Promise<DictionaryDetail | null> {
+    try {
+      const res = await fetch(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,
+      );
+
+      if (!res.ok) {
+        return null;
+      }
+
+      const payload = (await res.json()) as any[];
+      const entry = Array.isArray(payload) ? payload[0] : null;
+      if (!entry) {
+        return null;
+      }
+
+      const phonetics = Array.isArray(entry.phonetics) ? entry.phonetics : [];
+      const textPhonetics = phonetics
+        .map((p: any) => String(p?.text || '').trim())
+        .filter(Boolean);
+      const ipaText = textPhonetics[0] || '';
+
+      const meaningBlocks = Array.isArray(entry.meanings) ? entry.meanings : [];
+      const senses: DictionarySense[] = [];
+      const synonymsSet = new Set<string>();
+      const antonymsSet = new Set<string>();
+
+      for (const block of meaningBlocks) {
+        const pos = String(block?.partOfSpeech || '').trim();
+        const definitions = Array.isArray(block?.definitions)
+          ? block.definitions
+          : [];
+
+        for (const def of definitions.slice(0, 2)) {
+          const meaning = String(def?.definition || '').trim();
+          const example = String(def?.example || '').trim();
+          if (!meaning) continue;
+
+          const sense: DictionarySense = {
+            partOfSpeech: pos || 'unknown',
+            meaning,
+            examples: example ? [example] : [],
+          };
+          senses.push(sense);
+
+          const syns = Array.isArray(def?.synonyms) ? def.synonyms : [];
+          const ants = Array.isArray(def?.antonyms) ? def.antonyms : [];
+          for (const s of syns) {
+            const v = String(s || '').trim();
+            if (v) synonymsSet.add(v);
+          }
+          for (const a of ants) {
+            const v = String(a || '').trim();
+            if (v) antonymsSet.add(v);
+          }
+        }
+      }
+
+      const limitedSenses = senses.slice(0, 4);
+      if (limitedSenses.length === 0) {
+        return null;
+      }
+
+      return {
+        word: String(entry.word || word),
+        ipa: {
+          uk: ipaText,
+          us: ipaText,
+        },
+        phoneticSpelling: ipaText.replace(/[\/]/g, ''),
+        syllables: [],
+        senses: limitedSenses,
+        synonyms: Array.from(synonymsSet).slice(0, 8),
+        antonyms: Array.from(antonymsSet).slice(0, 8),
+        collocations: [],
+        phrasalVerbs: [],
+        note:
+          targetLanguage.toLowerCase() === 'en'
+            ? 'Fallback dictionary source: dictionaryapi.dev'
+            : 'Fallback dictionary source: dictionaryapi.dev (definitions may be in English).',
+      };
+    } catch (error) {
+      this.logger.warn(
+        `Fallback dictionary fetch failed for "${word}": ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      return null;
+    }
+  }
+
+  private async parseGeminiJson(rawText: string): Promise<any> {
+    const directText = rawText.trim();
+
+    try {
+      return JSON.parse(directText);
+    } catch {
+      // Continue with normalization steps below.
+    }
+
+    // Remove markdown fences if model accidentally returns them.
+    let cleaned = directText
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .trim();
+
+    // Normalize smart quotes and invisible control chars.
+    cleaned = cleaned
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/[\u0000-\u0019]+/g, ' ')
+      .trim();
+
+    // Keep only the JSON object body if extra text is present.
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+      cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+    }
+
+    // Convert single-quoted keys/values and remove trailing commas.
+    cleaned = cleaned
+      // Quote unquoted keys: { word: "x" } -> { "word": "x" }
+      .replace(/([{,]\s*)([A-Za-z_][A-Za-z0-9_\-]*)(\s*:)/g, '$1"$2"$3')
+      .replace(/([{,]\s*)'([^'\\]+)'\s*:/g, '$1"$2":')
+      .replace(/:\s*'([^'\\]*(?:\\.[^'\\]*)*)'/g, ': "$1"')
+      .replace(/,\s*([}\]])/g, '$1');
+
+    try {
+      return JSON.parse(cleaned);
+    } catch {
+      // Fallback: ask Gemini to repair malformed JSON into strict JSON.
+      const repaired = await this.repairJsonWithGemini(cleaned);
+      try {
+        return JSON.parse(repaired);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new BadRequestException(`Failed to parse dictionary JSON: ${message}`);
+      }
+    }
+  }
+
+  private async repairJsonWithGemini(brokenJson: string): Promise<string> {
+    const prompt = `Convert the following malformed JSON into valid strict JSON.
+Rules:
+- Return JSON only.
+- Use double-quoted property names.
+- Do not add explanation.
+
+Malformed JSON:
+${brokenJson}`;
+
+    const repaired = await this.genAI.models.generateContent({
+      model: this.modelName,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: {
+        responseMimeType: 'application/json',
+        temperature: 0,
+        maxOutputTokens: 800,
+      } as GenerateContentConfig,
+    });
+
+    return (repaired.text || '{}').trim();
   }
 }
