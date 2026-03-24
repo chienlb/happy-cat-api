@@ -100,7 +100,7 @@ export class LessonProgressService {
         throw new NotFoundException('User not found');
       }
       const lessonProgress = await this.lessonProgressModel
-        .find({ userId: user._id })
+        .find({ userId })
         .skip((paginationDto.page - 1) * paginationDto.limit)
         .limit(paginationDto.limit)
         .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 });

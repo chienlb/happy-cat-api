@@ -577,4 +577,17 @@ export class UsersService {
     }
     return password;
   }
+
+  async getUserByRole(role: UserRole, session?: ClientSession): Promise<UserDocument[]> {
+    try {
+      const q = this.userModel.find({ role, status: UserStatus.ACTIVE }).select('-password');
+      const users = session ? await q.session(session) : await q;
+      return users;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Failed to get users by role: ${message}`,
+      );
+    }
+  }
 }

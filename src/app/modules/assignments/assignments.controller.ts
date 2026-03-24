@@ -244,4 +244,18 @@ export class AssignmentsController {
   ) {
     return this.assignmentsService.getAllAssignments(page, limit, sort, order);
   }
+
+  @Get('user-assignments/:userId')
+  @ApiOperation({ summary: 'Get all assignments by user ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Assignments retrieved successfully',
+    type: [Assignment],  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request',
+  })
+  async getAllByUserId(@Param('userId') userId: string) {
+    return this.assignmentsService.getAllAssignmentsByUserId(userId);
+  }
 }

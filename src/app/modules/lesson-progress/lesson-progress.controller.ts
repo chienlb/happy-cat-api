@@ -86,7 +86,7 @@ export class LessonProgressController {
     );
   }
 
-  @Get('user/:userId')
+  @Get('user/lessons/:userId')
   @ApiOperation({ summary: 'Get all lesson progress by user id' })
   @ApiQuery({
     name: 'page',

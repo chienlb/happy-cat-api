@@ -6,12 +6,14 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Assignment, AssignmentDocument } from './schema/assignment.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { UsersService } from '../users/users.service';
 import { CloudflareService } from '../cloudflare/cloudflare.service';
 import { UpdateAssignmentDto } from './dto/update-assignment.dto';
 import { NotificationJobsService } from '../notification-jobs/notification-jobs.service';
+import { Group, GroupDocument } from '../groups/schema/group.schema';
+import { LessonProgress, LessonProgressDocument } from '../lesson-progress/schema/lesson-progress.schema';
 import { Type } from 'class-transformer';
 
 @Injectable()
@@ -21,6 +23,8 @@ export class AssignmentsService {
   constructor(
     @InjectModel(Assignment.name)
     private assignmentModel: Model<AssignmentDocument>,
+    @InjectModel(Group.name) private groupModel: Model<GroupDocument>, 
+    @InjectModel(LessonProgress.name) private lessonProgressModel: Model<LessonProgressDocument>,
     private usersService: UsersService,
     private cloudflareService: CloudflareService,
     private notificationJobsService: NotificationJobsService,
@@ -52,6 +56,14 @@ export class AssignmentsService {
       );
       attachmentUrl = uploadResult.fileUrl;
     }
+    createAssignmentDto.createdBy = new Types.ObjectId(userId);
+    if(createAssignmentDto.classId) {
+      createAssignmentDto.classId = new Types.ObjectId(createAssignmentDto.classId);
+    }
+    if(createAssignmentDto.lessonId) {
+      createAssignmentDto.lessonId = new Types.ObjectId(createAssignmentDto.lessonId);
+    }
+    
     const assignment = new this.assignmentModel({
       ...createAssignmentDto,
       attachments: attachmentUrl ? [attachmentUrl] : [],
@@ -213,4 +225,58 @@ export class AssignmentsService {
       throw new BadRequestException('Failed to get assignments', error);
     }
   }
+
+  async getAllAssignmentsByUserId(userId: string) {
+  try {
+    // 1. Lấy group của user
+    const groups = await this.groupModel.find({ members: { $in: [userId] } }).lean();
+    const groupIds = groups.map((group) => group._id);
+
+    // 2. Lấy assignment của group
+    const groupAssignments = await this.assignmentModel
+      .find({
+        classId: { $in: groupIds },
+      })
+      .lean();
+
+    // 3. Lấy progress lesson của user
+    const lessonProgress = await this.lessonProgressModel
+      .find({ userId })
+      .lean();
+
+    const lessonIds = lessonProgress.map((lp) => lp.lessonId);
+
+    // 4. Lấy assignment của lesson
+    const lessonAssignments = await this.assignmentModel
+      .find({
+        lessonId: { $in: lessonIds },
+      })
+      .lean();
+
+    // 5. Map progress theo lessonId
+    const lessonProgressMap = new Map(
+      lessonProgress.map((lp) => [lp.lessonId.toString(), lp.progress]),
+    );
+
+    // 6. Gộp 2 danh sách và loại trùng
+    const mergedAssignmentsMap = new Map();
+
+    [...groupAssignments, ...lessonAssignments].forEach((assignment) => {
+      mergedAssignmentsMap.set(assignment._id.toString(), {
+        ...assignment,
+        progress: assignment.lessonId
+          ? lessonProgressMap.get(assignment.lessonId.toString()) || 0
+          : 0,
+      });
+    });
+
+    return {
+      assignments: Array.from(mergedAssignmentsMap.values()),
+    };
+  } catch (error) {
+    throw new BadRequestException(
+      error?.message || 'Failed to get assignments',
+    );
+  }
+}
 }
