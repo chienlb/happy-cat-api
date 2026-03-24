@@ -37,11 +37,6 @@ export class PackagesService {
   }
 
   async findPackageById(id: string): Promise<PackageDocument> {
-    const cacheKey = `package:id=${id}`;
-    const cached = await this.redisService.get(cacheKey);
-    if (cached) {
-      return JSON.parse(cached);
-    }
     const packageResult = await this.packageRepository.findById(id);
     if (!packageResult) {
       throw new NotFoundException('Package not found');
@@ -49,7 +44,6 @@ export class PackagesService {
     const result = {
       data: packageResult,
     };
-    await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
     return result.data;
   }
 

@@ -4,10 +4,12 @@ import { ConfigModule } from '@nestjs/config';
 import { ChatbotController } from './chatbot.controller';
 import { ChatbotService } from './chatbot.service';
 import { Conversation, ConversationSchema } from './schema/conversation.schema';
+import { CloudflareModule } from '../cloudflare/cloudflare.module';
 
 @Module({
   imports: [
     ConfigModule,
+    CloudflareModule,
     MongooseModule.forFeature([
       { name: Conversation.name, schema: ConversationSchema },
     ]),

@@ -84,12 +84,14 @@ export class CloudflareService {
     folder: string = 'uploads',
   ): Promise<{ fileUrl: string; key: string }> {
     const key = `${folder}/${Date.now()}-${file.originalname}`;
+    const isAudio = file.mimetype?.startsWith('audio/');
 
     const command = new PutObjectCommand({
       Bucket: this.bucket,
       Key: key,
       Body: file.buffer,
       ContentType: file.mimetype,
+      ...(isAudio ? { ContentDisposition: 'inline' } : {}),
     });
 
     await this.r2.send(command);

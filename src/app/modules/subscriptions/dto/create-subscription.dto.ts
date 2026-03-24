@@ -1,31 +1,30 @@
 import {
   IsBoolean,
-  IsDateString,
   IsEnum,
-  IsMongoId,
   IsOptional,
+  IsString,
 } from 'class-validator';
 import { SubscriptionStatus } from '../schema/subscription.schema';
+import { Transform } from 'class-transformer';
 
 export class CreateSubscriptionDto {
-  @IsMongoId()
+  @IsString()
   packageId: string;
 
-  @IsDateString()
   @IsOptional()
   startDate: string;
 
-  @IsDateString()
   @IsOptional()
   endDate: string;
 
   @IsEnum(SubscriptionStatus)
+  @IsOptional()
   status: SubscriptionStatus;
 
   @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true ? true : false)
   autoRenew: boolean;
 
   @IsOptional()
-  @IsMongoId()
   paymentId?: string;
 }

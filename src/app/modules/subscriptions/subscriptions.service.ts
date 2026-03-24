@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Req } from '@nestjs/common';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import {
   Subscription,
   SubscriptionDocument,
@@ -29,7 +29,7 @@ export class SubscriptionsService {
   ): Promise<SubscriptionDocument> {
     try {
       const user = await this.usersService.findUserById(
-        userId,
+        userId, 
       );
       if (!user) {
         throw new NotFoundException('User not found');
@@ -42,8 +42,8 @@ export class SubscriptionsService {
       }
       const newSubscription = new this.subscriptionRepository({
         ...createSubscriptionDto,
-        userId: user._id,
-        packageId: packageItem._id,
+        userId: new Types.ObjectId(userId),
+        packageId: new Types.ObjectId(packageItem._id),
         status: SubscriptionStatus.PENDING,
         startDate: new Date(),
         endDate: new Date(new Date().setDate(new Date().getDate() + packageItem.durationInDays)),
@@ -198,6 +198,27 @@ export class SubscriptionsService {
     } catch (error) {
       throw new Error(
         'Failed to find all subscriptions: ' + (error?.message || error),
+      );
+    }
+  }
+
+  async getSubscriptionByUserIdAndPackageId(
+    userId: string,
+    packageId: string,
+  ): Promise<SubscriptionDocument> {
+    try {
+      const subscription = await this.subscriptionRepository.findOne({
+        userId: new Types.ObjectId(userId),
+        packageId: new Types.ObjectId(packageId),
+      }).sort({ createdAt: -1 });
+      if (!subscription) {
+        throw new NotFoundException('Subscription not found');
+      }
+      return subscription;
+    } catch (error) {
+      throw new Error(
+        'Failed to get subscription by user id and package id: ' +
+        (error?.message || error),
       );
     }
   }

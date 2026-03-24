@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Connection, Model } from 'mongoose';
+import { ClientSession, Connection, Model, Types } from 'mongoose';
 import {
   Payment,
   PaymentDocument,
@@ -576,7 +576,7 @@ export class PaymentsService {
       }
 
       const subscription = await this.subscriptionModel
-        .findById(payment.subscriptionId)
+        .findById(new Types.ObjectId(payment.subscriptionId))
         .session(mongooseSession);
 
       if (!subscription) {
