@@ -29,7 +29,7 @@ import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
-@UseGuards(AuthGuard('jwt'), RolesGuard)
+@UseGuards(AuthGuard('jwt'))
 @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
 export class SubscriptionsController {
   constructor(private readonly subscriptionsService: SubscriptionsService) { }
@@ -62,7 +62,8 @@ export class SubscriptionsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  create(@Body() createSubscriptionDto: CreateSubscriptionDto, @Req() req: Request) {
+  create(
+    @Body() createSubscriptionDto: CreateSubscriptionDto, @Req() req: Request) {
     return this.subscriptionsService.createSubscription((req as any).user.userId, createSubscriptionDto);
   }
 

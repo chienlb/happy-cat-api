@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Req } from '@nestjs/common';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { Model, Types } from 'mongoose';
 import {
@@ -29,7 +29,7 @@ export class SubscriptionsService {
   ): Promise<SubscriptionDocument> {
     try {
       const user = await this.usersService.findUserById(
-        userId,
+        userId, 
       );
       if (!user) {
         throw new NotFoundException('User not found');
@@ -42,8 +42,8 @@ export class SubscriptionsService {
       }
       const newSubscription = new this.subscriptionRepository({
         ...createSubscriptionDto,
-        userId: user._id,
-        packageId: packageItem._id,
+        userId: new Types.ObjectId(userId),
+        packageId: new Types.ObjectId(packageItem._id),
         status: SubscriptionStatus.PENDING,
         startDate: new Date(),
         endDate: new Date(new Date().setDate(new Date().getDate() + packageItem.durationInDays)),
