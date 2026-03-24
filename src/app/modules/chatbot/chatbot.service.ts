@@ -7,12 +7,15 @@ import { ConfigService } from '@nestjs/config';
 import { Conversation, ConversationDocument } from './schema/conversation.schema';
 import { ChatDto } from './dto/chat.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
+import { VocabularyTtsDto } from './dto/vocabulary-tts.dto';
+import { CloudflareService } from '../cloudflare/cloudflare.service';
 
 @Injectable()
 export class ChatbotService {
   private readonly logger = new Logger(ChatbotService.name);
   private genAI: GoogleGenAI;
   private readonly modelName = 'gemini-2.5-flash';
+  private readonly ttsModelName ='gemini-2.5-flash-preview-tts';
   private readonly systemInstruction = `
 Bạn là Happy Cat - trợ lý AI thông minh và thân thiện trên nền tảng học tiếng Anh dành cho học sinh tiểu học (6-11 tuổi).
 
@@ -79,6 +82,7 @@ Hãy luôn nhớ: Bạn là người bạn đáng tin cậy giúp các em yêu t
     @InjectModel(Conversation.name)
     private conversationModel: Model<ConversationDocument>,
     private configService: ConfigService,
+    private cloudflareService: CloudflareService,
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (!apiKey) {
@@ -294,5 +298,141 @@ Hãy luôn nhớ: Bạn là người bạn đáng tin cậy giúp các em yêu t
       this.logger.error(`Error in chat stream: ${error.message}`, error.stack);
       throw new BadRequestException('Failed to process chat stream request');
     }
+  }
+
+  /**
+   * Tao audio doc tu vung bang Gemini TTS
+   */
+  async generateVocabularyAudio(dto: VocabularyTtsDto): Promise<{
+    text: string;
+    mimeType: string;
+    audioUrl: string;
+    key: string;
+    model: string;
+  }> {
+    try {
+      const inputText = dto.text.trim();
+      if (!inputText) {
+        throw new BadRequestException('text is required');
+      }
+
+      const voiceName = dto.voiceName?.trim() || 'Kore';
+      const languageCode = dto.languageCode?.trim() || 'en-US';
+
+      const response = await this.genAI.models.generateContent({
+        model: this.ttsModelName,
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text: `Pronounce clearly for children: ${inputText}`,
+              },
+            ],
+          },
+        ],
+        config: {
+          responseModalities: ['AUDIO'],
+          speechConfig: {
+            languageCode,
+            voiceConfig: {
+              prebuiltVoiceConfig: {
+                voiceName,
+              },
+            },
+          },
+        } as GenerateContentConfig,
+      });
+
+      const parts = response.candidates?.[0]?.content?.parts || [];
+      const audioPart = parts.find((p) => p.inlineData?.data);
+      const audioBase64 = audioPart?.inlineData?.data;
+      const rawMimeType = (audioPart?.inlineData?.mimeType || 'audio/wav').toLowerCase();
+
+      if (!audioBase64) {
+        throw new BadRequestException('Gemini did not return audio data');
+      }
+
+      let uploadBuffer: Buffer<ArrayBufferLike> = Buffer.from(audioBase64, 'base64');
+      let mimeType = rawMimeType;
+      let ext = 'wav';
+
+      // Gemini TTS sometimes returns raw PCM (audio/l16); wrap to wav for browser playback.
+      if (rawMimeType.includes('l16') || rawMimeType.includes('pcm')) {
+        uploadBuffer = this.wrapPcm16ToWav(uploadBuffer, 24000, 1);
+        mimeType = 'audio/wav';
+        ext = 'wav';
+      } else if (rawMimeType.includes('wav')) {
+        mimeType = 'audio/wav';
+        ext = 'wav';
+      } else if (rawMimeType.includes('mp3') || rawMimeType.includes('mpeg')) {
+        mimeType = 'audio/mpeg';
+        ext = 'mp3';
+      } else {
+        // Fallback to wav extension/mime to avoid .bin downloads in browsers.
+        mimeType = 'audio/wav';
+        ext = 'wav';
+      }
+
+      this.logger.log(`Gemini TTS raw mime: ${rawMimeType}, upload mime: ${mimeType}`);
+      const safeText = inputText
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+        .slice(0, 40) || 'vocabulary';
+
+      const upload = await this.cloudflareService.uploadFile(
+        {
+          buffer: uploadBuffer,
+          originalname: `${safeText}.${ext}`,
+          mimetype: mimeType,
+        },
+        'tts',
+      );
+
+      return {
+        text: inputText,
+        mimeType,
+        audioUrl: upload.fileUrl,
+        key: upload.key,
+        model: this.ttsModelName,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error in generateVocabularyAudio: ${error.message}`,
+        error.stack,
+      );
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to generate vocabulary audio');
+    }
+  }
+
+  private wrapPcm16ToWav(
+    pcmBuffer: Buffer<ArrayBufferLike>,
+    sampleRate: number,
+    channels: number,
+  ): Buffer<ArrayBufferLike> {
+    const bitsPerSample = 16;
+    const byteRate = (sampleRate * channels * bitsPerSample) / 8;
+    const blockAlign = (channels * bitsPerSample) / 8;
+    const wavHeader = Buffer.alloc(44);
+
+    wavHeader.write('RIFF', 0);
+    wavHeader.writeUInt32LE(36 + pcmBuffer.length, 4);
+    wavHeader.write('WAVE', 8);
+    wavHeader.write('fmt ', 12);
+    wavHeader.writeUInt32LE(16, 16); // PCM fmt chunk size
+    wavHeader.writeUInt16LE(1, 20); // PCM format
+    wavHeader.writeUInt16LE(channels, 22);
+    wavHeader.writeUInt32LE(sampleRate, 24);
+    wavHeader.writeUInt32LE(byteRate, 28);
+    wavHeader.writeUInt16LE(blockAlign, 32);
+    wavHeader.writeUInt16LE(bitsPerSample, 34);
+    wavHeader.write('data', 36);
+    wavHeader.writeUInt32LE(pcmBuffer.length, 40);
+
+    return Buffer.concat([wavHeader, pcmBuffer]);
   }
 }

@@ -15,6 +15,7 @@ import type { Response } from 'express';
 import { ChatbotService } from './chatbot.service';
 import { ChatDto } from './dto/chat.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
+import { VocabularyTtsDto } from './dto/vocabulary-tts.dto';
 import { ok } from '../../common/response/api-response';
 
 @ApiTags('Chatbot')
@@ -128,5 +129,13 @@ export class ChatbotController {
       );
       res.end();
     }
+  }
+
+  @Post('vocabulary/tts')
+  @ApiOperation({ summary: 'Doc tu vung bang Gemini TTS va tra audio base64' })
+  @ApiResponseSwagger({ status: 200, description: 'Tao audio thanh cong' })
+  async vocabularyTts(@Body() dto: VocabularyTtsDto) {
+    const result = await this.chatbotService.generateVocabularyAudio(dto);
+    return ok(result, 'Generated vocabulary audio successfully');
   }
 }
