@@ -579,7 +579,7 @@ export class PaymentsService {
         .findById(payment.subscriptionId)
         .session(mongooseSession);
 
-      if (!subscription){
+      if (!subscription) {
         throw new NotFoundException(`Subscription not found for ID: ${payment.subscriptionId}`);
       }
 
@@ -768,6 +768,52 @@ export class PaymentsService {
 
       this.logger.error(`[ERROR] VNPay IPN exception: ${error.message}`, error.stack);
       return { RspCode: '99', Message: 'System error' };
+    }
+  }
+
+  // [ADMIN] - Lấy doanh thu theo tháng
+  async getMonthlyRevenue(year: number, month: number) {
+    try {
+      const revenue = await this.paymentModel.aggregate([
+        {
+          $match: {
+            status: PaymentStatus.SUCCESS,
+            paidAt: {
+              $gte: new Date(`${year}-${month.toString().padStart(2, '0')}-01T00:00:00Z`),
+              $lte: new Date(`${year}-${month.toString().padStart(2, '0')}-31T23:59:59Z`),
+            },
+          },
+        },
+        {
+          $group: {
+            _id: { month: { $month: '$paidAt' } },
+            totalRevenue: { $sum: '$amount' },
+          },
+        },
+        {
+          $project: {
+            month: '$_id.month',
+            totalRevenue: 1,
+            _id: 0,
+          },
+        },
+        { $sort: { month: 1 } },
+      ]);
+      return revenue;
+    } catch (error) {
+      this.logger.error(`[ERROR] Failed to get monthly revenue: ${error.message}`, error.stack);
+      throw new BadRequestException(error?.message ?? 'Bad request');
+    }
+  }
+
+  // [ADMIN] - Lây danh sách thanh toán
+  async getListPayments() {
+    try {
+      const payments = await this.paymentModel.find().sort({ paidAt: -1 }).populate('userId', 'username, fullname, email').populate('subscriptionId', 'packageId').limit(10);
+      return payments;
+    } catch (error) {
+      this.logger.error(`[ERROR] Failed to get list of payments: ${error.message}`, error.stack);
+      throw new BadRequestException(error?.message ?? 'Bad request');
     }
   }
 }
