@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import {
   Subscription,
   SubscriptionDocument,
@@ -198,6 +198,27 @@ export class SubscriptionsService {
     } catch (error) {
       throw new Error(
         'Failed to find all subscriptions: ' + (error?.message || error),
+      );
+    }
+  }
+
+  async getSubscriptionByUserIdAndPackageId(
+    userId: string,
+    packageId: string,
+  ): Promise<SubscriptionDocument> {
+    try {
+      const subscription = await this.subscriptionRepository.findOne({
+        userId: new Types.ObjectId(userId),
+        packageId: new Types.ObjectId(packageId),
+      }).sort({ createdAt: -1 });
+      if (!subscription) {
+        throw new NotFoundException('Subscription not found');
+      }
+      return subscription;
+    } catch (error) {
+      throw new Error(
+        'Failed to get subscription by user id and package id: ' +
+        (error?.message || error),
       );
     }
   }

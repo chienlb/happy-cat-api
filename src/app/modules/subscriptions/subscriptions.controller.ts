@@ -164,4 +164,15 @@ export class SubscriptionsController {
   delete(@Param('id') id: string) {
     return this.subscriptionsService.deleteSubscription(id);
   }
+
+  @Get('user-subscriptions/:packageId')
+  async getSubscriptionsByUserIdAndPackageId(
+    @Param('packageId') packageId: string,
+    @Req() req: Request,
+  ) {
+    return this.subscriptionsService.getSubscriptionByUserIdAndPackageId(
+      (req as any).user.userId,
+      packageId,
+    );
+  }
 }
