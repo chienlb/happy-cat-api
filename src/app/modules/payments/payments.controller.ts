@@ -89,4 +89,35 @@ export class PaymentsController {
   async handleVNPayIPN(@Body() body: any) {
     return this.paymentsService.handleVNPayIPN(body);
   }
+
+  @Get('/get-admin-revenue')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get admin revenue' })
+  @ApiQuery({ name: 'year', type: Number })
+  @ApiQuery({ name: 'month', type: Number })
+  @ApiResponse({ status: 200, description: 'Revenue retrieved successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getAdminRevenue(@Query('year') year: number, @Query('month') month: number) {
+    try {
+      const result = await this.paymentsService.getMonthlyRevenue(year, month);
+      return ok(result, 'Revenue retrieved successfully');
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Get('/get-list-payment')
+  async getListPayments(){
+    try {
+      const result = await this.paymentsService.getListPayments();
+      return ok(result, 'Payments retrieved successfully');
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    } 
+  }
 }
