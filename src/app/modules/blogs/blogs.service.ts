@@ -33,14 +33,11 @@ export class BlogsService {
 
   async findAllBlogs(paginationDto: PaginationDto) {
     try {
-      const page = paginationDto.page || 1;
-      const limit = paginationDto.limit || 10;
-
       const [blogs, total] = await Promise.all([
         this.blogModel
           .find()
-          .skip((page - 1) * limit)
-          .limit(limit)
+          .skip((paginationDto.page || 1- 1) * paginationDto.limit || 10)
+          .limit(paginationDto.limit || 10)
           .lean(),
         this.blogModel.countDocuments()
       ]);
@@ -52,8 +49,8 @@ export class BlogsService {
       return {
         data: blogs,
         total,
-        page,
-        totalPages: Math.ceil(total / limit),
+        page: paginationDto.page || 1,
+        totalPages: Math.ceil(total / paginationDto.limit || 10), 
       };
 
     } catch (error) {
