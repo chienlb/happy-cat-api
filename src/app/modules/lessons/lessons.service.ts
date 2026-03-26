@@ -429,7 +429,7 @@ export class LessonsService {
         .skip((paginationDto.page - 1) * paginationDto.limit)
         .limit(paginationDto.limit)
         .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 })
-        .exec();
+        .populate('unit', 'name');
       const totalLessons = await this.lessonModel.countDocuments({
         isActive: LessonStatus.ACTIVE,
       });
