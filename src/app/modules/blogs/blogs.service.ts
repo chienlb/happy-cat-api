@@ -33,24 +33,10 @@ export class BlogsService {
 
   async findAllBlogs(paginationDto: PaginationDto) {
     try {
-      const [blogs, total] = await Promise.all([
-        this.blogModel
-          .find()
-          .skip((paginationDto.page || 1- 1) * paginationDto.limit || 10)
-          .limit(paginationDto.limit || 10)
-          .lean(),
-        this.blogModel.countDocuments()
-      ]);
-
-      if (blogs.length === 0) {
-        throw new Error('No blogs found');
-      }
+      const blogs = await this.blogModel.find();
 
       return {
         data: blogs,
-        total,
-        page: paginationDto.page || 1,
-        totalPages: Math.ceil(total / paginationDto.limit || 10), 
       };
 
     } catch (error) {
