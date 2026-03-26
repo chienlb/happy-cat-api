@@ -1,10 +1,11 @@
-import { IsString, IsBoolean } from 'class-validator';
+import { IsString, IsBoolean, IsOptional } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateBlogDto {
     @IsString()
     title: string;
     @IsString()
+    @IsOptional()
     slug: string;
     @IsString()
     content: string;
