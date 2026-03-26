@@ -8,7 +8,7 @@ import { PaginationDto } from '../pagination/pagination.dto';
 
 @Injectable()
 export class BlogsService {
-  constructor(@InjectModel(Blog.name) private blogModel: Model<BlogDocument>) {}
+  constructor(@InjectModel(Blog.name) private blogModel: Model<BlogDocument>) { }
   async createBlog(createBlogDto: CreateBlogDto) {
     try {
       const { title, slug, content, author, isActive, isFeatured } = createBlogDto;
@@ -33,14 +33,30 @@ export class BlogsService {
 
   async findAllBlogs(paginationDto: PaginationDto) {
     try {
-      const { page, limit } = paginationDto;
-      const blogs = await this.blogModel.find().skip((page - 1) * limit).limit(limit).exec();
-      if (!blogs) {
+      const { page = 1, limit = 10 } = paginationDto;
+
+      const [blogs, total] = await Promise.all([
+        this.blogModel
+          .find()
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .lean(),
+        this.blogModel.countDocuments()
+      ]);
+
+      if (blogs.length === 0) {
         throw new Error('No blogs found');
       }
-      return blogs;
+
+      return {
+        data: blogs,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+      };
+
     } catch (error) {
-      throw new Error('Failed to retrieve blogs');
+      throw new Error('Failed to retrieve blogs: ' + error.message);
     }
   }
 
@@ -68,7 +84,7 @@ export class BlogsService {
     }
   }
 
-  async deleteBlog(id: string) {  
+  async deleteBlog(id: string) {
     try {
       const deletedBlog = await this.blogModel.findByIdAndDelete(id).exec();
       if (!deletedBlog) {
