@@ -355,7 +355,7 @@ Now generate the result.
       model: this.modelName,
       config: {
         systemInstruction: this.getPromptByType(practiceData.type).replace('{COUNT}', '5'),
-        maxOutputTokens: 1000,
+        maxOutputTokens: 99999,
         temperature: 0.7,
         responseMimeType: 'application/json',
       },
