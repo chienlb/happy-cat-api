@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put, Query } from '@nestjs/common';
 import { BlogsService } from './blogs.service';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
@@ -15,7 +15,7 @@ export class BlogsController {
   }
 
   @Get('all')
-  findAllBlogs(paginationDto: PaginationDto) {
+  findAllBlogs(@Query() paginationDto: PaginationDto) {
     return this.blogsService.findAllBlogs(paginationDto);
   }
 
