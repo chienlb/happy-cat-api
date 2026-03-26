@@ -382,4 +382,40 @@ export class GroupsService {
       throw new Error('Failed to get all groups by user id: ' + error.message);
     }
   }
+
+async getAllMembersGroupByUserId(userId: string, paginationDto: PaginationDto) {
+  try {
+    const { page = 1, limit = 10 } = paginationDto;
+
+    // Lấy tất cả group mà user tạo
+    const groups = await this.groupModel
+      .find({ createdBy: userId })
+      .lean();
+
+    if (!groups || groups.length === 0) {
+      throw new NotFoundException('No groups found for this user');
+    }
+
+    // Lấy tất cả members từ các group
+    const members = groups.map(group => group.members).flat();
+
+    const total = members.length;
+    const totalPages = Math.ceil(total / limit);
+
+    // pagination
+    const start = (page - 1) * limit;
+    const paginatedMembers = members.slice(start, start + limit);
+
+    return {
+      total,
+      totalPages,
+      page,
+      limit,
+      data: paginatedMembers,
+    };
+
+  } catch (error) {
+    throw new Error('Failed to get all members of group by user id: ' + error.message);
+  }
+}
 }
