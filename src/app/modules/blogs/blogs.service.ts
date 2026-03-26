@@ -33,7 +33,8 @@ export class BlogsService {
 
   async findAllBlogs(paginationDto: PaginationDto) {
     try {
-      const { page = 1, limit = 10 } = paginationDto;
+      const page = paginationDto.page || 1;
+      const limit = paginationDto.limit || 10;
 
       const [blogs, total] = await Promise.all([
         this.blogModel
