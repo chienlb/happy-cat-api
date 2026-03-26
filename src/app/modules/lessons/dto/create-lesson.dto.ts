@@ -524,6 +524,7 @@ export class CreateLessonDto {
     example: 'lesson-1-greetings',
   })
   @IsString()
+  @IsOptional()
   slug: string;
 
   @ApiPropertyOptional({
