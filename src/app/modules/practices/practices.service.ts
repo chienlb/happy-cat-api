@@ -685,4 +685,12 @@ Rules:
     };
   }
 
+  async getAllPracticesByStudentId(studentId: string): Promise<Practice[]> {
+    try {
+      return await this.practiceModel.find({ studentId }).populate('studentId', 'fullname email').exec();
+    } catch (error) {
+      throw new Error('Failed to get practices by student id: ' + error.message);
+    }
+  }
+
 }

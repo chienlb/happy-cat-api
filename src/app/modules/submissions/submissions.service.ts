@@ -97,6 +97,26 @@ export class SubmissionsService {
     }
   }
 
+  async getGradedSubmissionsByAssignmentId(
+    assignmentId: string,
+  ): Promise<SubmissionDocument[]> {
+    try {
+      const submissions = await this.submissionModel.find({
+        assignmentId,
+        status: SubmissionStatus.GRADED,
+      });
+      if (!submissions) {
+        throw new NotFoundException('Graded submissions not found');
+      }
+      const result = {
+        data: submissions,
+      };
+      return result.data;
+    } catch (error) {
+      throw new Error('Failed to get graded submissions: ' + error.message);
+    }
+  }
+
   async getSubmissionById(id: string): Promise<SubmissionDocument> {
     try {
       const cacheKey = `submission:id=${id}`;
@@ -145,19 +165,13 @@ export class SubmissionsService {
     studentId: string,
   ): Promise<SubmissionDocument[]> {
     try {
-      const cacheKey = `submissions:student-id=${studentId}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
-      }
-      const submissions = await this.submissionModel.find({ studentId });
+      const submissions = await this.submissionModel.find({ studentId }).populate('assignmentId', 'title').populate('userId', 'fullname');
       if (!submissions) {
         throw new NotFoundException('Submissions not found');
       }
       const result = {
         data: submissions,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result.data;
     } catch (error) {
       throw new Error('Failed to get submissions: ' + error.message);

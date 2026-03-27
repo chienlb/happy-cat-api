@@ -268,4 +268,11 @@ export class SubmissionsController {
   ): Promise<SubmissionDocument> {
     return this.submissionsService.studentViewSubmission(id, studentId);
   }
+
+  @Get('user/grade/:assignmentId')
+  async getGradedSubmissionsByAssignmentId(
+    @Param('assignmentId') assignmentId: string
+  ): Promise<SubmissionDocument[]> {
+    return this.submissionsService.getGradedSubmissionsByAssignmentId(assignmentId);
+  }
 }

@@ -37,4 +37,9 @@ export class PracticesController {
   remove(@Param('id') id: string) {
     return this.practicesService.remove(id);
   }
+
+  @Get('student/:studentId')
+  getAllPracticesByStudentId(@Param('studentId') studentId: string) {
+    return this.practicesService.getAllPracticesByStudentId(studentId);
+  }
 }
