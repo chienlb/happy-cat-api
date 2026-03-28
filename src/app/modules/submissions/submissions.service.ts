@@ -12,7 +12,7 @@ import {
   SubmissionStatus,
 } from './schema/submission.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { AssignmentsService } from '../assignments/assignments.service';
 import { UsersService } from '../users/users.service';
 import { RedisService } from 'src/app/configs/redis/redis.service';
@@ -286,7 +286,7 @@ export class SubmissionsService {
 
   async getAllSubmissionsByAssignmentId(assignmentId: string): Promise<SubmissionDocument[]> {
     try {
-      const submissions = await this.submissionModel.find({ assignmentId }).populate('studentId', 'fullname email');
+      const submissions = await this.submissionModel.find({ assignmentId: new mongoose.Types.ObjectId(assignmentId) }).populate('studentId', 'fullname email');
       return submissions;
     } catch (error) {
       throw new Error('Failed to get submissions: ' + error.message);
