@@ -296,4 +296,9 @@ export class GroupsController {
     const userId = (req as any).user.userId;
     return this.groupsService.getAllMembersForAllGroupsByUserId(userId);
   }
+
+  @Get('/user/get-all-members/:groupId')
+  async getAllMembersInGroupForUser(@Param('groupId') groupId: string) {
+    return this.groupsService.getAllMembersForAllGroupsByUserId(groupId);
+  }
 }

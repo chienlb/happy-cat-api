@@ -475,4 +475,26 @@ export class GroupsService {
       );
     }
   }
+
+  async getAllMembersForGroup(groupId: string) {
+    try {
+      const group = await this.groupModel.findById(groupId).select('members').lean();
+      if (!group) {
+        throw new NotFoundException('Group not found');
+      }
+      const memberIds = group.members?.map((id) => id.toString()) || [];
+      if (!memberIds.length) {
+        throw new NotFoundException('No members found in this group');
+      }
+      const members = await this.userModel.find({ _id: { $in: memberIds } }).lean();
+      return members;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        `Failed to get all members for group: ${error.message}`,
+      );
+    }
+  }
 }
