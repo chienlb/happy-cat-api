@@ -283,4 +283,13 @@ export class SubmissionsService {
       await this.progressesService.updateProgress(progressPayload);
     }
   }
+
+  async getAllSubmissionsByAssignmentId(assignmentId: string): Promise<SubmissionDocument[]> {
+    try {
+      const submissions = await this.submissionModel.find({ assignmentId }).populate('studentId', 'fullname email');
+      return submissions;
+    } catch (error) {
+      throw new Error('Failed to get submissions: ' + error.message);
+    }
+  }
 }

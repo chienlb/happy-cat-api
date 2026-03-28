@@ -37,6 +37,7 @@ export class CreateSubmissionDto {
   attachments?: string[]; 
 
   @IsEnum(SubmissionStatus)
+  @IsOptional()
   status: SubmissionStatus;
 
   @IsOptional()

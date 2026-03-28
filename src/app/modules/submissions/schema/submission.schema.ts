@@ -57,6 +57,3 @@ export class Submission implements ISubmission {
 }
 
 export const SubmissionSchema = SchemaFactory.createForClass(Submission);
-
-SubmissionSchema.index({ assignmentId: 1, studentId: 1 }, { unique: true });
-SubmissionSchema.index({ status: 1 });
