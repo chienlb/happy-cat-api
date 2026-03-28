@@ -284,4 +284,16 @@ export class GroupsController {
     const userId = (req as any).user.userId;
     return this.groupsService.joinGroupByJoinCode(joinCode, userId);
   }
+
+  @Get('/user/get-all-groups')
+  async getAllGroupsForUser(@Req() req: Request) {
+    const userId = (req as any).user.userId;
+    return this.groupsService.findAllGroupsByUserId(userId);
+  }
+
+  @Get('/user/get-all-members')
+  async getAllMembersInActiveGroupsForUser(@Req() req: Request) {
+    const userId = (req as any).user.userId;
+    return this.groupsService.getAllMembersForAllGroupsByUserId(userId);
+  }
 }

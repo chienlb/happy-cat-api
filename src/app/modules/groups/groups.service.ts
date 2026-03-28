@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import {
   Group,
   GroupDocument,
@@ -19,11 +19,13 @@ import { PackageType } from '../packages/schema/package.schema';
 import { PaginationDto } from '../pagination/pagination.dto';
 import { RedisService } from 'src/app/configs/redis/redis.service';
 import { CloudflareService } from '../cloudflare/cloudflare.service';
+import { User, UserDocument } from '../users/schema/user.schema';
 
 @Injectable()
 export class GroupsService {
   constructor(
     @InjectModel(Group.name) private readonly groupModel: Model<GroupDocument>,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private usersService: UsersService,
     private readonly redisService: RedisService,
     private readonly cloudflareService: CloudflareService,
@@ -327,8 +329,9 @@ export class GroupsService {
   async joinGroupByJoinCode(joinCode: string, userId: string): Promise<GroupDocument> {
     try {
       const group = await this.getGroupByJoinCode(joinCode);
-      if (!group) {        throw new NotFoundException('Group not found');
-      } 
+      if (!group) {
+        throw new NotFoundException('Group not found');
+      }
       const user = await this.usersService.findUserById(userId);
       if (!user) {
         throw new NotFoundException('User not found');
@@ -383,39 +386,93 @@ export class GroupsService {
     }
   }
 
-async getAllMembersGroupByUserId(userId: string, paginationDto: PaginationDto) {
-  try {
-    const { page = 1, limit = 10 } = paginationDto;
+  async getAllMembersGroupByUserId(userId: string, paginationDto: PaginationDto) {
+    try {
+      const { page = 1, limit = 10 } = paginationDto;
 
-    // Lấy tất cả group mà user tạo
-    const groups = await this.groupModel
-      .find({ createdBy: userId })
-      .lean();
+      // Lấy tất cả group mà user tạo
+      const groups = await this.groupModel
+        .find({ createdBy: userId })
+        .lean();
 
-    if (!groups || groups.length === 0) {
-      throw new NotFoundException('No groups found for this user');
+      if (!groups || groups.length === 0) {
+        throw new NotFoundException('No groups found for this user');
+      }
+
+      // Lấy tất cả members từ các group
+      const members = groups.map(group => group.members).flat();
+
+      const total = members.length;
+      const totalPages = Math.ceil(total / limit);
+
+      // pagination
+      const start = (page - 1) * limit;
+      const paginatedMembers = members.slice(start, start + limit);
+
+      return {
+        total,
+        totalPages,
+        page,
+        limit,
+        data: paginatedMembers,
+      };
+
+    } catch (error) {
+      throw new Error('Failed to get all members of group by user id: ' + error.message);
     }
-
-    // Lấy tất cả members từ các group
-    const members = groups.map(group => group.members).flat();
-
-    const total = members.length;
-    const totalPages = Math.ceil(total / limit);
-
-    // pagination
-    const start = (page - 1) * limit;
-    const paginatedMembers = members.slice(start, start + limit);
-
-    return {
-      total,
-      totalPages,
-      page,
-      limit,
-      data: paginatedMembers,
-    };
-
-  } catch (error) {
-    throw new Error('Failed to get all members of group by user id: ' + error.message);
   }
-}
+
+  async findAllGroupsByUserId(userId: string): Promise<GroupDocument[]> {
+    try {
+      const groups = await this.groupModel.find({ owner: userId, isActive: true });
+      if (!groups) {
+        throw new NotFoundException('Groups not found');
+      }
+      return groups;
+    } catch (error) {
+      throw new Error('Failed to find all groups by user id: ' + error.message);
+    }
+  }
+
+  async getAllMembersForAllGroupsByUserId(userId: string) {
+    try {
+      const groups = await this.groupModel
+        .find({
+          owner: userId, 
+          isActive: true,
+        })
+        .select('members')
+        .lean();
+
+      if (!groups?.length) {
+        throw new NotFoundException('No active groups found for this user');
+      }
+
+      const memberIds = [
+        ...new Set(
+          groups
+            .flatMap((group) => group.members ?? [])
+            .map((id) => id.toString()),
+        ),
+      ];
+
+      if (!memberIds.length) {
+        throw new NotFoundException("No members found in this user's active groups");
+      }
+
+      const members = await this.userModel
+        .find({ _id: { $in: memberIds } })
+        .lean();
+
+      return members;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        `Failed to get all members for all groups by user id: ${error.message}`,
+      );
+    }
+  }
 }
