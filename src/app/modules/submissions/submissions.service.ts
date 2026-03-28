@@ -292,4 +292,13 @@ export class SubmissionsService {
       throw new Error('Failed to get submissions: ' + error.message);
     }
   }
+
+  async getAllSubmissionsByStudentId(studentId: string): Promise<SubmissionDocument[]> {
+    try {
+      const submissions = await this.submissionModel.find({ studentId: new mongoose.Types.ObjectId(studentId) }).populate('assignmentId', 'title description');
+      return submissions;
+    } catch (error) {
+      throw new Error('Failed to get submissions: ' + error.message);
+    }
+  }
 }

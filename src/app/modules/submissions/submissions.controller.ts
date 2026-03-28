@@ -282,4 +282,11 @@ export class SubmissionsController {
   ): Promise<SubmissionDocument[]> {
     return this.submissionsService.getAllSubmissionsByAssignmentId(assignmentId);
   }
+
+  @Get('/user/student/submissions/:studentId')
+  async getAllSubmissionsByStudentId(
+    @Param('studentId') studentId: string
+  ): Promise<SubmissionDocument[]> {
+    return this.submissionsService.getAllSubmissionsByStudentId(studentId);
+  }
 }
