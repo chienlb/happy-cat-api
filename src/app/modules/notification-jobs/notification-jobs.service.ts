@@ -1,4 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { InjectConnection } from '@nestjs/mongoose';
+import { Connection } from 'mongoose';
 import { notificationAssignmentDueSoonQueue } from 'src/app/jobs/queues/notification-assignment-due-soon.queue';
 import { notificationSubscriptionExpiringQueue } from 'src/app/jobs/queues/notification-subscription-expiring.queue';
 import {
@@ -13,10 +15,12 @@ import { initializeNotificationNewAssignmentWorker } from 'src/app/jobs/workers/
 export class NotificationJobsService implements OnModuleInit {
   private readonly logger = new Logger(NotificationJobsService.name);
 
+  constructor(@InjectConnection() private readonly connection: Connection) {}
+
   async onModuleInit() {
     await initializeNotificationAssignmentDueSoonWorker();
     await initializeNotificationSubscriptionExpiringWorker();
-    await initializeNotificationNewAssignmentWorker();
+    await initializeNotificationNewAssignmentWorker(this.connection);
 
     await this.scheduleRepeatableJobs();
     this.logger.log('Notification jobs: workers and repeatable jobs ready');
