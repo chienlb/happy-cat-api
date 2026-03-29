@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Practice, PracticeDocument, ParcticeTypes } from './schema/practice.schema';
@@ -7,12 +12,15 @@ import { ConfigService } from '@nestjs/config';
 import { CreatePracticeDto } from './dto/create-practice.dto';
 import { UpdatePracticeDto } from './dto/update-practice.dto';
 import { SubmitPracticeDto } from './dto/submit-practice.dto';
+import { UsersService } from '../users/users.service';
+import { PackageType } from '../packages/schema/package.schema';
 
 @Injectable()
 export class PracticesService {
   constructor(
     @InjectModel(Practice.name) private practiceModel: Model<PracticeDocument>,
     private configService: ConfigService,
+    private usersService: UsersService,
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (!apiKey) {
@@ -334,12 +342,27 @@ Now generate the result.
       throw new NotFoundException('Practice not found');
     }
 
+    await this.assertVipForAiWriting(practice.studentId);
+
     const aiFeedback = await this.generateFeedbackByType(practice, submitPracticeDto.studentWriting);
 
     practice.studentWriting = submitPracticeDto.studentWriting;
     practice.AIFeedback = aiFeedback;
 
     return practice.save();
+  }
+
+  private async assertVipForAiWriting(studentId: string): Promise<void> {
+    const user = await this.usersService.findUserById(studentId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.accountPackage !== PackageType.VIP) {
+      throw new ForbiddenException(
+        'Tinh nang luyen viet voi AI chi danh cho tai khoan VIP.',
+      );
+    }
   }
 
   async remove(id: string): Promise<Practice> {

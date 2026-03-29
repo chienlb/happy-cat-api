@@ -1,4 +1,11 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  HttpException,
+  HttpStatus,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { GoogleGenAI } from '@google/genai';
@@ -10,6 +17,8 @@ import { CreateConversationDto } from './dto/create-conversation.dto';
 import { VocabularyTtsDto } from './dto/vocabulary-tts.dto';
 import { DictionaryPronunciationDto } from './dto/dictionary-pronunciation.dto';
 import { CloudflareService } from '../cloudflare/cloudflare.service';
+import { UsersService } from '../users/users.service';
+import { PackageType } from '../packages/schema/package.schema';
 
 type DictionarySense = {
   partOfSpeech: string;
@@ -36,6 +45,7 @@ type DictionaryDetail = {
 
 @Injectable()
 export class ChatbotService {
+  private static readonly FREE_DAILY_CHAT_LIMIT = 10;
   private readonly logger = new Logger(ChatbotService.name);
   private genAI: GoogleGenAI;
   private readonly modelName = 'gemini-2.5-flash';
@@ -107,6 +117,7 @@ Hãy luôn nhớ: Bạn là người bạn đáng tin cậy giúp các em yêu t
     private conversationModel: Model<ConversationDocument>,
     private configService: ConfigService,
     private cloudflareService: CloudflareService,
+    private usersService: UsersService,
   ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (!apiKey) {
@@ -182,6 +193,8 @@ Hãy luôn nhớ: Bạn là người bạn đáng tin cậy giúp các em yêu t
    */
   async chat(userId: string, chatDto: ChatDto): Promise<any> {
     try {
+      await this.assertDailyChatQuota(userId);
+
       let conversation: ConversationDocument | null = null;
       let history: any[] = [];
 
@@ -247,6 +260,11 @@ Hãy luôn nhớ: Bạn là người bạn đáng tin cậy giúp các em yêu t
         timestamp: new Date(),
       };
     } catch (error) {
+      if (
+        error instanceof HttpException
+      ) {
+        throw error;
+      }
       this.logger.error(`Error in chat: ${error.message}`, error.stack);
       throw new BadRequestException('Failed to process chat request');
     }
@@ -257,6 +275,8 @@ Hãy luôn nhớ: Bạn là người bạn đáng tin cậy giúp các em yêu t
    */
   async *chatStream(userId: string, chatDto: ChatDto): AsyncGenerator<string> {
     try {
+      await this.assertDailyChatQuota(userId);
+
       let conversation: ConversationDocument | null = null;
       let history: any[] = [];
 
@@ -319,9 +339,77 @@ Hãy luôn nhớ: Bạn là người bạn đáng tin cậy giúp các em yêu t
 
       this.logger.log(`Chat stream completed for user ${userId}`);
     } catch (error) {
+      if (
+        error instanceof HttpException
+      ) {
+        throw error;
+      }
       this.logger.error(`Error in chat stream: ${error.message}`, error.stack);
       throw new BadRequestException('Failed to process chat stream request');
     }
+  }
+
+  private async assertDailyChatQuota(userId: string): Promise<void> {
+    if (!Types.ObjectId.isValid(userId)) {
+      return;
+    }
+
+    const user = await this.usersService.findUserById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.accountPackage !== PackageType.FREE) {
+      return;
+    }
+
+    const { start, end } = this.getCurrentDayRange();
+
+    const result = await this.conversationModel.aggregate([
+      {
+        $match: {
+          userId: new Types.ObjectId(userId),
+          isActive: true,
+          messages: {
+            $elemMatch: {
+              role: 'user',
+              timestamp: {
+                $gte: start,
+                $lt: end,
+              },
+            },
+          },
+        },
+      },
+      { $unwind: '$messages' },
+      {
+        $match: {
+          'messages.role': 'user',
+          'messages.timestamp': {
+            $gte: start,
+            $lt: end,
+          },
+        },
+      },
+      { $count: 'count' },
+    ]);
+
+    const dailyUsage = result[0]?.count || 0;
+    if (dailyUsage >= ChatbotService.FREE_DAILY_CHAT_LIMIT) {
+      throw new HttpException(
+        `Tai khoan free chi duoc chat toi da ${ChatbotService.FREE_DAILY_CHAT_LIMIT} lan moi ngay. Vui long nang cap VIP de su dung khong gioi han.`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+  }
+
+  private getCurrentDayRange(): { start: Date; end: Date } {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
+    return { start, end };
   }
 
   /**

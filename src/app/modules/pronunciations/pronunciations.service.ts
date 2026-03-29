@@ -2,6 +2,8 @@
 import {
   Injectable,
   BadRequestException,
+  HttpException,
+  HttpStatus,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
@@ -26,6 +28,7 @@ import {
   PronunciationAttemptStatus,
 } from './schema/pronunciation-attempt.schema';
 import { GoogleGenAI } from '@google/genai';
+import { PackageType } from '../packages/schema/package.schema';
 
 const env = envSchema.parse(process.env);
 
@@ -38,6 +41,7 @@ type AssessInput = {
 
 @Injectable()
 export class PronunciationService {
+  private static readonly FREE_DAILY_ASSESS_LIMIT = 10;
   private genAI: GoogleGenAI;
 
   constructor(
@@ -62,6 +66,8 @@ export class PronunciationService {
     userId: string,
     exerciseId: string,
   ) {
+    await this.assertDailyPronunciationQuota(userId);
+
     console.log('env');
     console.log(env.AZURE_SPEECH_REGION);
     console.log(env.AZURE_SPEECH_KEY);
@@ -212,6 +218,42 @@ export class PronunciationService {
       aiAnalysis,
       raw: json,
     };
+  }
+
+  private async assertDailyPronunciationQuota(userId: string): Promise<void> {
+    const user = await this.usersService.findUserById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.accountPackage !== PackageType.FREE) {
+      return;
+    }
+
+    const { start, end } = this.getCurrentDayRange();
+    const dailyUsage = await this.pronunciationAttemptModel.countDocuments({
+      userId: new Types.ObjectId(userId),
+      createdAt: {
+        $gte: start,
+        $lt: end,
+      },
+    });
+
+    if (dailyUsage >= PronunciationService.FREE_DAILY_ASSESS_LIMIT) {
+      throw new HttpException(
+        `Tai khoan free chi duoc luyen phat am toi da ${PronunciationService.FREE_DAILY_ASSESS_LIMIT} lan moi ngay. Vui long nang cap VIP de su dung khong gioi han.`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+  }
+
+  private getCurrentDayRange(): { start: Date; end: Date } {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
+    return { start, end };
   }
 
   /**

@@ -3,10 +3,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { PracticesService } from './practices.service';
 import { PracticesController } from './practices.controller';
 import { Practice, PracticeSchema } from './schema/practice.schema';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Practice.name, schema: PracticeSchema }]),
+    UsersModule,
   ],
   controllers: [PracticesController],
   providers: [PracticesService],
