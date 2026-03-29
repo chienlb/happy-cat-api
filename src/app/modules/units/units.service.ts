@@ -170,20 +170,31 @@ export class UnitsService {
     return unit;
   }
 
-  async updateUnitById(
-    id: string,
-    updateUnitDto: UpdateUnitDto,
-    session?: ClientSession,
-  ) {
-    try {
-      const unit = await this.unitModel
-        .findByIdAndUpdate(id, updateUnitDto, { session })
-        .session(session || null);
-      return unit;
-    } catch (error) {
-      throw new Error('Failed to update unit: ' + error.message);
+ async updateUnitById(
+  id: string,
+  updateUnitDto: UpdateUnitDto,
+  session?: ClientSession,
+) {
+  try {
+    const unit = await this.unitModel.findByIdAndUpdate(
+      id,
+      updateUnitDto,
+      {
+        new: true,        // trả về data mới
+        runValidators: true,
+        session,
+      }
+    );
+
+    if (!unit) {
+      throw new Error("Unit not found");
     }
+
+    return unit;
+  } catch (error) {
+    throw new Error('Failed to update unit: ' + error.message);
   }
+}
 
   async deleteUnitById(id: string, session?: ClientSession) {
     try {
