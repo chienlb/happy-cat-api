@@ -137,11 +137,6 @@ export class UnitsService {
 
   async findAllUnits(paginationDto: PaginationDto, session?: ClientSession) {
     try {
-      const cacheKey = `units:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
-      }
       const units = await this.unitModel
         .find({ isActive: UnitStatus.ACTIVE })
         .skip((paginationDto.page - 1) * paginationDto.limit)
@@ -159,7 +154,6 @@ export class UnitsService {
             : null,
         prevPage: paginationDto.page > 1 ? paginationDto.page - 1 : null,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new Error('Failed to find all units: ' + error.message);
