@@ -117,18 +117,6 @@ export class UnitsController {
     return this.unitsService.findAllUnits(paginationDto);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get a unit by ID' })
-  @ApiParam({ name: 'id', type: String, description: 'Unit ID' })
-  @ApiResponse({ status: 200, description: 'Unit fetched successfully' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
-  findById(@Param('id') id: string) {
-    return this.unitsService.findUnitById(id);
-  }
-
   @Patch(':id')
   @ApiOperation({ summary: 'Update a unit by ID' })
   @ApiParam({ name: 'id', type: String, description: 'Unit ID' })
@@ -180,5 +168,17 @@ export class UnitsController {
   @ApiResponse({ status: 500, description: 'Internal server error' })
   getUnitsByStatus(@Param('status') status: UnitStatus) {
     return this.unitsService.getUnitByStatus(status);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a unit by ID' })
+  @ApiParam({ name: 'id', type: String, description: 'Unit ID' })
+  @ApiResponse({ status: 200, description: 'Unit fetched successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  findById(@Param('id') id: string) {
+    return this.unitsService.findUnitById(id);
   }
 }
