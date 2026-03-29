@@ -71,6 +71,30 @@ export class GroupsController {
     return this.groupsService.createGroup((req as any).user.userId, createGroupDto, avatar, background);
   }
 
+  
+  @Get('user/get-all-groups')
+  async getAllGroupsForUser(@Req() req: Request) {
+    const userId = (req as any).user.userId;
+    return this.groupsService.findAllGroupsByUserId(userId);
+  }
+
+  @Get('user/get-all-members')
+  async getAllMembersInActiveGroupsForUser(@Req() req: Request) {
+    const userId = (req as any).user.userId;
+    return this.groupsService.getAllMembersForAllGroupsByUserId(userId);
+  }
+
+  @Get('user/get-all-member')
+  async getAllMembersInActiveGroupsForUserAlias(@Req() req: Request) {
+    const userId = (req as any).user.userId;
+    return this.groupsService.getAllMembersForAllGroupsByUserId(userId);
+  }
+
+  @Get('user/get-all-members/:groupId')
+  async getAllMembersInGroupForUser(@Param('groupId') groupId: string) {
+    return this.groupsService.getAllMembersForGroup(groupId);
+  }
+
   @Get('user')
   async getAllGroupsByUserId(@Req() req: Request, @Query() paginationDto: PaginationDto) {
     const userId = (req as any).user.userId;
@@ -283,22 +307,5 @@ export class GroupsController {
   ) {
     const userId = (req as any).user.userId;
     return this.groupsService.joinGroupByJoinCode(joinCode, userId);
-  }
-
-  @Get('/user/get-all-groups')
-  async getAllGroupsForUser(@Req() req: Request) {
-    const userId = (req as any).user.userId;
-    return this.groupsService.findAllGroupsByUserId(userId);
-  }
-
-  @Get('/user/get-all-members')
-  async getAllMembersInActiveGroupsForUser(@Req() req: Request) {
-    const userId = (req as any).user.userId;
-    return this.groupsService.getAllMembersForAllGroupsByUserId(userId);
-  }
-
-  @Get('/user/get-all-members/:groupId')
-  async getAllMembersInGroupForUser(@Param('groupId') groupId: string) {
-    return this.groupsService.getAllMembersForGroup(groupId);
   }
 }
