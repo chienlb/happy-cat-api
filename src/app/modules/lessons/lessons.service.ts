@@ -419,11 +419,6 @@ export class LessonsService {
     prevPage: number;
   }> {
     try {
-      const cacheKey = `lessons:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
-      }
       const lessons = await this.lessonModel
         .find({ isActive: LessonStatus.ACTIVE })
         .skip((paginationDto.page - 1) * paginationDto.limit)
@@ -446,13 +441,27 @@ export class LessonsService {
         prevPage:
           paginationDto.page > 1 ? paginationDto.page - 1 : paginationDto.page,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to find all lessons: ' + error.message,
       );
     }
+  }
+
+  async getLessonsByStatus(
+    status: LessonStatus,
+    page: number = 1,
+    limit: number = 10,
+    sort: string = 'createdAt',
+    order: 'asc' | 'desc' = 'desc',
+  ) {
+    return this.lessonModel
+      .find({ isActive: status })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ [sort]: order === 'asc' ? 1 : -1 })
+      .exec();
   }
 
   async getLessonByOrderIndex(

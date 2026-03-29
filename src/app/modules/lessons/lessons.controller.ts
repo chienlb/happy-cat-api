@@ -332,4 +332,28 @@ export class LessonsController {
   restoreLessonById(@Param('id') id: string) {
     return this.lessonsService.restoreLesson(id);
   }
+
+  @Get('/status/:status')
+  @ApiOperation({ summary: 'Get lessons by status' })
+  @ApiParam({
+    name: 'status',
+    description: 'The status of the lessons',
+    type: String,
+    example: 'active',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The lessons have been successfully retrieved.',
+  })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Not Found' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  getLessonsByStatus(
+    @Param('status') status: LessonStatus,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.lessonsService.getLessonsByStatus(status, paginationDto.page, paginationDto.limit, paginationDto.sort, paginationDto.order);
+  }
 }
