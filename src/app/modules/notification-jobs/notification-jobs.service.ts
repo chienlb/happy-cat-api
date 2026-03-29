@@ -46,9 +46,8 @@ export class NotificationJobsService implements OnModuleInit {
     }
   }
 
-  async notifyNewAssignment(assignmentId: string, classId: string): Promise<void> {
-    const payload: NotificationNewAssignmentJobData = { assignmentId, classId };
+  async notifyNewAssignment(payload: NotificationNewAssignmentJobData): Promise<void> {
     await notificationNewAssignmentQueue.add('new-assignment', payload);
-    this.logger.log(`Enqueued new-assignment job: ${assignmentId} -> class ${classId}`);
+    this.logger.log(`Enqueued new-assignment job for assignment ${payload.assignmentId}`);
   }
 }

@@ -3,7 +3,8 @@ import { redis } from 'src/app/configs/redis/redis.client';
 
 export interface NotificationNewAssignmentJobData {
   assignmentId: string;
-  classId: string;
+  classId?: string;
+  notifyAllStudents?: boolean;
 }
 
 export const QUEUE_NAME = 'notification-new-assignment';

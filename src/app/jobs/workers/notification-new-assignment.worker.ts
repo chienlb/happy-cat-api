@@ -8,6 +8,8 @@ import {
 import {
   findAssignmentById,
   findGroupMembersByClassId,
+  findStudentsByIds,
+  findAllActiveStudents,
   createNotification,
   getUserForEmail,
 } from '../lib/notification-job.lib';
@@ -19,7 +21,7 @@ const logger = new Logger('NotificationNewAssignmentWorker');
 export async function notificationNewAssignmentProcessor(
   job: Job<NotificationNewAssignmentJobData>,
 ) {
-  const { assignmentId, classId } = job.data;
+  const { assignmentId, classId, notifyAllStudents } = job.data;
 
   const assignment = await findAssignmentById(assignmentId);
   if (!assignment) {
@@ -30,22 +32,41 @@ export async function notificationNewAssignmentProcessor(
   const a = assignment as any;
   const title = a.title ?? 'Bài tập mới';
 
-  let members: string[] = [];
-  try {
-    members = await findGroupMembersByClassId(classId);
-  } catch (e) {
-    logger.warn(`Group not found for classId ${classId}: ${(e as Error).message}`);
+  let recipients: string[] = [];
+
+  if (notifyAllStudents) {
+    recipients = await findAllActiveStudents();
+  } else if (classId) {
+    try {
+      const members = await findGroupMembersByClassId(classId);
+      recipients = await findStudentsByIds(members);
+    } catch (e) {
+      logger.warn(
+        `Group not found for classId ${classId}: ${(e as Error).message}`,
+      );
+      return;
+    }
+  }
+
+  if (!recipients.length) {
+    logger.log(`No recipients found for assignment ${assignmentId}`);
     return;
   }
 
-  for (const userId of members) {
+  for (const userId of recipients) {
     try {
       await createNotification({
         userId,
         title: 'Bài tập mới',
         message: `Bạn có bài tập mới: "${title}". Vui lòng xem và nộp bài đúng hạn.`,
         type: NotificationType.ASSIGNMENT,
-        data: { assignmentId, classId, createdBy: a.createdBy },
+        data: {
+          assignmentId,
+          classId,
+          lessonId: a.lessonId,
+          createdBy: a.createdBy,
+          target: notifyAllStudents ? 'all-students' : 'group-students',
+        },
       });
     } catch (err) {
       logger.error(`Failed to create new-assignment notification for user ${userId}: ${(err as Error).message}`);
@@ -66,7 +87,7 @@ export async function notificationNewAssignmentProcessor(
     }
   }
 
-  logger.log(`New assignment: ${assignmentId} -> ${members.length} notifications.`);
+  logger.log(`New assignment: ${assignmentId} -> ${recipients.length} notifications.`);
 }
 
 let workerInstance: Worker | null = null;

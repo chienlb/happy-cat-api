@@ -15,6 +15,7 @@ import { NotificationJobsService } from '../notification-jobs/notification-jobs.
 import { Group, GroupDocument } from '../groups/schema/group.schema';
 import { LessonProgress, LessonProgressDocument } from '../lesson-progress/schema/lesson-progress.schema';
 import { Type } from 'class-transformer';
+import { UserRole } from '../users/schema/user.schema';
 
 @Injectable()
 export class AssignmentsService {
@@ -72,12 +73,24 @@ export class AssignmentsService {
 
     const saved = await assignment.save();
 
-    this.notificationJobsService
-      .notifyNewAssignment(
-        saved._id.toString(),
-        (saved.classId as any)?.toString?.() ?? String(createAssignmentDto.classId),
-      )
-      .catch((e) => this.logger.warn('Failed to enqueue new-assignment notification:', (e as Error).message));
+    const classId = (saved.classId as any)?.toString?.();
+    const shouldNotifyAllStudents =
+      !classId && Boolean(saved.lessonId) && user.role === UserRole.ADMIN;
+
+    if (classId || shouldNotifyAllStudents) {
+      this.notificationJobsService
+        .notifyNewAssignment({
+          assignmentId: saved._id.toString(),
+          classId,
+          notifyAllStudents: shouldNotifyAllStudents,
+        })
+        .catch((e) =>
+          this.logger.warn(
+            'Failed to enqueue new-assignment notification:',
+            (e as Error).message,
+          ),
+        );
+    }
 
     return saved;
   }

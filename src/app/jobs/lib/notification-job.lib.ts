@@ -14,7 +14,12 @@ import {
   SubscriptionStatus,
 } from 'src/app/modules/subscriptions/schema/subscription.schema';
 import { Group, GroupSchema } from 'src/app/modules/groups/schema/group.schema';
-import { User, UserSchema } from 'src/app/modules/users/schema/user.schema';
+import {
+  User,
+  UserRole,
+  UserSchema,
+  UserStatus,
+} from 'src/app/modules/users/schema/user.schema';
 
 function getNotificationModel() {
   return (
@@ -122,4 +127,35 @@ export async function findGroupMembersByClassId(classId: string): Promise<string
   const group = await GroupModel.findById(classId).lean().exec();
   if (!group || !(group as any).members?.length) return [];
   return ((group as any).members as Types.ObjectId[]).map((m) => m.toString());
+}
+
+export async function findStudentsByIds(userIds: string[]): Promise<string[]> {
+  if (!userIds.length) return [];
+
+  const UserModel = getUserModel();
+  const students = await UserModel.find({
+    _id: {
+      $in: userIds.map((id) => new Types.ObjectId(id)),
+    },
+    role: UserRole.STUDENT,
+    status: UserStatus.ACTIVE,
+  })
+    .select('_id')
+    .lean()
+    .exec();
+
+  return students.map((s: any) => s._id.toString());
+}
+
+export async function findAllActiveStudents(): Promise<string[]> {
+  const UserModel = getUserModel();
+  const students = await UserModel.find({
+    role: UserRole.STUDENT,
+    status: UserStatus.ACTIVE,
+  })
+    .select('_id')
+    .lean()
+    .exec();
+
+  return students.map((s: any) => s._id.toString());
 }
