@@ -237,4 +237,15 @@ export class UnitsService {
       throw new Error('Failed to get unit by user id: ' + error.message);
     }
   }
+
+  async getUnitByStatus(status: UnitStatus, session?: ClientSession) {
+    try {
+      const units = await this.unitModel
+        .find({ isActive: status })
+        .session(session || null);
+      return units;
+    } catch (error) {
+      throw new Error('Failed to get units by status: ' + error.message);
+    }
+  }
 }

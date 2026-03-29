@@ -27,6 +27,7 @@ import { Body, Delete, Get, Patch } from '@nestjs/common';
 import { Post } from '@nestjs/common';
 import { UpdateUnitDto } from './dto/update-unit.dto';
 import { PaginationDto } from '../pagination/pagination.dto';
+import { UnitStatus } from './schema/unit.schema';
 
 @ApiTags('Units')
 @ApiBearerAuth()
@@ -167,5 +168,17 @@ export class UnitsController {
     @Query('unitId') unitId: string,
   ) {
     return this.unitsService.getUnitByUserId(userId, orderIndex, unitId);
+  }
+
+  @Get('/status/:status')
+  @ApiOperation({ summary: 'Get units by status' })
+  @ApiParam({ name: 'status', type: String, description: 'Unit status' })
+  @ApiResponse({ status: 200, description: 'Units fetched successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  getUnitsByStatus(@Param('status') status: UnitStatus) {
+    return this.unitsService.getUnitByStatus(status);
   }
 }
