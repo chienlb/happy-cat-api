@@ -90,6 +90,10 @@ export class AssignmentsService {
             (e as Error).message,
           ),
         );
+    } else {
+      this.logger.warn(
+        `Skip new-assignment notification because no classId/lesson target for assignment ${saved._id.toString()}`,
+      );
     }
 
     return saved;

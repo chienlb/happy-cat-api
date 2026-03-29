@@ -64,15 +64,34 @@ export async function notificationNewAssignmentProcessor(
     recipients = recipientUsers.map((u: any) => u._id.toString());
   } else if (classId) {
     try {
-      const group = await groupModel.findById(classId).select('members').lean().exec();
-      const memberIds: string[] = ((group as any)?.members ?? []).map((m: Types.ObjectId) =>
+      const groupById = Types.ObjectId.isValid(classId)
+        ? await groupModel
+            .findById(classId)
+            .select('members')
+            .lean()
+            .exec()
+        : null;
+
+      const groupByClassRef = groupById
+        ? null
+        : await groupModel.collection.findOne(
+            { classRef: classId } as any,
+            { projection: { members: 1 } },
+          );
+
+      const group: any = groupById ?? groupByClassRef;
+      const memberIds: string[] = (group?.members ?? []).map((m: any) =>
         m.toString(),
       );
 
-      if (memberIds.length) {
+      const validMemberObjectIds = memberIds
+        .filter((id) => Types.ObjectId.isValid(id))
+        .map((id) => new Types.ObjectId(id));
+
+      if (validMemberObjectIds.length) {
         recipientUsers = await userModel
           .find({
-            _id: { $in: memberIds.map((id) => new Types.ObjectId(id)) },
+            _id: { $in: validMemberObjectIds },
             role: UserRole.STUDENT,
             status: UserStatus.ACTIVE,
           })
@@ -81,6 +100,10 @@ export async function notificationNewAssignmentProcessor(
           .exec();
         recipients = recipientUsers.map((u: any) => u._id.toString());
       }
+
+      logger.log(
+        `Resolved recipients for classId ${classId}: members=${memberIds.length}, students=${recipients.length}`,
+      );
     } catch (e) {
       logger.warn(
         `Group not found for classId ${classId}: ${(e as Error).message}`,
