@@ -3,23 +3,10 @@ import { HydratedDocument, Types } from 'mongoose';
 
 export type FeedbackDocument = HydratedDocument<Feedback>;
 
-export enum FeedbackType {
-  GENERAL = 'general',
-  LESSON = 'lesson',
-  FEATURE = 'feature',
-  BUG = 'bug',
-}
-
 export interface IFeedback {
   userId: Types.ObjectId;
-  type: FeedbackType;
-  title: string;
   content: string;
-  rating?: number;
-  relatedId?: Types.ObjectId;
-  isResolved: boolean;
-  resolvedBy?: Types.ObjectId;
-  resolvedAt?: Date;
+  rating: number;
 }
 
 @Schema({ collection: 'feedbacks', timestamps: true })
@@ -27,33 +14,11 @@ export class Feedback implements IFeedback {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
-  @Prop({
-    type: String,
-    enum: FeedbackType,
-    default: FeedbackType.GENERAL,
-  })
-  type: FeedbackType;
-
-  @Prop({ required: true })
-  title: string;
-
   @Prop({ required: true })
   content: string;
 
-  @Prop()
-  rating?: number;
-
-  @Prop({ type: Types.ObjectId })
-  relatedId?: Types.ObjectId;
-
-  @Prop({ default: false })
-  isResolved: boolean;
-
-  @Prop({ type: Types.ObjectId, ref: 'User' })
-  resolvedBy?: Types.ObjectId;
-
-  @Prop()
-  resolvedAt?: Date;
+  @Prop({ required: true, min: 1, max: 5 })
+  rating: number;
 }
 
 export const FeedbackSchema = SchemaFactory.createForClass(Feedback);
