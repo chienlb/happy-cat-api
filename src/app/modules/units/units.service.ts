@@ -162,8 +162,7 @@ export class UnitsService {
 
   async findUnitById(id: string, session?: ClientSession) {
     const cacheKey = `unit:id=${id}`;
-    const cached = await this.redisService.get(cacheKey);
-    if (cached) {
+    const cached = null;    if (cached) {
       return JSON.parse(cached);
     }
     const unit = await this.unitModel.findById(id).session(session || null);
@@ -260,3 +259,4 @@ export class UnitsService {
     }
   }
 }
+

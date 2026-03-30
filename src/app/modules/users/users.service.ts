@@ -18,7 +18,6 @@ import * as bcrypt from 'bcrypt';
 import { InvitationCodeType } from '../invitation-codes/schema/invitation-code.schema';
 import { InvitationCodesService } from '../invitation-codes/invitation-codes.service';
 import { PaginationDto } from '../pagination/pagination.dto';
-import { RedisService } from 'src/app/configs/redis/redis.service';
 import * as XLSX from 'xlsx';
 import { validate } from 'class-validator';
 import { plainToClass } from 'class-transformer';
@@ -65,7 +64,6 @@ export class UsersService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @Inject(forwardRef(() => InvitationCodesService))
     private readonly invitationCodesService: InvitationCodesService,
-    private readonly redisService: RedisService,
     @InjectConnection() private readonly connection: Connection,
   ) { }
 
@@ -188,7 +186,7 @@ export class UsersService {
   }
 
   /**
-   * Get paginated active users. Results are cached for a short TTL.
+   * Get paginated active users.
    */
   async findAllUsers(
     paginationDto: PaginationDto,
@@ -200,16 +198,6 @@ export class UsersService {
       sort = 'createdAt',
       order = 'desc',
     } = paginationDto;
-
-    const cacheKey = `users:page=${page}:limit=${limit}:sort=${sort}:order=${order}`;
-    this.logger.debug(`[findAllUsers] Cache key: ${cacheKey}`);
-
-    const cached = await this.redisService.get(cacheKey);
-    if (cached) {
-      this.logger.debug(`[findAllUsers] Cache hit for key: ${cacheKey}`);
-      return JSON.parse(cached) as PaginatedUsers;
-    }
-    this.logger.debug(`[findAllUsers] Cache miss for key: ${cacheKey}`);
 
     const skip = (page - 1) * limit;
     const total = await this.userModel.countDocuments({
@@ -237,10 +225,6 @@ export class UsersService {
       page,
       limit,
     };
-
-    // cache for 5 minutes
-    await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
-    this.logger.debug(`[findAllUsers] Cache set for key: ${cacheKey}`);
 
     return result;
   }

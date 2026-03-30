@@ -45,8 +45,7 @@ export class UserBadgesService {
   async findUserBadgeById(id: string): Promise<UserBadgeDocument> {
     try {
       const cacheKey = `user-badge:id=${id}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const userBadge = await this.userBadgeModel.findById(id);
@@ -56,7 +55,6 @@ export class UserBadgesService {
       const result = {
         data: userBadge,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result.data;
     } catch (error) {
       throw new BadRequestException(error.message);
@@ -75,8 +73,7 @@ export class UserBadgesService {
   }> {
     try {
       const cacheKey = `user-badges:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const userBadges = await this.userBadgeModel
@@ -102,7 +99,6 @@ export class UserBadgesService {
         nextPage,
         previousPage,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new BadRequestException(error.message);
@@ -184,8 +180,7 @@ export class UserBadgesService {
   }> {
     try {
       const cacheKey = `user-badges:user-id=${userId}:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const userBadges = await this.userBadgeModel
@@ -212,10 +207,10 @@ export class UserBadgesService {
         nextPage,
         previousPage,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new BadRequestException('Failed to find user badges', error);
     }
   }
 }
+

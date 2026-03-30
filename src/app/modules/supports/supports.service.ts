@@ -83,8 +83,7 @@ export class SupportsService {
   async getSupportById(id: string): Promise<SupportDocument> {
     try {
       const cacheKey = `support:id=${id}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const support = await this.supportModel.findById(id);
@@ -94,7 +93,6 @@ export class SupportsService {
       const result = {
         data: support,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result.data;
     } catch (error) {
       throw new Error('Failed to get support: ' + error.message);
@@ -104,15 +102,13 @@ export class SupportsService {
   async getSupports(): Promise<SupportDocument[]> {
     try {
       const cacheKey = `supports`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const supports = await this.supportModel.find();
       const result = {
         data: supports,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result.data;
     } catch (error) {
       throw new Error('Failed to get supports: ' + error.message);
@@ -122,15 +118,13 @@ export class SupportsService {
   async getSupportsByUserId(userId: string): Promise<SupportDocument[]> {
     try {
       const cacheKey = `supports:user-id=${userId}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const supports = await this.supportModel.find({ userId });
       const result = {
         data: supports,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result.data;
     } catch (error) {
       throw new Error('Failed to get supports: ' + error.message);
@@ -146,3 +140,4 @@ export class SupportsService {
     }
   }
 }
+
