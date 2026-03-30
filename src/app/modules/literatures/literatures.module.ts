@@ -4,8 +4,6 @@ import { LiteraturesController } from './literatures.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Literature, LiteratureSchema } from './schema/literature.schema';
 import { UsersModule } from '../users/users.module';
-import { RedisModule } from 'src/app/configs/redis/redis.module';
-import { RedisService } from 'src/app/configs/redis/redis.service';
 import { CloudflareService } from '../cloudflare/cloudflare.service';
 
 @Module({
@@ -14,10 +12,9 @@ import { CloudflareService } from '../cloudflare/cloudflare.service';
       { name: Literature.name, schema: LiteratureSchema },
     ]),
     UsersModule,
-    RedisModule,
   ],
   controllers: [LiteraturesController],
-  providers: [LiteraturesService, RedisService, CloudflareService],
+  providers: [LiteraturesService, CloudflareService],
   exports: [LiteraturesService],
 })
 export class LiteraturesModule {}

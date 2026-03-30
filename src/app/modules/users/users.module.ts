@@ -7,8 +7,6 @@ import { InvitationCodesModule } from '../invitation-codes/invitation-codes.modu
 import { HistoryInvitationsModule } from '../history-invitations/history-invitations.module';
 import { HistoryInvitationSchema } from '../history-invitations/schema/history-invitation.schema';
 import { TokenSchema } from '../tokens/schema/token.schema';
-import { RedisService } from 'src/app/configs/redis/redis.service';
-import { RedisModule } from 'src/app/configs/redis/redis.module';
 
 @Module({
   imports: [
@@ -18,10 +16,9 @@ import { RedisModule } from 'src/app/configs/redis/redis.module';
       { name: 'Token', schema: TokenSchema },
     ]),
     forwardRef(() => InvitationCodesModule),
-    RedisModule,
   ],
   controllers: [UsersController],
-  providers: [UsersService, RedisService],
+  providers: [UsersService],
   exports: [UsersService, MongooseModule],
 })
 export class UsersModule {}

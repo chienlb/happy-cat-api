@@ -103,8 +103,7 @@ export class InvitationCodesService {
   async findInvitationCodeById(id: string): Promise<InvitationCodeDocument> {
     try {
       const cacheKey = `invitation-code:id=${id}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached) as InvitationCodeDocument;
       }
       const invitationCode = await this.invitationCodeModel.findById(id);
@@ -114,7 +113,6 @@ export class InvitationCodesService {
       const result = {
         data: invitationCode,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result.data;
     } catch (error) {
       this.logger.error('Error while finding invitation code:', error);
@@ -135,8 +133,7 @@ export class InvitationCodesService {
   }> {
     try {
       const cacheKey = `invitation-codes:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached) as {
           data: InvitationCodeDocument[];
           total: number;
@@ -166,7 +163,6 @@ export class InvitationCodesService {
         hasPreviousPage: hasPreviousPage,
         limit: paginationDto.limit,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       this.logger.error('Error while finding all invitation codes:', error);
@@ -176,3 +172,4 @@ export class InvitationCodesService {
     }
   }
 }
+

@@ -6,7 +6,6 @@ import { CreateLiteratureDto } from './dto/create-literature.dto';
 import { UpdateLiteratureDto } from './dto/update-literature.dto';
 import { UsersService } from '../users/users.service';
 import { PaginationDto } from '../pagination/pagination.dto';
-import { RedisService } from 'src/app/configs/redis/redis.service';
 import { CloudflareService } from '../cloudflare/cloudflare.service';
 
 
@@ -16,7 +15,6 @@ export class LiteraturesService {
     @InjectModel(Literature.name)
     private literatureModel: Model<LiteratureDocument>,
     private usersService: UsersService,
-    private readonly redisService: RedisService,
     private readonly cloudflareService: CloudflareService,
   ) { }
 
@@ -133,12 +131,6 @@ export class LiteraturesService {
 
     const sortOrder = paginationDto.order === 'asc' ? 1 : -1;
 
-    // const cacheKey = `literatures:isPublished=true:page=${page}:limit=${limit}:sort=${sortField}:order=${sortOrder}`;
-
-    // // 3) cache
-    // const cached = await this.redisService.get(cacheKey);
-    // if (cached) return JSON.parse(cached);
-
     const filter = { isPublished: true };
 
     const test = await this.literatureModel.countDocuments().exec();
@@ -175,27 +167,17 @@ export class LiteraturesService {
       prevPage,
     };
 
-    // await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
     return result;
   }
 
 
   async getLiteratureById(id: string): Promise<LiteratureDocument> {
     try {
-      const cacheKey = `literature:id=${id}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
-      }
       const literature = await this.literatureModel.findById(id);
       if (!literature) {
         throw new BadRequestException('Literature not found');
       }
-      const result = {
-        data: literature,
-      };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
-      return result.data;
+      return literature;
     } catch (error) {
       throw new BadRequestException(error.message);
     }

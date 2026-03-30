@@ -12,13 +12,12 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserDocument, UserRole, UserStatus } from './schema/user.schema';
-import { ClientSession, Connection, Model } from 'mongoose';
+import { ClientSession, Connection, Model, Types } from 'mongoose';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { InvitationCodeType } from '../invitation-codes/schema/invitation-code.schema';
 import { InvitationCodesService } from '../invitation-codes/invitation-codes.service';
 import { PaginationDto } from '../pagination/pagination.dto';
-import { RedisService } from 'src/app/configs/redis/redis.service';
 import * as XLSX from 'xlsx';
 import { validate } from 'class-validator';
 import { plainToClass } from 'class-transformer';
@@ -27,6 +26,26 @@ import { emailInformationQueue } from 'src/app/jobs/queues/email-information.que
 
 type PaginatedUsers = {
   data: UserDocument[];
+  total: number;
+  totalPages: number;
+  nextPage: number | null;
+  prevPage: number | null;
+  page: number;
+  limit: number;
+};
+
+type LeaderboardUser = {
+  _id: string;
+  fullname: string;
+  username: string;
+  avatar?: string;
+  role: UserRole;
+  exp: number;
+  rank: number;
+};
+
+type PaginatedLeaderboard = {
+  data: LeaderboardUser[];
   total: number;
   totalPages: number;
   nextPage: number | null;
@@ -45,7 +64,6 @@ export class UsersService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @Inject(forwardRef(() => InvitationCodesService))
     private readonly invitationCodesService: InvitationCodesService,
-    private readonly redisService: RedisService,
     @InjectConnection() private readonly connection: Connection,
   ) { }
 
@@ -168,7 +186,7 @@ export class UsersService {
   }
 
   /**
-   * Get paginated active users. Results are cached for a short TTL.
+   * Get paginated active users.
    */
   async findAllUsers(
     paginationDto: PaginationDto,
@@ -180,16 +198,6 @@ export class UsersService {
       sort = 'createdAt',
       order = 'desc',
     } = paginationDto;
-
-    const cacheKey = `users:page=${page}:limit=${limit}:sort=${sort}:order=${order}`;
-    this.logger.debug(`[findAllUsers] Cache key: ${cacheKey}`);
-
-    const cached = await this.redisService.get(cacheKey);
-    if (cached) {
-      this.logger.debug(`[findAllUsers] Cache hit for key: ${cacheKey}`);
-      return JSON.parse(cached) as PaginatedUsers;
-    }
-    this.logger.debug(`[findAllUsers] Cache miss for key: ${cacheKey}`);
 
     const skip = (page - 1) * limit;
     const total = await this.userModel.countDocuments({
@@ -218,9 +226,55 @@ export class UsersService {
       limit,
     };
 
-    // cache for 5 minutes
-    await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
-    this.logger.debug(`[findAllUsers] Cache set for key: ${cacheKey}`);
+    return result;
+  }
+
+  /**
+   * Get paginated leaderboard by XP (exp), sorted from high to low.
+   */
+  async getXpLeaderboard(
+    paginationDto: PaginationDto,
+    session?: ClientSession,
+  ): Promise<PaginatedLeaderboard> {
+    const page = Math.max(1, Number(paginationDto.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(paginationDto.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const filter = { status: UserStatus.ACTIVE, role: UserRole.STUDENT };
+    const total = await this.userModel.countDocuments(filter);
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const nextPage = totalPages > page ? page + 1 : null;
+    const prevPage = page > 1 ? page - 1 : null;
+
+    const query = this.userModel
+      .find(filter)
+      .select('fullname username avatar role exp')
+      .sort({ exp: -1, updatedAt: 1, _id: 1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const users = session ? await query.session(session) : await query;
+
+    const data: LeaderboardUser[] = users.map((user: any, index: number) => ({
+      _id: user._id.toString(),
+      fullname: user.fullname,
+      username: user.username,
+      avatar: user.avatar,
+      role: user.role,
+      exp: user.exp ?? 0,
+      rank: skip + index + 1,
+    }));
+
+    const result: PaginatedLeaderboard = {
+      data,
+      total,
+      totalPages,
+      nextPage,
+      prevPage,
+      page,
+      limit,
+    };
 
     return result;
   }
@@ -237,6 +291,27 @@ export class UsersService {
       const message = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(
         `Failed to find user by ID: ${message}`,
+      );
+    }
+  }
+
+  async findUsersByIds(
+    ids: string[],
+    session?: ClientSession,
+  ): Promise<UserDocument[]> {
+    try {
+      if (!ids || ids.length === 0) {
+        return [];
+      }
+
+      const objectIds = ids.map((id) => new Types.ObjectId(id));
+      const q = this.userModel.find({ _id: { $in: objectIds } }).select('-password');
+      const users = session ? await q.session(session) : await q;
+      return users;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Failed to find users by IDs: ${message}`,
       );
     }
   }

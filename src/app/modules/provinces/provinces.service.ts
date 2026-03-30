@@ -31,8 +31,7 @@ export class ProvincesService {
   }> {
     try {
       const cacheKey = `provinces:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const skip = (paginationDto.page - 1) * paginationDto.limit;
@@ -54,7 +53,6 @@ export class ProvincesService {
         nextPage: nextPage ?? paginationDto.page,
         prevPage: prevPage ?? paginationDto.page,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new Error('Failed to find all provinces: ' + error.message);
@@ -63,8 +61,7 @@ export class ProvincesService {
 
   async findProvinceById(id: string): Promise<ProvinceDocument> {
     const cacheKey = `province:id=${id}`;
-    const cached = await this.redisService.get(cacheKey);
-    if (cached) {
+    const cached = null;    if (cached) {
       return JSON.parse(cached);
     }
     const province = await this.provinceModel.findById(id);
@@ -74,7 +71,6 @@ export class ProvincesService {
     const result = {
       data: province,
     };
-    await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
     return result.data;
   }
 
@@ -111,3 +107,4 @@ export class ProvincesService {
     }
   }
 }
+

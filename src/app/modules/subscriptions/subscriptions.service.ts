@@ -68,8 +68,7 @@ export class SubscriptionsService {
   }> {
     try {
       const cacheKey = `subscriptions:user-id=${userId}:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const subscriptions = await this.subscriptionRepository
@@ -91,7 +90,6 @@ export class SubscriptionsService {
         nextPage: nextPage ?? paginationDto.page,
         prevPage: prevPage ?? paginationDto.page,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new Error(
@@ -103,8 +101,7 @@ export class SubscriptionsService {
   async findSubscriptionById(id: string): Promise<SubscriptionDocument> {
     try {
       const cacheKey = `subscription:id=${id}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const subscription = await this.subscriptionRepository.findById(id);
@@ -114,7 +111,6 @@ export class SubscriptionsService {
       const result = {
         data: subscription,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result.data;
     } catch (error) {
       throw new Error(
@@ -171,8 +167,7 @@ export class SubscriptionsService {
   }> {
     try {
       const cacheKey = `subscriptions:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const subscriptions = await this.subscriptionRepository
@@ -193,7 +188,6 @@ export class SubscriptionsService {
         nextPage: nextPage ?? paginationDto.page,
         prevPage: prevPage ?? paginationDto.page,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new Error(
@@ -223,3 +217,4 @@ export class SubscriptionsService {
     }
   }
 }
+

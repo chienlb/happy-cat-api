@@ -134,8 +134,7 @@ export class ProgressesService {
   }> {
     try {
       const cacheKey = `progresses:user-id=${userId}:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const progress = await this.progressModel
@@ -155,7 +154,6 @@ export class ProgressesService {
         hasPreviousPage: currentPage > 1,
         limit: paginationDto.limit,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new BadRequestException(error);
@@ -176,8 +174,7 @@ export class ProgressesService {
   }> {
     try {
       const cacheKey = `progresses:course-id=${courseId}:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const progress = await this.progressModel
@@ -198,7 +195,6 @@ export class ProgressesService {
         hasPreviousPage: currentPage > 1,
         limit: paginationDto.limit,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new BadRequestException(error);
@@ -219,8 +215,7 @@ export class ProgressesService {
   }> {
     try {
       const cacheKey = `progresses:lesson-id=${lessonId}:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const progress = await this.progressModel
@@ -241,7 +236,6 @@ export class ProgressesService {
         hasPreviousPage: currentPage > 1,
         limit: paginationDto.limit,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new BadRequestException(error);
@@ -262,8 +256,7 @@ export class ProgressesService {
   }> {
     try {
       const cacheKey = `progresses:assignment-id=${assignmentId}:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const progress = await this.progressModel
@@ -284,7 +277,6 @@ export class ProgressesService {
         hasPreviousPage: currentPage > 1,
         limit: paginationDto.limit,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new BadRequestException(error);
@@ -306,8 +298,7 @@ export class ProgressesService {
   }> {
     try {
       const cacheKey = `progresses:user-id=${userId}&course-id=${courseId}:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const progress = await this.progressModel
@@ -329,7 +320,6 @@ export class ProgressesService {
         hasPreviousPage: currentPage > 1,
         limit: paginationDto.limit,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new BadRequestException(error);
@@ -347,8 +337,7 @@ export class ProgressesService {
   }> {
     try {
       const cacheKey = `progresses:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const progress = await this.progressModel
@@ -367,10 +356,10 @@ export class ProgressesService {
         hasPreviousPage: currentPage > 1,
         limit: paginationDto.limit,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new BadRequestException(error);
     }
   }
 }
+

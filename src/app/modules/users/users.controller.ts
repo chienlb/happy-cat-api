@@ -103,6 +103,31 @@ export class UsersController {
     return ok(users, 'Users retrieved successfully');
   }
 
+  @Get('leaderboard/xp')
+  @UseGuards(AuthGuard('jwt'))
+  @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT, UserRole.STUDENT)
+  @ApiOperation({ summary: 'Get users leaderboard by XP' })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    description: 'The page number',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'limit',
+    type: Number,
+    description: 'The number of users per page',
+    required: false,
+  })
+  @ApiResponse({ status: 200, description: 'XP leaderboard retrieved successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getXpLeaderboard(@Query() paginationDto: PaginationDto) {
+    const leaderboard = await this.usersService.getXpLeaderboard(paginationDto);
+    return ok(leaderboard, 'XP leaderboard retrieved successfully');
+  }
+
   @Get(':id')
   @UseGuards(AuthGuard('jwt'))
   @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)

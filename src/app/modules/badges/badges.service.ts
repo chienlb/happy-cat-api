@@ -69,8 +69,7 @@ export class BadgesService {
   }> {
     try {
       const cacheKey = `badges:page=${page}:limit=${limit}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const skip = (page - 1) * limit;
@@ -92,7 +91,6 @@ export class BadgesService {
         nextPage,
         previousPage,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new BadRequestException(error.message);
@@ -162,3 +160,4 @@ export class BadgesService {
     }
   }
 }
+

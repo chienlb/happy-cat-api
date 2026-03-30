@@ -120,8 +120,7 @@ export class SubmissionsService {
   async getSubmissionById(id: string): Promise<SubmissionDocument> {
     try {
       const cacheKey = `submission:id=${id}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const submission = await this.submissionModel.findById(id);
@@ -131,7 +130,6 @@ export class SubmissionsService {
       const result = {
         data: submission,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result.data;
     } catch (error) {
       throw new Error('Failed to get submission: ' + error.message);
@@ -143,8 +141,7 @@ export class SubmissionsService {
   ): Promise<SubmissionDocument[]> {
     try {
       const cacheKey = `submissions:assignment-id=${assignmentId}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const submissions = await this.submissionModel.find({ assignmentId });
@@ -154,7 +151,6 @@ export class SubmissionsService {
       const result = {
         data: submissions,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result.data;
     } catch (error) {
       throw new Error('Failed to get submissions: ' + error.message);
@@ -302,3 +298,4 @@ export class SubmissionsService {
     }
   }
 }
+

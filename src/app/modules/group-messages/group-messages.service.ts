@@ -159,8 +159,7 @@ export class GroupMessagesService {
   }> {
     try {
       const cacheKey = `group-message:id=${id}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const message = await this.groupMessageModel.findById(id);
@@ -170,7 +169,6 @@ export class GroupMessagesService {
       const result = {
         data: message,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new InternalServerErrorException(
@@ -188,8 +186,7 @@ export class GroupMessagesService {
   }> {
     try {
       const cacheKey = `group-message:id=${id}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const message = await this.findMessageById(id);
@@ -208,7 +205,6 @@ export class GroupMessagesService {
       const result = {
         data: updatedMessage,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       this.groupMessagesGateway.emitEditMessage(
         message.data.groupId.toString(),
         updatedMessage,
@@ -401,8 +397,7 @@ export class GroupMessagesService {
   }> {
     try {
       const cacheKey = `group-message:id=${id}:replies:page=${paginationDto.page}:limit=${paginationDto.limit}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const message = await this.findMessageById(id);
@@ -432,7 +427,6 @@ export class GroupMessagesService {
         hasPreviousPage: hasPreviousPage,
         limit: paginationDto.limit,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new InternalServerErrorException(
@@ -445,8 +439,7 @@ export class GroupMessagesService {
   async getMessageRepliesCount(id: string): Promise<number> {
     try {
       const cacheKey = `group-message:id=${id}:replies-count`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const message = await this.findMessageById(id);
@@ -459,7 +452,6 @@ export class GroupMessagesService {
       const result = {
         data: count,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result.data;
     } catch (error) {
       throw new InternalServerErrorException(
@@ -472,8 +464,7 @@ export class GroupMessagesService {
   async getMessageGroupCount(groupId: string): Promise<number> {
     try {
       const cacheKey = `group-message:groupId=${groupId}:count`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const group = await this.groupsService.findGroupById(groupId);
@@ -487,7 +478,6 @@ export class GroupMessagesService {
       const result = {
         data: count,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result.data;
     } catch (error) {
       throw new InternalServerErrorException(
@@ -497,3 +487,4 @@ export class GroupMessagesService {
     }
   }
 }
+

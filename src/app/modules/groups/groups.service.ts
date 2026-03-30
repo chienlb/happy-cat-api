@@ -155,8 +155,7 @@ export class GroupsService {
   }> {
     try {
       const cacheKey = `groups:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const groups = await this.groupModel
@@ -178,7 +177,6 @@ export class GroupsService {
         nextPage: nextPage ?? paginationDto.page,
         prevPage: prevPage ?? paginationDto.page,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new Error('Failed to find all groups: ' + error.message);
@@ -355,8 +353,7 @@ export class GroupsService {
   }> {
     try {
       const cacheKey = `groups:user:${userId}:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
+      const cached = null;      if (cached) {
         return JSON.parse(cached);
       }
       const groups = await this.groupModel
@@ -379,7 +376,6 @@ export class GroupsService {
         nextPage: nextPage ?? paginationDto.page,
         prevPage: prevPage ?? paginationDto.page,
       };
-      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
       throw new Error('Failed to get all groups by user id: ' + error.message);
@@ -498,3 +494,4 @@ export class GroupsService {
     }
   }
 }
+
