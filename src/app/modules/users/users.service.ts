@@ -35,6 +35,26 @@ type PaginatedUsers = {
   limit: number;
 };
 
+type LeaderboardUser = {
+  _id: string;
+  fullname: string;
+  username: string;
+  avatar?: string;
+  role: UserRole;
+  exp: number;
+  rank: number;
+};
+
+type PaginatedLeaderboard = {
+  data: LeaderboardUser[];
+  total: number;
+  totalPages: number;
+  nextPage: number | null;
+  prevPage: number | null;
+  page: number;
+  limit: number;
+};
+
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
@@ -221,6 +241,56 @@ export class UsersService {
     // cache for 5 minutes
     await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
     this.logger.debug(`[findAllUsers] Cache set for key: ${cacheKey}`);
+
+    return result;
+  }
+
+  /**
+   * Get paginated leaderboard by XP (exp), sorted from high to low.
+   */
+  async getXpLeaderboard(
+    paginationDto: PaginationDto,
+    session?: ClientSession,
+  ): Promise<PaginatedLeaderboard> {
+    const page = Math.max(1, Number(paginationDto.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(paginationDto.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const filter = { status: UserStatus.ACTIVE, role: UserRole.STUDENT };
+    const total = await this.userModel.countDocuments(filter);
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const nextPage = totalPages > page ? page + 1 : null;
+    const prevPage = page > 1 ? page - 1 : null;
+
+    const query = this.userModel
+      .find(filter)
+      .select('fullname username avatar role exp')
+      .sort({ exp: -1, updatedAt: 1, _id: 1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const users = session ? await query.session(session) : await query;
+
+    const data: LeaderboardUser[] = users.map((user: any, index: number) => ({
+      _id: user._id.toString(),
+      fullname: user.fullname,
+      username: user.username,
+      avatar: user.avatar,
+      role: user.role,
+      exp: user.exp ?? 0,
+      rank: skip + index + 1,
+    }));
+
+    const result: PaginatedLeaderboard = {
+      data,
+      total,
+      totalPages,
+      nextPage,
+      prevPage,
+      page,
+      limit,
+    };
 
     return result;
   }
