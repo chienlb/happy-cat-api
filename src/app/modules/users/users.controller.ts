@@ -46,7 +46,7 @@ import { AnyARecord } from 'dns';
 @ApiTags('Users')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
+@Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT, UserRole.STUDENT)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
