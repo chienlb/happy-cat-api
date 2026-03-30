@@ -54,11 +54,6 @@ export class PackagesService {
     nextPage: number;
     prevPage: number;
   }> {
-    const cacheKey = `packages:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
-    const cached = await this.redisService.get(cacheKey);
-    if (cached) {
-      return JSON.parse(cached);
-    }
     const skip = (paginationDto.page - 1) * paginationDto.limit;
     const packages = await this.packageRepository
       .find({ isActive: true })
@@ -80,7 +75,7 @@ export class PackagesService {
       nextPage: nextPage ?? paginationDto.page,
       prevPage: prevPage ?? paginationDto.page,
     };
-    await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+    // await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
     return result;
   }
 
