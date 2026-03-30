@@ -12,6 +12,10 @@ import { CreateCompetitionDto } from './dto/create-competition.dto';
 import { UpdateCompetitionDto } from './dto/update-competition.dto';
 import { PaginationDto } from '../pagination/pagination.dto';
 import { RanksService } from '../ranks/rank.service';
+import {
+  CompetitionLeaderboardUserDto,
+  PaginatedCompetitionLeaderboardDto,
+} from './dto/leaderboard-competition.dto';
 
 @Injectable()
 export class CompetitionsService {
@@ -307,6 +311,76 @@ export class CompetitionsService {
         await rank.save();
       }
       return competition;
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
+
+  async getCompetitionLeaderboard(
+    competitionId: string,
+    paginationDto: PaginationDto,
+  ): Promise<PaginatedCompetitionLeaderboardDto> {
+    try {
+      const ranks = await this.ranksService.findLeaderboardByCompetition(
+        competitionId,
+        1000, // initial large limit to get all for pagination
+      );
+
+      if (!ranks || ranks.length === 0) {
+        return {
+          data: [],
+          total: 0,
+          totalPages: 0,
+          nextPage: null,
+          prevPage: null,
+          page: paginationDto.page,
+          limit: paginationDto.limit,
+        };
+      }
+
+      // Get user details for all ranks
+      const userIds = ranks.map((r) => r.userId.toString());
+      const users = await this.usersService.findUsersByIds(userIds);
+      const userMap = new Map(users.map((u) => [u._id.toString(), u]));
+
+      // Fetch paginated results
+      const start = (paginationDto.page - 1) * paginationDto.limit;
+      const end = start + paginationDto.limit;
+      const paginatedRanks = ranks.slice(start, end);
+
+      const leaderboardData: CompetitionLeaderboardUserDto[] = paginatedRanks.map((rank) => {
+        const user = userMap.get(rank.userId.toString());
+        return {
+          _id: user?._id.toString() || rank.userId.toString(),
+          fullname: user?.fullname || 'Unknown',
+          username: user?.username || 'Unknown',
+          avatar: user?.avatar,
+          role: user?.role,
+          score: rank.score,
+          rank: rank.rank,
+          submittedAt: rank.submittedAt,
+        };
+      });
+
+      const total = ranks.length;
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
+
+      return {
+        data: leaderboardData,
+        total,
+        totalPages,
+        nextPage:
+          currentPage < totalPages
+            ? currentPage + 1
+            : currentPage === totalPages
+              ? null
+              : totalPages,
+        prevPage:
+          currentPage > 1 ? currentPage - 1 : currentPage === 1 ? null : 1,
+        page: currentPage,
+        limit: paginationDto.limit,
+      };
     } catch (error) {
       throw new BadRequestException(error);
     }

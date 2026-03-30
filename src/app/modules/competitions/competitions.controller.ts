@@ -32,6 +32,10 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { PaginationDto } from '../pagination/pagination.dto';
+import {
+  CompetitionLeaderboardUserDto,
+  PaginatedCompetitionLeaderboardDto,
+} from './dto/leaderboard-competition.dto';
 
 @Controller('competitions')
 @ApiTags('Competitions')
@@ -412,6 +416,64 @@ export class CompetitionsController {
       body.competitionId,
       userId,
       body.score,
+    );
+  }
+
+  @Get(':competitionId/leaderboard')
+  @ApiOperation({ summary: 'Get competition leaderboard' })
+  @ApiParam({ name: 'competitionId', type: String, description: 'Competition id' })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+    description: 'Page number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    type: Number,
+    required: false,
+    description: 'Limit number',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Leaderboard fetched successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              _id: { type: 'string' },
+              fullname: { type: 'string' },
+              username: { type: 'string' },
+              avatar: { type: 'string' },
+              role: { type: 'string' },
+              score: { type: 'number' },
+              rank: { type: 'number' },
+              submittedAt: { type: 'string' },
+            },
+          },
+        },
+        total: { type: 'number' },
+        totalPages: { type: 'number' },
+        nextPage: { type: 'number' },
+        prevPage: { type: 'number' },
+        page: { type: 'number' },
+        limit: { type: 'number' },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getCompetitionLeaderboard(
+    @Param('competitionId') competitionId: string,
+    @Query() paginationDto: PaginationDto,
+  ): Promise<PaginatedCompetitionLeaderboardDto> {
+    return await this.competitionsService.getCompetitionLeaderboard(
+      competitionId,
+      paginationDto,
     );
   }
 

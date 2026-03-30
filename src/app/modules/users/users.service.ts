@@ -12,7 +12,7 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserDocument, UserRole, UserStatus } from './schema/user.schema';
-import { ClientSession, Connection, Model } from 'mongoose';
+import { ClientSession, Connection, Model, Types } from 'mongoose';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { InvitationCodeType } from '../invitation-codes/schema/invitation-code.schema';
@@ -307,6 +307,27 @@ export class UsersService {
       const message = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(
         `Failed to find user by ID: ${message}`,
+      );
+    }
+  }
+
+  async findUsersByIds(
+    ids: string[],
+    session?: ClientSession,
+  ): Promise<UserDocument[]> {
+    try {
+      if (!ids || ids.length === 0) {
+        return [];
+      }
+
+      const objectIds = ids.map((id) => new Types.ObjectId(id));
+      const q = this.userModel.find({ _id: { $in: objectIds } }).select('-password');
+      const users = session ? await q.session(session) : await q;
+      return users;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Failed to find users by IDs: ${message}`,
       );
     }
   }
