@@ -293,9 +293,10 @@ export class LessonsService {
     }
     try {
       const lesson = await this.findLessonById(id, mongooseSession);
+      const unit = new Types.ObjectId(updateLessonDto.unit);
 
       const updatedLesson = await this.lessonModel
-        .findByIdAndUpdate(id, updateLessonDto, {
+        .findByIdAndUpdate(id, { ...updateLessonDto, unit }, {
           new: true,
           runValidators: true,
           session: mongooseSession,
