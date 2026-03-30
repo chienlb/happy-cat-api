@@ -23,7 +23,6 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { FeedbackType } from './schema/feedback.schema';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -43,7 +42,6 @@ export class FeedbacksController {
       example1: {
         value: {
           userId: '1234567890',
-          type: FeedbackType.GENERAL,
           title: 'Feedback title',
           content: 'Feedback content',
           rating: 5,
@@ -137,7 +135,6 @@ export class FeedbacksController {
     examples: {
       example1: {
         value: {
-          type: FeedbackType.GENERAL,
           title: 'Feedback title',
           content: 'Feedback content',
           rating: 5,
