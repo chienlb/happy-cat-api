@@ -309,4 +309,13 @@ export class NotificationsController {
   ): Promise<NotificationDocument> {
     return await this.notificationsService.findNotificationById(id);
   }
+
+  @Post('send-to-teachers')
+  async sendNotificationToTeachers(
+    @Body() createNotificationDto: CreateNotificationDto,
+  ): Promise<NotificationDocument[]> {
+    return await this.notificationsService.sendNotificationToAllUsersRoleTeacher(
+      createNotificationDto,
+    );
+  }
 }

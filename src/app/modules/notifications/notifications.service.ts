@@ -8,10 +8,11 @@ import {
   Notification,
   NotificationDocument,
 } from './schema/notification.schema';
-import { Model, Types } from 'mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { UsersService } from '../users/users.service';
+import { UserRole } from '../users/schema/user.schema';
 
 @Injectable()
 export class NotificationsService {
@@ -189,6 +190,95 @@ export class NotificationsService {
           currentPage > 1 ? currentPage - 1 : currentPage === 1 ? null : 1,
         limit: limit,
       };
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
+
+  async sendNotificationToUser(
+    userId: string,
+    createNotificationDto: CreateNotificationDto,
+  ): Promise<NotificationDocument> {
+    try {
+      const user = await this.usersService.findUserById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      const notification = new this.notificationRepository({
+        userId: new Types.ObjectId(userId),
+        senderId: createNotificationDto.senderId
+          ? new Types.ObjectId(createNotificationDto.senderId)
+          : null,
+        title: createNotificationDto.title,
+        message: createNotificationDto.message,
+        type: createNotificationDto.type,
+        data: createNotificationDto.data,
+        isRead: createNotificationDto.isRead,
+        readAt: createNotificationDto.readAt,
+      });
+      await notification.save();
+      return notification;
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
+
+  async sendNotificationToMultipleUsers(
+    userIds: string[],
+    createNotificationDto: CreateNotificationDto,
+  ): Promise<NotificationDocument[]> {
+    try {
+      const notifications: NotificationDocument[] = [];
+      for (const userId of userIds) {
+        const user = await this.usersService.findUserById(userId);
+        if (!user) {
+          throw new NotFoundException(`User with ID ${userId} not found`);
+        }
+        const notification = new this.notificationRepository({
+          userId: new Types.ObjectId(userId),
+          senderId: createNotificationDto.senderId
+            ? new Types.ObjectId(createNotificationDto.senderId)
+            : null,
+          title: createNotificationDto.title,
+          message: createNotificationDto.message,
+          type: createNotificationDto.type,
+          data: createNotificationDto.data,
+          isRead: createNotificationDto.isRead,
+          readAt: createNotificationDto.readAt,
+        });
+        await notification.save();
+        notifications.push(notification);
+      }
+      return notifications;
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
+
+  async sendNotificationToAllUsersRoleTeacher(
+    createNotificationDto: CreateNotificationDto,
+    session?: ClientSession
+  ): Promise<NotificationDocument[]> {
+    try {
+      const users = await this.usersService.getUserByRole(UserRole.TEACHER, session);
+      const notifications: NotificationDocument[] = [];
+      for (const user of users) {
+        const notification = new this.notificationRepository({
+          userId: new Types.ObjectId(user._id),
+          senderId: createNotificationDto.senderId
+            ? new Types.ObjectId(createNotificationDto.senderId)
+            : null,
+          title: createNotificationDto.title,
+          message: createNotificationDto.message,
+          type: createNotificationDto.type,
+          data: createNotificationDto.data,
+          isRead: createNotificationDto.isRead,
+          readAt: createNotificationDto.readAt,
+        });
+        await notification.save();
+        notifications.push(notification);
+      }
+      return notifications;
     } catch (error) {
       throw new BadRequestException(error);
     }
