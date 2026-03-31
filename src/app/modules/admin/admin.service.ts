@@ -5,7 +5,7 @@ import { PaymentDocument } from "../payments/schema/payment.schema";
 import { FeatureFlag } from "../feature-flags/schema/feature-flag.schema";
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import { Model, Types } from "mongoose";
 import * as XLSX from 'xlsx';
 import { ExportFilterDto, ExportType } from './dto/export-admin.dto';
 import { FeatureFlagsService } from "../feature-flags/feature-flags.service";
@@ -521,7 +521,7 @@ export class AdminService {
 
   async uploadDocument(groupId: string, file: any): Promise<{ message: string }> {
     // Tìm nhóm theo ID
-    const group = await this.groupModel.findById(groupId);
+    const group = await this.groupModel.findById(new Types.ObjectId(groupId));
     if (!group) {
       throw new Error('Nhóm không tồn tại');
     }
