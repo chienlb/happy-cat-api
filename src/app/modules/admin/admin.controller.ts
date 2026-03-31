@@ -11,6 +11,8 @@ import { UserRole } from '../users/schema/user.schema';
 import { ToggleFeatureFlagDto } from './dto/toggle-feature-flag.dto';
 import { FeatureFlag } from '../feature-flags/schema/feature-flag.schema';
 import { Express } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { UploadedFile, UseInterceptors } from '@nestjs/common';
 
 @Controller('admin')
 @ApiTags('Admin')
@@ -203,6 +205,7 @@ export class AdminController {
   @Post('upload-document')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(UserRole.TEACHER)
+  @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Giáo viên đăng tài liệu lên nhóm' })
   @ApiBody({
     schema: {
@@ -220,7 +223,7 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden - Teacher only' })
   async uploadDocument(
     @Body('groupId') groupId: string,
-    @Body('file') file: any,
+    @UploadedFile() file: any,
   ) {
     console.log('Received groupId:', groupId);
     console.log('Received file:', file);
