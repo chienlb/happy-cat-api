@@ -29,6 +29,7 @@ export interface IGroup {
   joinCode?: string; // Mã mời tham gia nhóm (tự sinh)
   avatar?: string; // Ảnh đại diện nhóm
   background?: string; // Ảnh nền nhóm
+  documents?: { name: string; path: string }[]; // Danh sách tài liệu của nhóm
 }
 
 export interface IGroupResponse extends IGroup {
@@ -74,6 +75,17 @@ export class Group implements IGroup {
 
   @Prop()
   background?: string;
+
+  @Prop({
+    type: [
+      {
+        name: { type: String, required: true },
+        path: { type: String, required: true },
+      },
+    ],
+    default: [],
+  })
+  documents: { name: string; path: string }[];
 }
 
 export const GroupSchema = SchemaFactory.createForClass(Group);

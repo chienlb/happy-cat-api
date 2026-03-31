@@ -10,6 +10,7 @@ import { Roles } from '../../common/decorators/role.decorator';
 import { UserRole } from '../users/schema/user.schema';
 import { ToggleFeatureFlagDto } from './dto/toggle-feature-flag.dto';
 import { FeatureFlag } from '../feature-flags/schema/feature-flag.schema';
+import { Express } from 'express';
 
 @Controller('admin')
 @ApiTags('Admin')
@@ -197,5 +198,30 @@ export class AdminController {
         error: 'Internal Server Error'
       });
     }
+  }
+
+  @Post('upload-document')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.TEACHER)
+  @ApiOperation({ summary: 'Giáo viên đăng tài liệu lên nhóm' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        groupId: { type: 'string', description: 'ID của nhóm' },
+        file: { type: 'string', format: 'binary', description: 'Tài liệu tải lên' },
+      },
+      required: ['groupId', 'file'],
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Tài liệu được tải lên thành công' })
+  @ApiResponse({ status: 400, description: 'Yêu cầu không hợp lệ' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Teacher only' })
+  async uploadDocument(
+    @Body('groupId') groupId: string,
+    @Body('file') file: any,
+  ) {
+    return this.adminService.uploadDocument(groupId, file);
   }
 }

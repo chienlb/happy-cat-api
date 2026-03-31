@@ -9,6 +9,7 @@ import { Model } from "mongoose";
 import * as XLSX from 'xlsx';
 import { ExportFilterDto, ExportType } from './dto/export-admin.dto';
 import { FeatureFlagsService } from "../feature-flags/feature-flags.service";
+import { CloudflareService } from '../cloudflare/cloudflare.service';
 
 @Injectable()
 export class AdminService {
@@ -18,6 +19,7 @@ export class AdminService {
     @InjectModel("Group") private groupModel: Model<GroupDocument>,
     @InjectModel("Payment") private paymentModel: Model<PaymentDocument>,
     private readonly featureFlagsService: FeatureFlagsService,
+    private readonly cloudflareService: CloudflareService,
   ) { }
 
   async getSystemFeatures(): Promise<FeatureFlag[]> {
@@ -515,5 +517,48 @@ export class AdminService {
     } catch (error) {
       throw new Error("Error exporting to Excel: " + error.message);
     }
+  }
+
+  async uploadDocument(groupId: string, file: any): Promise<{ message: string }> {
+    // Tìm nhóm theo ID
+    const group = await this.groupModel.findById(groupId);
+    if (!group) {
+      throw new Error('Nhóm không tồn tại');
+    }
+
+    // Lưu trữ file (có thể thay thế bằng lưu trữ trên S3 hoặc dịch vụ khác)
+    const filePath = `uploads/groups/${groupId}/${file.originalname}`;
+    // Giả sử chúng ta lưu file vào hệ thống cục bộ
+    const fs = require('fs');
+    const path = require('path');
+    const uploadDir = path.dirname(filePath);
+
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    fs.writeFileSync(filePath, file.buffer);
+
+    // Cập nhật nhóm với tài liệu mới
+    group.documents = group.documents || [];
+    group.documents.push({ name: file.originalname, path: filePath });
+    await group.save();
+
+    return { message: 'Tài liệu đã được tải lên thành công' };
+  }
+
+  async uploadDocumentToCloudflare(groupId: string, file: any): Promise<{ message: string; url: string }> {
+    const group = await this.groupModel.findById(groupId);
+    if (!group) {
+      throw new Error('Nhóm không tồn tại');
+    }
+
+    const { fileUrl } = await this.cloudflareService.uploadFile(file, `groups/${groupId}`);
+
+    group.documents = group.documents || [];
+    group.documents.push({ name: file.originalname, path: fileUrl });
+    await group.save();
+
+    return { message: 'Tài liệu đã được tải lên Cloudflare thành công', url: fileUrl };
   }
 }

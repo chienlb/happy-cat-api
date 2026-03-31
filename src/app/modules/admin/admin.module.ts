@@ -7,6 +7,7 @@ import { UnitSchema } from '../units/schema/unit.schema';
 import { GroupSchema } from '../groups/schema/group.schema';
 import { PaymentSchema } from '../payments/schema/payment.schema';
 import { FeatureFlagsModule } from '../feature-flags/feature-flags.module';
+import { CloudflareService } from '../cloudflare/cloudflare.service';
 
 @Module({
   imports: [
@@ -19,6 +20,6 @@ import { FeatureFlagsModule } from '../feature-flags/feature-flags.module';
     ]),
   ],
   controllers: [AdminController],
-  providers: [AdminService],
+  providers: [AdminService, CloudflareService],
 })
 export class AdminModule {}
