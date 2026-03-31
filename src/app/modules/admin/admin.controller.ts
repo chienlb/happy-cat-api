@@ -222,6 +222,8 @@ export class AdminController {
     @Body('groupId') groupId: string,
     @Body('file') file: any,
   ) {
+    console.log('Received groupId:', groupId);
+    console.log('Received file:', file);
     return this.adminService.uploadDocument(groupId, file);
   }
 }
