@@ -229,6 +229,17 @@ export class UsersService {
     return result;
   }
 
+  async getAllUsers(): Promise<UserDocument[]> {
+    const users = await this.userModel
+      .find({ status: UserStatus.ACTIVE })
+      .select('-password');
+    if (!users) {
+      throw new NotFoundException('No users found.');
+    }
+    return users;
+  }
+
+
   /**
    * Get paginated leaderboard by XP (exp), sorted from high to low.
    */

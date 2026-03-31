@@ -13,6 +13,7 @@ import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { UsersService } from '../users/users.service';
 import { UserRole } from '../users/schema/user.schema';
+import { includes } from 'zod';
 
 @Injectable()
 export class NotificationsService {
@@ -261,6 +262,39 @@ export class NotificationsService {
   ): Promise<NotificationDocument[]> {
     try {
       const users = await this.usersService.getUserByRole(UserRole.TEACHER, session);
+      const notifications: NotificationDocument[] = [];
+      for (const user of users) {
+        const notification = new this.notificationRepository({
+          userId: new Types.ObjectId(user._id),
+          senderId: createNotificationDto.senderId
+            ? new Types.ObjectId(createNotificationDto.senderId)
+            : null,
+          title: createNotificationDto.title,
+          message: createNotificationDto.message,
+          type: createNotificationDto.type,
+          data: createNotificationDto.data,
+          isRead: createNotificationDto.isRead,
+          readAt: createNotificationDto.readAt,
+        });
+        await notification.save();
+        notifications.push(notification);
+      }
+      return notifications;
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
+
+  async sendNotificationToAllUsers(
+    createNotificationDto: CreateNotificationDto,
+    session?: ClientSession
+  ): Promise<NotificationDocument[]> {
+    try {      
+      const users = await this.usersService.getAllUsers();
+
+      if(users.length === 0) {
+        throw new NotFoundException('No users found');
+      }
       const notifications: NotificationDocument[] = [];
       for (const user of users) {
         const notification = new this.notificationRepository({

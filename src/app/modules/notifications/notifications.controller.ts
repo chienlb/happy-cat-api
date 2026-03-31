@@ -318,4 +318,13 @@ export class NotificationsController {
       createNotificationDto,
     );
   }
+
+  @Post('send-to-all-users')
+  async sendNotificationToAllUsers(
+    @Body() createNotificationDto: CreateNotificationDto,
+  ): Promise<NotificationDocument[]> {
+    return await this.notificationsService.sendNotificationToAllUsers(
+      createNotificationDto,
+    );
+  }
 }
