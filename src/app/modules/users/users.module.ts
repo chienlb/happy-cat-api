@@ -7,6 +7,7 @@ import { InvitationCodesModule } from '../invitation-codes/invitation-codes.modu
 import { HistoryInvitationsModule } from '../history-invitations/history-invitations.module';
 import { HistoryInvitationSchema } from '../history-invitations/schema/history-invitation.schema';
 import { TokenSchema } from '../tokens/schema/token.schema';
+import { CloudflareModule } from '../cloudflare/cloudflare.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { TokenSchema } from '../tokens/schema/token.schema';
       { name: 'Token', schema: TokenSchema },
     ]),
     forwardRef(() => InvitationCodesModule),
+    CloudflareModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],

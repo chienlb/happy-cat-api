@@ -41,6 +41,7 @@ import { PaginationDto } from '../pagination/pagination.dto';
 import mongoose, { ClientSession } from 'mongoose';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AnyARecord } from 'dns';
+import { CloudflareService } from '../cloudflare/cloudflare.service';
 
 @Controller('users')
 @ApiTags('Users')
@@ -48,7 +49,10 @@ import { AnyARecord } from 'dns';
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT, UserRole.STUDENT)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly cloudflareService: CloudflareService,
+  ) {}
 
   @Post()
   @UseGuards(AuthGuard('jwt'))
@@ -147,6 +151,8 @@ export class UsersController {
   @Patch(':id')
   @UseGuards(AuthGuard('jwt'))
   @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT, UserRole.STUDENT)
+  @UseInterceptors(FileInterceptor('avatar'))
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Update user by ID' })
   @ApiBody({ type: UpdateUserDto })
   @ApiParam({ name: 'id', description: 'The ID of the user' })
@@ -155,7 +161,16 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async updateUserById(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+  async updateUserById(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+    @UploadedFile() avatar?: any,
+  ) {
+    if (avatar) {
+      const uploaded = await this.cloudflareService.uploadFile(avatar, 'users/avatar');
+      dto.avatar = uploaded.fileUrl;
+    }
+
     const user = await this.usersService.updateUserById(id, dto);
     if (!user) throw new NotFoundException('User not found.');
     return ok(user, 'User updated successfully');
