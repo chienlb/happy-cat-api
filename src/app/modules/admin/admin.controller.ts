@@ -3,10 +3,13 @@ import type { Response } from 'express';
 import { AdminService } from './admin.service';
 import { ExportFilterDto, ExportType } from './dto/export-admin.dto';
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../../common/guards/role.guard';
 import { Roles } from '../../common/decorators/role.decorator';
 import { UserRole } from '../users/schema/user.schema';
+import { ToggleFeatureFlagDto } from './dto/toggle-feature-flag.dto';
+import { FeatureFlag } from '../feature-flags/schema/feature-flag.schema';
 
 @Controller('admin')
 @ApiTags('Admin')
@@ -52,6 +55,45 @@ export class AdminController {
   @Get('revenue-by-month')
   getRevenueByMonth() {
     return this.adminService.getRevenueByMonth();
+  }
+
+  @Get('system-features')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Lấy danh sách chức năng hệ thống có thể bật/tắt' })
+  @ApiResponse({
+    status: 200,
+    description: 'Danh sách feature flag trong hệ thống',
+    type: [FeatureFlag],
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
+  async getSystemFeatures() {
+    return this.adminService.getSystemFeatures();
+  }
+
+  @Patch('system-features/:id/toggle')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Bật/tắt một chức năng hệ thống' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID của feature flag',
+    type: String,
+  })
+  @ApiBody({ type: ToggleFeatureFlagDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Cập nhật trạng thái bật/tắt thành công',
+    type: FeatureFlag,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
+  async toggleSystemFeature(
+    @Param('id') id: string,
+    @Body() toggleFeatureFlagDto: ToggleFeatureFlagDto,
+  ) {
+    return this.adminService.toggleSystemFeature(id, toggleFeatureFlagDto.isEnabled);
   }
 
   @Get('user-by-month')

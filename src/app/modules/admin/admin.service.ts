@@ -2,11 +2,13 @@ import { UnitDocument } from "../units/schema/unit.schema";
 import { UserDocument, UserRole, UserStatus } from "../users/schema/user.schema";
 import { GroupDocument } from "../groups/schema/group.schema";
 import { PaymentDocument } from "../payments/schema/payment.schema";
+import { FeatureFlag } from "../feature-flags/schema/feature-flag.schema";
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import * as XLSX from 'xlsx';
 import { ExportFilterDto, ExportType } from './dto/export-admin.dto';
+import { FeatureFlagsService } from "../feature-flags/feature-flags.service";
 
 @Injectable()
 export class AdminService {
@@ -14,8 +16,20 @@ export class AdminService {
     @InjectModel("User") private userModel: Model<UserDocument>,
     @InjectModel("Unit") private unitModel: Model<UnitDocument>,
     @InjectModel("Group") private groupModel: Model<GroupDocument>,
-    @InjectModel("Payment") private paymentModel: Model<PaymentDocument>
+    @InjectModel("Payment") private paymentModel: Model<PaymentDocument>,
+    private readonly featureFlagsService: FeatureFlagsService,
   ) { }
+
+  async getSystemFeatures(): Promise<FeatureFlag[]> {
+    return this.featureFlagsService.findAllFeatureFlags();
+  }
+
+  async toggleSystemFeature(
+    id: string,
+    isEnabled: boolean,
+  ): Promise<FeatureFlag> {
+    return this.featureFlagsService.updateFeatureFlag(id, { isEnabled });
+  }
 
   async getDashboardData() {
     try {

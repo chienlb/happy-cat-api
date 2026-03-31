@@ -6,9 +6,11 @@ import { UserSchema } from '../users/schema/user.schema';
 import { UnitSchema } from '../units/schema/unit.schema';
 import { GroupSchema } from '../groups/schema/group.schema';
 import { PaymentSchema } from '../payments/schema/payment.schema';
+import { FeatureFlagsModule } from '../feature-flags/feature-flags.module';
 
 @Module({
   imports: [
+    FeatureFlagsModule,
     MongooseModule.forFeature([
       { name: 'User', schema: UserSchema },
       { name: 'Unit', schema: UnitSchema },
