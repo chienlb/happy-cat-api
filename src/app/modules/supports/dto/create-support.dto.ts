@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 
 export class CreateSupportDto {
-  @IsMongoId()
+  @IsString()
   userId: string;
 
   @IsString()
