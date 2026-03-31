@@ -64,13 +64,20 @@ export class GroupsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  create(@Body() createGroupDto: CreateGroupDto, @Req() req: Request, @UploadedFiles() files?: any[]) {
+    create(@Body() createGroupDto: CreateGroupDto, @Req() req: Request, @UploadedFiles() files?: any[]) {
+      const avatar = files?.find(f => f.fieldname === 'avatar');
+      const background = files?.find(f => f.fieldname === 'background');
+
+      return this.groupsService.createGroup((req as any).user.userId, createGroupDto, avatar, background);
+    }
+
+  @Post('admin/create')
+  createByAdmin(@Body() createGroupDto: CreateGroupDto, @Req() req: Request, @UploadedFiles() files?: any[]) {
     const avatar = files?.find(f => f.fieldname === 'avatar');
     const background = files?.find(f => f.fieldname === 'background');
 
-    return this.groupsService.createGroup((req as any).user.userId, createGroupDto, avatar, background);
+    return this.groupsService.createGroupByAdmin(createGroupDto, avatar, background);
   }
-
   
   @Get('user/get-all-groups')
   async getAllGroupsForUser(@Req() req: Request) {

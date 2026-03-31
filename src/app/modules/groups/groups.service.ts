@@ -20,6 +20,7 @@ import { PaginationDto } from '../pagination/pagination.dto';
 import { RedisService } from 'src/app/configs/redis/redis.service';
 import { CloudflareService } from '../cloudflare/cloudflare.service';
 import { User, UserDocument } from '../users/schema/user.schema';
+import { create } from 'domain';
 
 @Injectable()
 export class GroupsService {
@@ -113,6 +114,75 @@ export class GroupsService {
       throw new Error('Failed to create group: ' + error.message);
     }
   }
+
+
+  async createGroupByAdmin(createGroupDto: CreateGroupDto, avatar?: any, background?: any): Promise<GroupDocument> {
+    try {
+      let groupAvatarUrl: string | null = null;
+      let groupBackgroundUrl: string | null = null;
+      if (avatar) {
+        // Upload file trực tiếp lên Cloudflare R2
+        const uploadResult = await this.cloudflareService.uploadFile(
+          avatar,
+          'groups/avatars',
+        );
+        groupAvatarUrl = uploadResult.fileUrl;
+      }
+
+      if (background) {
+        // Upload file trực tiếp lên Cloudflare R2
+        const uploadResultBg = await this.cloudflareService.uploadFile(
+          background,
+          'groups/backgrounds',
+        );
+        groupBackgroundUrl = uploadResultBg.fileUrl;
+      }
+      let members: string[] = [];
+      if (createGroupDto.members && createGroupDto.members.length > 0) {
+        const resolved = await Promise.all(
+          createGroupDto.members.map(async (member) => {
+            const memberUser = await this.usersService.findUserById(member);
+            if (!memberUser) {
+              throw new NotFoundException('User not found');
+            }
+            return memberUser._id;
+          }),
+        );
+        members = resolved.map((m) => m.toString());
+      }
+      const ownerId = createGroupDto.owner as string;
+      if (!members.includes(ownerId)) {
+        members = [ownerId, ...members];
+      }
+      createGroupDto.members = members;
+      createGroupDto.maxMembers = createGroupDto.maxMembers || 50; // Mặc định maxMembers là 10 nếu không được cung cấp
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const checkCode = await this.groupModel.findOne({ joinCode: code });
+
+      if (checkCode) {
+        const countCode = await this.groupModel.countDocuments({ joinCode: code });
+        const newCode = (parseInt(countCode.toString(36)) + 1).toString(36).toUpperCase();
+        createGroupDto.joinCode = newCode;
+      }
+      const newGroup = await this.groupModel.create({
+        ...createGroupDto,
+        owner: createGroupDto.owner,
+        members: createGroupDto.members,
+        maxMembers: createGroupDto.maxMembers,
+        isActive: true,
+        joinCode: code,
+        avatar: groupAvatarUrl,
+        background: groupBackgroundUrl,
+      });
+      if (!newGroup) {
+        throw new InternalServerErrorException('Failed to create group');
+      }
+      return newGroup;
+    } catch (error) {
+      throw new Error('Failed to create group: ' + error.message);
+    }
+  }
+
 
   async findGroupById(id: string): Promise<GroupDocument> {
     const group = await this.groupModel.findById(id);
