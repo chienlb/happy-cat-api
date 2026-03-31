@@ -52,5 +52,9 @@ export class CreateGroupDto {
 
   @IsOptional()
   @IsString()
+  owner?: string;
+
+  @IsOptional()
+  @IsString()
   background?: string;
 }
