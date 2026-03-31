@@ -12,8 +12,11 @@ import {
 } from '@nestjs/swagger';
 import { SupportStatus } from './schema/support.schema';
 import { UpdateSupportDto } from './dto/update-support.dto';
+import { UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Supports')
+@UseGuards(AuthGuard('jwt'))
 @Controller('supports')
 export class SupportsController {
   constructor(private readonly supportsService: SupportsService) {}
