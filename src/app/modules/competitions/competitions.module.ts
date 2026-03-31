@@ -6,6 +6,7 @@ import { Competition, CompetitionSchema } from './schema/competition.schema';
 import { UsersModule } from '../users/users.module';
 import { CloudflareModule } from '../cloudflare/cloudflare.module';
 import { RanksModule } from '../ranks/ranks.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { RanksModule } from '../ranks/ranks.module';
     UsersModule,
     CloudflareModule,
     RanksModule,
+    NotificationsModule,
   ],
   controllers: [CompetitionsController],
   providers: [CompetitionsService],

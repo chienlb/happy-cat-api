@@ -12,6 +12,8 @@ import { CreateCompetitionDto } from './dto/create-competition.dto';
 import { UpdateCompetitionDto } from './dto/update-competition.dto';
 import { PaginationDto } from '../pagination/pagination.dto';
 import { RanksService } from '../ranks/rank.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/schema/notification.schema';
 import {
   CompetitionLeaderboardUserDto,
   PaginatedCompetitionLeaderboardDto,
@@ -25,6 +27,7 @@ export class CompetitionsService {
     private usersService: UsersService,
     private cloudflareService: CloudflareService,
     private ranksService: RanksService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async createCompetition(
@@ -94,6 +97,21 @@ export class CompetitionsService {
         countQuestion: listQuestion.length,
       });
       await competition.save();
+
+      await this.notificationsService.sendNotificationToAllUsers({
+        userId: createCompetitionDto.createdBy ?? new Types.ObjectId().toString(),
+        senderId: createCompetitionDto.createdBy,
+        title: `Kì thi mới: ${competition.name}`,
+        message: `Kì thi ${competition.name} đã được tạo. Hãy tham gia ngay!`,
+        type: NotificationType.COMPETITION,
+        data: {
+          competitionId: competition._id.toString(),
+          startTime: competition.startTime,
+          endTime: competition.endTime,
+        },
+        isRead: false,
+      });
+
       return competition;
     } catch (error) {
       throw new BadRequestException(error);
