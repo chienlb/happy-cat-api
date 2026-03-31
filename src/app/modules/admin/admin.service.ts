@@ -521,7 +521,11 @@ export class AdminService {
 
   async uploadDocument(groupId: string, file: any): Promise<{ message: string }> {
     // Tìm nhóm theo ID
-    const group = await this.groupModel.findById(new Types.ObjectId(groupId));
+    const group = await this.groupModel.findById(groupId);
+
+    // Thêm log để kiểm tra giá trị groupId
+    console.log('Tìm nhóm với ID:', groupId);
+
     if (!group) {
       throw new Error('Nhóm không tồn tại');
     }
