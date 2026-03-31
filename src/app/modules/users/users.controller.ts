@@ -146,7 +146,7 @@ export class UsersController {
 
   @Patch(':id')
   @UseGuards(AuthGuard('jwt'))
-  @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT, UserRole.STUDENT)
   @ApiOperation({ summary: 'Update user by ID' })
   @ApiBody({ type: UpdateUserDto })
   @ApiParam({ name: 'id', description: 'The ID of the user' })
