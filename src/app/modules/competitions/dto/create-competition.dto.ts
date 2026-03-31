@@ -11,7 +11,7 @@ import {
   IsBoolean,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   CompetitionType,
   CompetitionStatus,
@@ -53,6 +53,7 @@ export class CreateCompetitionDto {
 
   @IsNumber()
   @Min(0)
+  @Transform(({ value }) => Number(value))
   totalParticipants: number;
 
   @IsOptional()
@@ -63,6 +64,7 @@ export class CreateCompetitionDto {
   @IsOptional()
   @IsNumber()
   @Min(1)
+  @Transform(({ value }) => Number(value))
   maxParticipants?: number;
 
   @IsOptional()
@@ -84,6 +86,7 @@ export class CreateCompetitionDto {
   visibility?: CompetitionVisibility;
 
   @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true ? true : false)
   isPublished: boolean;
 
   @ApiPropertyOptional({
