@@ -62,7 +62,7 @@ export class AdminController {
 
   @Get('system-features')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT, UserRole.PARENT)
   @ApiOperation({ summary: 'Lấy danh sách chức năng hệ thống có thể bật/tắt' })
   @ApiResponse({
     status: 200,
