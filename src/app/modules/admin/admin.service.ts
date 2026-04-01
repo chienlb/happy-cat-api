@@ -519,50 +519,62 @@ export class AdminService {
     }
   }
 
-  async uploadDocument(groupId: string, file: any): Promise<{ message: string }> {
-    // Tìm nhóm theo ID
-    const group = await this.groupModel.findById(groupId);
+  // async uploadDocument(groupId: string, file: any): Promise<{ message: string }> {
+  //   try {
+  //     const group = await this.groupModel.findById(groupId);
 
-    // Thêm log để kiểm tra giá trị groupId
-    console.log('Tìm nhóm với ID:', groupId);
+  //     if (!group) {
+  //       throw new Error('Nhóm không tồn tại');
+  //     }
 
-    if (!group) {
-      throw new Error('Nhóm không tồn tại');
+  //     const fs = await import('fs/promises');
+  //     const path = await import('path');
+  //     const filePath = `uploads/groups/${groupId}/${file.originalname}`;
+  //     const uploadDir = path.dirname(filePath);
+
+  //     await fs.mkdir(uploadDir, { recursive: true });
+  //     await fs.writeFile(filePath, file.buffer);
+
+  //     group.documents = group.documents || [];
+  //     group.documents.push({ name: file.originalname, path: filePath });
+  //     await group.save();
+
+  //     return { message: 'Tài liệu đã được tải lên thành công' };
+  //   } catch (error) {
+  //     throw new Error("Error uploading document: " + error.message);
+  //   }
+  // }
+
+  async uploadDocumentToCloudflare(
+    groupId: string,
+    file: any,
+  ): Promise<{ message: string; url: string }> {
+    try {
+      const group = await this.groupModel.findById(groupId);
+
+      if (!group) {
+        throw new Error('Nhóm không tồn tại');
+      }
+
+      const { fileUrl, key } = await this.cloudflareService.uploadFile(
+        file,
+        'images',
+      );
+
+      group.documents = group.documents || [];
+      group.documents.push({
+        name: file.originalname,
+        path: fileUrl,
+      });
+
+      await group.save();
+
+      return {
+        message: 'Tài liệu đã được tải lên Cloudflare thành công',
+        url: fileUrl,
+      };
+    } catch (error) {
+      throw new Error("Error uploading to Cloudflare: " + error.message);
     }
-
-    // Lưu trữ file (có thể thay thế bằng lưu trữ trên S3 hoặc dịch vụ khác)
-    const filePath = `uploads/groups/${groupId}/${file.originalname}`;
-    // Giả sử chúng ta lưu file vào hệ thống cục bộ
-    const fs = require('fs');
-    const path = require('path');
-    const uploadDir = path.dirname(filePath);
-
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    fs.writeFileSync(filePath, file.buffer);
-
-    // Cập nhật nhóm với tài liệu mới
-    group.documents = group.documents || [];
-    group.documents.push({ name: file.originalname, path: filePath });
-    await group.save();
-
-    return { message: 'Tài liệu đã được tải lên thành công' };
-  }
-
-  async uploadDocumentToCloudflare(groupId: string, file: any): Promise<{ message: string; url: string }> {
-    const group = await this.groupModel.findById(groupId);
-    if (!group) {
-      throw new Error('Nhóm không tồn tại');
-    }
-
-    const { fileUrl } = await this.cloudflareService.uploadFile(file, `groups/${groupId}`);
-
-    group.documents = group.documents || [];
-    group.documents.push({ name: file.originalname, path: fileUrl });
-    await group.save();
-
-    return { message: 'Tài liệu đã được tải lên Cloudflare thành công', url: fileUrl };
   }
 }
