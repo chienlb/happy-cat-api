@@ -227,6 +227,6 @@ export class AdminController {
   ) {
     console.log('Received groupId:', groupId);
     console.log('Received file:', file);
-    return this.adminService.uploadDocument(groupId, file);
+    return this.adminService.uploadDocumentToCloudflare(groupId, file);
   }
 }
