@@ -557,11 +557,11 @@ private buildFeedbackPrompt(practice: Practice, studentWriting: string): string 
         throw new BadRequestException('Invalid feedback structure from Gemini');
       }
 
-      // Chuyển đổi thang điểm sang 100 và đảm bảo nhận xét dài hơn
-      parsed.score = (Number(parsed.score) || 0) * 10;
-      parsed.relevance_score = (Number(parsed.relevance_score) || 0) * 10;
-      parsed.language_score = (Number(parsed.language_score) || 0) * 10;
-      parsed.completeness_score = (Number(parsed.completeness_score) || 0) * 10;
+      // Adjust scoring to be on a scale of 10
+      parsed.score = Math.min((Number(parsed.score) || 0) / 10, 10);
+      parsed.relevance_score = Math.min((Number(parsed.relevance_score) || 0) / 10, 10);
+      parsed.language_score = Math.min((Number(parsed.language_score) || 0) / 10, 10);
+      parsed.completeness_score = Math.min((Number(parsed.completeness_score) || 0) / 10, 10);
 
       // Ensure all scores are numbers before summing
       parsed.total_score = (Number(parsed.score) || 0) + (Number(parsed.relevance_score) || 0) + (Number(parsed.language_score) || 0) + (Number(parsed.completeness_score) || 0);
