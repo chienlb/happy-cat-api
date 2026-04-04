@@ -33,269 +33,352 @@ export class PracticesService {
   private genAI: GoogleGenAI;
   private readonly modelName = 'gemini-2.5-flash';
   private readonly promptSentence = `
-    You are creating English translation exercises for FIRST GRADE students (6–7 years old).
+    Bạn đang tạo các bài tập dịch tiếng Anh cho học sinh lớp 1 (6–7 tuổi).
 
     ========================
-    VERY IMPORTANT RULES
+    QUY TẮC RẤT QUAN TRỌNG
     ========================
 
-    - Students are beginners (A0–A1)
-    - Use VERY SIMPLE Vietnamese sentences
-    - English must be VERY EASY
-    - Sentences must be SHORT (3–6 words)
-    - Use only basic vocabulary
-    - No complex grammar
+    - Học sinh là người mới bắt đầu (A0–A1)
+    - Sử dụng câu tiếng Việt RẤT ĐƠN GIẢN
+    - Tiếng Anh phải RẤT DỄ HIỂU
+    - Câu phải DÀI HƠN (6–10 từ)
+    - Sử dụng từ vựng cơ bản
+    - Không sử dụng ngữ pháp phức tạp
 
     ========================
-    TOPIC SELECTION
+    CHỦ ĐỀ
     ========================
 
-    You MUST automatically choose SIMPLE topics suitable for kids, such as:
-    - animals
-    - food
-    - school
-    - family
-    - toys
-    - colors
-    - daily actions
+    Bạn PHẢI tự động chọn các chủ đề ĐƠN GIẢN phù hợp với trẻ em, ví dụ:
+    - động vật
+    - thức ăn
+    - trường học
+    - gia đình
+    - đồ chơi
+    - màu sắc
+    - các hành động hàng ngày
 
-    Do NOT use difficult or abstract topics.
-
-    ========================
-    OUTPUT REQUIREMENTS
-    ========================
-
-    Generate {COUNT} items.
-
-    Each item must include:
-    - sentence_vi (Vietnamese)
-    - correct_answer (English)
-    - hint (1–2 simple keywords)
-    - difficulty: always "easy"
+    Không sử dụng các chủ đề khó hoặc trừu tượng.
 
     ========================
-    EXAMPLES
+    YÊU CẦU ĐẦU RA
     ========================
 
-    "Tôi thấy một con mèo" → "I see a cat"
-    "Đây là quả táo" → "This is an apple"
+    Tạo {COUNT} bài tập.
+
+    Mỗi bài tập phải bao gồm:
+    - câu tiếng Việt (sentence_vi)
+    - câu tiếng Anh (sentence_en)
+    - câu trả lời đúng (correct_answer)
+    - gợi ý (1–2 từ khóa đơn giản)
+    - độ khó: luôn là "dễ"
 
     ========================
-    OUTPUT FORMAT (STRICT JSON)
+    ĐỊNH DẠNG ĐẦU RA (JSON CHUẨN)
     ========================
 
-    Return ONLY JSON:
-
-    {
-      "items": [
-        {
-          "sentence_vi": "Tôi có một quả táo",
-          "correct_answer": "I have an apple",
-          "hint": ["apple"],
-          "difficulty": "easy"
-        }
-      ]
-    }
-
-    ========================
-    IMPORTANT
-    ========================
-
-    - Vietnamese must be natural and simple
-    - English must match exactly
-    - Use repetitive patterns:
-      - I see...
-      - I have...
-      - This is...
-      - I like...
-    - DO NOT return text outside JSON
-    - DO NOT create long sentences
-    - Keep everything VERY EASY
-
-    If unsure, make it simpler.
-
-    Now generate the result.
-    `;
-
-private readonly promptLetter = `
-You are creating English letter-writing tasks for FIRST GRADE students (6–7 years old).
-
-========================
-MAIN GOAL
-========================
-Create ONE detailed but easy letter-writing task in ENGLISH ONLY.
-
-The task should be inspired by VSTEP format (situation + requirements),
-but MUCH EASIER and suitable for children.
-
-========================
-VERY IMPORTANT RULES
-========================
-- Students are beginners (A0–A1)
-- Use VERY SIMPLE English only
-- Use SHORT sentences (3–6 words where possible)
-- No complex grammar
-- No difficult words
-- No long instructions
-
-========================
-TASK STRUCTURE
-========================
-
-Each task MUST include:
-
-1. situation (in English)
-- simple and clear
-- 1–2 short sentences
-- describe a real-life situation for a child
-
-2. requirements
-- 4–5 bullet points
-- very short and easy
-
-3. instruction
-- one simple sentence
-
-4. hints
-- simple sentence patterns
-
-========================
-TOPIC RULES
-========================
-
-Only use child-friendly topics:
-- a pet
-- a toy
-- school
-- a friend
-- a teacher
-- family
-- food
-
-========================
-OUTPUT REQUIREMENTS
-========================
-
-Return:
-- title
-- situation
-- requirements
-- instruction
-- hints
-- required_topic_keywords
-- minimum_sentences
-- sample_answer
-- difficulty
-
-========================
-OUTPUT FORMAT (STRICT JSON)
-========================
-
-Return ONLY JSON:
-
-{
-  "title": "Tell your friend about your cat",
-  "situation": "You have a new cat. You are happy and want to tell your friend.",
-  "requirements": [
-    "Say what you have",
-    "Say you like it",
-    "Say its color",
-    "Say what it can do",
-    "Ask one question"
-  ],
-  "instruction": "Write a short letter to your friend.",
-  "hints": [
-    "Dear ... ,",
-    "I have a cat.",
-    "It is small and white.",
-    "It can run fast.",
-    "I like it.",
-    "Do you like cats?"
-  ],
-  "required_topic_keywords": ["cat", "friend"],
-  "minimum_sentences": 6,
-  "sample_answer": "Dear Nam,\\nI have a new cat. It is small and white. It can run fast. I play with it every day. I like my cat very much. Do you like cats?\\nLove, Lan",
-  "difficulty": "easy"
-}
-
-========================
-IMPORTANT
-========================
-
-- Everything must be in ENGLISH
-- Keep everything VERY SIMPLE
-- Situation must be clear and real
-- Sample answer must be 6–8 short sentences
-- Use easy words only
-- DO NOT return text outside JSON
-- DO NOT explain anything
-
-If unsure, make it simpler.
-
-Now generate the result.
-`;
-
-  private readonly promptDiscussion = `
-    You are creating English discussion exercises for FIRST GRADE students (6–7 years old).
-    ========================
-    VERY IMPORTANT RULES
-    ========================
-    - Students are beginners (A0–A1)
-    - Use VERY SIMPLE Vietnamese sentences
-    - English must be VERY EASY
-    - Sentences must be SHORT (3–6 words)
-    - Use only basic vocabulary
-    - No complex grammar
-    ========================
-    TOPIC SELECTION
-    ========================
-
-    You MUST automatically choose SIMPLE topics suitable for kids, such as:
-    - animals
-    - food
-    - school
-    - family
-    - toys
-    - colors
-    - daily actions
-
-    Do NOT use difficult or abstract topics.
-
-    ========================
-    OUTPUT REQUIREMENTS
-    ========================
-
-    Generate {COUNT} items.
-
-    Each item must include:
-    - sentence_vi (Vietnamese)
-    - correct_answer (English)
-    - hint (1–2 simple keywords)
-    - difficulty: always "easy"
-
-    ========================
-    OUTPUT FORMAT (STRICT JSON)
-    ========================
-
-    Return ONLY JSON:
+    Chỉ trả về JSON:
 
     {
       "items": [
         {
           "sentence_vi": "Bạn có thể giúp tôi không?",
+          "sentence_en": "Can you help me?",
           "correct_answer": "Can you help me?",
           "hint": ["help"],
-          "difficulty": "easy"
+          "difficulty": "dễ"
         }
       ]
     }
 
-    - DO NOT return text outside JSON
-    - Keep everything VERY EASY
+    ========================
+    QUAN TRỌNG
+    ========================
 
-    Now generate the result.
+    - Tiếng Việt phải tự nhiên và đơn giản
+    - Tiếng Anh phải khớp chính xác
+    - Sử dụng các mẫu câu lặp lại:
+      - Tôi thấy...
+      - Tôi có...
+      - Đây là...
+      - Tôi thích...
+    - KHÔNG trả về văn bản ngoài JSON
+    - KHÔNG tạo câu dài dòng
+    - Giữ mọi thứ RẤT DỄ HIỂU
+
+    Nếu không chắc chắn, hãy làm đơn giản hơn.
+
+    Bây giờ hãy tạo kết quả.
     `;
 
+private readonly promptDiscussion = `
+    Bạn đang tạo các bài tập viết đoạn văn tiếng Anh cho học sinh lớp 1 (6–7 tuổi).
+
+    ========================
+    MỤC TIÊU CHÍNH
+    ========================
+    Tạo MỘT bài tập yêu cầu học sinh viết một đoạn văn ngắn mô tả một chủ đề đơn giản.
+
+    ========================
+    QUY TẮC RẤT QUAN TRỌNG
+    ========================
+    - Học sinh là người mới bắt đầu (A0–A1)
+    - Sử dụng tiếng Việt RẤT ĐƠN GIẢN
+    - Sử dụng câu ngắn (6–10 từ nếu có thể)
+    - Không sử dụng ngữ pháp phức tạp
+    - Không sử dụng từ khó
+    - Không hướng dẫn dài dòng
+
+    ========================
+    CẤU TRÚC BÀI TẬP
+    ========================
+
+    Mỗi bài tập PHẢI bao gồm:
+
+    1. tình huống (situation)
+    - đơn giản và rõ ràng
+    - 1–2 câu ngắn
+    - mô tả tình huống thực tế cho trẻ em
+
+    2. yêu cầu (requirements)
+    - 3–4 gạch đầu dòng
+    - rất ngắn và dễ hiểu
+
+    3. hướng dẫn (instruction)
+    - một câu đơn giản
+
+    4. gợi ý (hints)
+    - các mẫu câu đơn giản
+
+    ========================
+    CHỦ ĐỀ
+    ========================
+
+    Chỉ sử dụng các chủ đề thân thiện với trẻ em:
+    - thú cưng
+    - đồ chơi
+    - trường học
+    - bạn bè
+    - giáo viên
+    - gia đình
+    - thức ăn
+
+    ========================
+    YÊU CẦU ĐẦU RA
+    ========================
+
+    Trả về:
+    - tiêu đề (title)
+    - tình huống (situation)
+    - yêu cầu (requirements)
+    - hướng dẫn (instruction)
+    - gợi ý (hints)
+    - từ khóa chủ đề bắt buộc (required_topic_keywords)
+    - số câu tối thiểu (minimum_sentences)
+    - đoạn văn mẫu (sample_paragraph_vi, sample_paragraph_en)
+    - độ khó (difficulty)
+
+    ========================
+    ĐỊNH DẠNG ĐẦU RA (JSON CHUẨN)
+    ========================
+
+    Chỉ trả về JSON:
+
+    {
+      "title": "Mô tả trường học của bạn",
+      "situation": "Bạn đi học mỗi ngày. Bạn muốn kể cho bạn bè về trường của mình.",
+      "requirements": [
+        "Nói tên trường của bạn",
+        "Nói trường của bạn lớn hay nhỏ",
+        "Nói bạn thích gì ở trường",
+        "Nói bạn học gì ở trường"
+      ],
+      "instruction": "Viết một đoạn văn ngắn mô tả trường học của bạn.",
+      "hints": [
+        "Trường của tôi tên là ABC.",
+        "Nó lớn và đẹp.",
+        "Tôi học tiếng Anh ở đó.",
+        "Tôi thích bạn bè của tôi."
+      ],
+      "required_topic_keywords": ["trường học", "mô tả"],
+      "minimum_sentences": 7,
+      "sample_paragraph_vi": "Tôi đi học mỗi ngày. Trường của tôi tên là An Binh. Nó lớn và có nhiều phòng học. Tôi học tiếng Anh và Toán. Tôi thích bạn bè và giáo viên của mình ở trường. Trường của tôi rất đẹp và tôi yêu nó.",
+      "sample_paragraph_en": "I go to school every day. My school is called An Binh. It is big and has many classrooms. I study English and Math. I like my friends and teachers at school. My school is very beautiful and I love it.",
+      "difficulty": "dễ"
+    }
+
+    ========================
+    QUAN TRỌNG
+    ========================
+
+    - Mọi thứ phải bằng TIẾNG VIỆT và TIẾNG ANH
+    - Giữ mọi thứ RẤT ĐƠN GIẢN
+    - Tình huống phải rõ ràng và thực tế
+    - Đoạn văn mẫu phải từ 7–10 câu ngắn
+    - Sử dụng từ dễ hiểu
+    - KHÔNG trả về văn bản ngoài JSON
+    - KHÔNG giải thích bất kỳ điều gì
+
+    Nếu không chắc chắn, hãy làm đơn giản hơn.
+
+    Bây giờ hãy tạo kết quả.
+    `;
+
+private readonly promptLetter = `
+    Bạn đang tạo các bài tập viết thư tiếng Anh cho học sinh lớp 1 (6–7 tuổi).
+
+    ========================
+    MỤC TIÊU CHÍNH
+    ========================
+    Tạo MỘT bài tập viết thư chi tiết nhưng dễ dàng bằng TIẾNG VIỆT THÂN THIỆN.
+
+    ========================
+    QUY TẮC RẤT QUAN TRỌNG
+    ========================
+    - Học sinh là người mới bắt đầu (A0–A1)
+    - Sử dụng tiếng Việt RẤT ĐƠN GIẢN
+    - Sử dụng câu ngắn (6–10 từ nếu có thể)
+    - Không sử dụng ngữ pháp phức tạp
+    - Không sử dụng từ khó
+    - Không hướng dẫn dài dòng
+
+    ========================
+    CẤU TRÚC BÀI TẬP
+    ========================
+
+    Mỗi bài tập PHẢI bao gồm:
+
+    1. tình huống (situation)
+    - đơn giản và rõ ràng
+    - 1–2 câu ngắn
+    - mô tả tình huống thực tế cho trẻ em
+
+    2. yêu cầu (requirements)
+    - 4–5 gạch đầu dòng
+    - rất ngắn và dễ hiểu
+
+    3. hướng dẫn (instruction)
+    - một câu đơn giản
+
+    4. gợi ý (hints)
+    - các mẫu câu đơn giản
+
+    ========================
+    CHỦ ĐỀ
+    ========================
+
+    Chỉ sử dụng các chủ đề thân thiện với trẻ em:
+    - thú cưng
+    - đồ chơi
+    - trường học
+    - bạn bè
+    - giáo viên
+    - gia đình
+    - thức ăn
+
+    ========================
+    YÊU CẦU ĐẦU RA
+    ========================
+
+    Trả về:
+    - tiêu đề (title)
+    - tình huống (situation)
+    - yêu cầu (requirements)
+    - hướng dẫn (instruction)
+    - gợi ý (hints)
+    - từ khóa chủ đề bắt buộc (required_topic_keywords)
+    - số câu tối thiểu (minimum_sentences)
+    - câu trả lời mẫu (sample_answer)
+    - độ khó (difficulty)
+
+    ========================
+    ĐỊNH DẠNG ĐẦU RA (JSON CHUẨN)
+    ========================
+
+    Chỉ trả về JSON:
+
+    {
+      "title": "Viết về con mèo của bạn",
+      "situation": "Bạn có một con mèo mới. Bạn rất vui và muốn kể cho bạn bè.",
+      "requirements": [
+        "Nói bạn có gì",
+        "Nói bạn thích nó",
+        "Nói màu sắc của nó",
+        "Nói nó có thể làm gì",
+        "Hỏi một câu đơn giản"
+      ],
+      "instruction": "Viết một bức thư ngắn cho bạn bè.",
+      "hints": [
+        "Thân gửi ... ,",
+        "Tôi có một con mèo.",
+        "Nó nhỏ và màu trắng.",
+        "Nó có thể chạy nhanh.",
+        "Tôi thích nó.",
+        "Bạn có thích mèo không?"
+      ],
+      "required_topic_keywords": ["mèo", "bạn bè"],
+      "minimum_sentences": 8,
+      "sample_answer": "Thân gửi Nam,\nTôi có một con mèo mới. Nó nhỏ và màu trắng. Nó có thể chạy nhanh. Tôi chơi với nó mỗi ngày. Tôi rất thích con mèo của mình. Bạn có thích mèo không?\nThân ái, Lan",
+      "difficulty": "dễ"
+    }
+
+    ========================
+    QUAN TRỌNG
+    ========================
+
+    - Mọi thứ phải bằng TIẾNG VIỆT
+    - Giữ mọi thứ RẤT ĐƠN GIẢN
+    - Tình huống phải rõ ràng và thực tế
+    - Câu trả lời mẫu phải từ 8–10 câu ngắn
+    - Sử dụng từ dễ hiểu
+    - KHÔNG trả về văn bản ngoài JSON
+    - KHÔNG giải thích bất kỳ điều gì
+
+    Nếu không chắc chắn, hãy làm đơn giản hơn.
+
+    Bây giờ hãy tạo kết quả.
+    `;
+
+private buildFeedbackPrompt(practice: Practice, studentWriting: string): string {
+    return `
+Bạn đang chấm bài tập tiếng Anh của học sinh lớp 1 (A0–A1).
+
+Loại bài tập: ${practice.type}
+Bài tập (JSON): ${JSON.stringify(practice.exercise)}
+Bài viết của học sinh: ${studentWriting}
+
+Chỉ trả về JSON với cấu trúc sau:
+{
+  "score": 0,
+  "relevance_score": 0,
+  "language_score": 0,
+  "completeness_score": 0,
+  "off_topic": false,
+  "comments": "nhận xét ngắn gọn và thân thiện",
+  "corrections": [
+    {
+      "original": "văn bản",
+      "corrected": "văn bản",
+      "reason": "lý do ngắn gọn"
+    }
+  ],
+  "encouragement": "lời động viên tích cực"
+}
+
+Quy tắc:
+- score là số nguyên từ 0–10
+- relevance_score là số nguyên từ 0–4
+- language_score là số nguyên từ 0–3
+- completeness_score là số nguyên từ 0–3
+- score phải bằng relevance_score + language_score + completeness_score
+- Nếu học sinh lạc đề, đặt off_topic=true và score phải từ 0–3
+- comments phải bằng tiếng Việt đơn giản
+- giữ nhận xét thân thiện với trẻ em
+- nếu bài viết tốt, để corrections trống
+- không trả về văn bản ngoài JSON
+`;
+  }
   async create(createPracticeDto: CreatePracticeDto): Promise<Practice> {
     const hasExercise =
       createPracticeDto.exercise !== undefined && createPracticeDto.exercise !== null;
@@ -464,46 +547,6 @@ Now generate the result.
         encouragement: 'Try again. You can do it with short simple sentences.',
       };
     }
-  }
-
-  private buildFeedbackPrompt(practice: Practice, studentWriting: string): string {
-    return `
-You are grading a FIRST GRADE English practice submission (A0-A1).
-
-Practice type: ${practice.type}
-Exercise JSON: ${JSON.stringify(practice.exercise)}
-Student writing: ${studentWriting}
-
-Return ONLY JSON with this structure:
-{
-  "score": 0,
-  "relevance_score": 0,
-  "language_score": 0,
-  "completeness_score": 0,
-  "off_topic": false,
-  "comments": "short simple feedback",
-  "corrections": [
-    {
-      "original": "text",
-      "corrected": "text",
-      "reason": "short reason"
-    }
-  ],
-  "encouragement": "positive message"
-}
-
-Rules:
-- score is integer 0-10
-- relevance_score is integer 0-4
-- language_score is integer 0-3
-- completeness_score is integer 0-3
-- score must equal relevance_score + language_score + completeness_score
-- If student is off-topic, set off_topic=true and score must be 0-3
-- comments must be simple English
-- keep feedback friendly for kids
-- if writing is good, keep corrections empty
-- no text outside JSON
-`;
   }
 
   private normalizeFeedbackScore(
