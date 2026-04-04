@@ -342,43 +342,64 @@ private readonly promptLetter = `
 
 private buildFeedbackPrompt(practice: Practice, studentWriting: string): string {
     return `
-Bạn đang chấm bài tập tiếng Anh của học sinh lớp 1 (A0–A1).
+      Bạn là một giáo viên tiếng Anh. Hãy chấm điểm bài viết của học sinh dựa trên các tiêu chí sau:
 
-Loại bài tập: ${practice.type}
-Bài tập (JSON): ${JSON.stringify(practice.exercise)}
-Bài viết của học sinh: ${studentWriting}
+      ========================
+      TIÊU CHÍ CHẤM ĐIỂM
+      ========================
 
-Chỉ trả về JSON với cấu trúc sau:
-{
-  "score": 0,
-  "relevance_score": 0,
-  "language_score": 0,
-  "completeness_score": 0,
-  "off_topic": false,
-  "comments": "nhận xét ngắn gọn và thân thiện",
-  "corrections": [
-    {
-      "original": "văn bản",
-      "corrected": "văn bản",
-      "reason": "lý do ngắn gọn"
-    }
-  ],
-  "encouragement": "lời động viên tích cực"
-}
+      1. Độ phù hợp với chủ đề (relevance_score):
+         - 10: Hoàn toàn phù hợp
+         - 5: Phần lớn phù hợp
+         - 0: Không phù hợp
 
-Quy tắc:
-- score là số nguyên từ 0–10
-- relevance_score là số nguyên từ 0–4
-- language_score là số nguyên từ 0–3
-- completeness_score là số nguyên từ 0–3
-- score phải bằng relevance_score + language_score + completeness_score
-- Nếu học sinh lạc đề, đặt off_topic=true và score phải từ 0–3
-- comments phải bằng tiếng Việt đơn giản
-- giữ nhận xét thân thiện với trẻ em
-- nếu bài viết tốt, để corrections trống
-- không trả về văn bản ngoài JSON
-`;
+      2. Ngôn ngữ (language_score):
+         - 10: Không có lỗi ngữ pháp, từ vựng phong phú
+         - 5: Một vài lỗi nhỏ, từ vựng cơ bản
+         - 0: Nhiều lỗi nghiêm trọng
+
+      3. Độ đầy đủ (completeness_score):
+         - 10: Đầy đủ ý, rõ ràng
+         - 5: Thiếu một vài ý
+         - 0: Thiếu nhiều ý
+
+      ========================
+      YÊU CẦU ĐẦU RA
+      ========================
+
+      Trả về JSON với định dạng sau:
+
+      {
+        "score": <Tổng điểm>,
+        "relevance_score": <Điểm độ phù hợp>,
+        "language_score": <Điểm ngôn ngữ>,
+        "completeness_score": <Điểm độ đầy đủ>,
+        "off_topic": <true | false>,
+        "comments": "<Nhận xét chi tiết>",
+        "corrections": [<Các chỉnh sửa cần thiết>],
+        "encouragement": "<Lời động viên>"
+      }
+
+      ========================
+      BÀI VIẾT CỦA HỌC SINH
+      ========================
+
+      Bài viết của học sinh bao gồm nhiều câu, mỗi câu được phân tách bằng \n. Hãy đánh giá từng câu riêng biệt và đảm bảo rằng:
+      - Mỗi câu được so sánh với bài tập tương ứng.
+      - Nếu đánh giá là "không sát chủ đề", hãy giải thích lý do cụ thể.
+
+      ${studentWriting}
+
+      ========================
+      BÀI TẬP
+      ========================
+
+      ${JSON.stringify(practice.exercise)}
+
+      Hãy chấm điểm và đưa ra nhận xét chi tiết, lời động viên để học sinh cải thiện.
+    `;
   }
+
   async create(createPracticeDto: CreatePracticeDto): Promise<Practice> {
     const hasExercise =
       createPracticeDto.exercise !== undefined && createPracticeDto.exercise !== null;
@@ -522,8 +543,8 @@ Quy tắc:
     const chat = this.genAI.chats.create({
       model: this.modelName,
       config: {
-        maxOutputTokens: 1200,
-        temperature: 0.4,
+        maxOutputTokens: 90000, // Tăng giới hạn token để đảm bảo đầu ra dài hơn
+        temperature: 0.7, // Tăng tính ngẫu nhiên để nhận xét đa dạng hơn
         responseMimeType: 'application/json',
       },
     });
@@ -531,20 +552,38 @@ Quy tắc:
     try {
       const result = await chat.sendMessage({ message: feedbackPrompt });
       const parsed = this.extractJsonObject(result.text || '');
+
       if (!('score' in parsed) || !('comments' in parsed)) {
         throw new BadRequestException('Invalid feedback structure from Gemini');
       }
+
+      // Chuyển đổi thang điểm sang 100 và đảm bảo nhận xét dài hơn
+      parsed.score = (Number(parsed.score) || 0) * 10;
+      parsed.relevance_score = (Number(parsed.relevance_score) || 0) * 10;
+      parsed.language_score = (Number(parsed.language_score) || 0) * 10;
+      parsed.completeness_score = (Number(parsed.completeness_score) || 0) * 10;
+
+      // Ensure all scores are numbers before summing
+      parsed.total_score = (Number(parsed.score) || 0) + (Number(parsed.relevance_score) || 0) + (Number(parsed.language_score) || 0) + (Number(parsed.completeness_score) || 0);
+
+      // Ensure comments are split into multiple sentences for clarity
+      parsed.comments = parsed.comments || 'Bài viết của bạn cần sát với chủ đề hơn.\nHãy cố gắng viết đúng yêu cầu và sử dụng các câu đơn giản.\nVí dụ: "Tôi thấy một con mèo lớn màu đen."';
+      parsed.comments += '\nBài viết cần thêm chi tiết và ví dụ cụ thể để làm rõ ý hơn.\nHãy thử viết thêm về cảm xúc hoặc lý do bạn thích các hoạt động này.';
+
+      parsed.encouragement = parsed.encouragement || 'Bạn đã làm tốt khi cố gắng viết.\nHãy tiếp tục luyện tập và sử dụng các câu ngắn, đơn giản để cải thiện bài viết của mình.';
+      parsed.encouragement += '\nĐừng ngại thử thêm các câu mô tả chi tiết hơn để làm bài viết sinh động hơn.';
+
       return this.normalizeFeedbackScore(parsed, practice, studentWriting);
     } catch {
       return {
-        score: 3,
-        relevance_score: 1,
-        language_score: 1,
-        completeness_score: 1,
+        score: 30,
+        relevance_score: 10,
+        language_score: 10,
+        completeness_score: 10,
         off_topic: true,
-        comments: 'Your writing is not close to the exercise topic. Please answer the task directly.',
+        comments: 'Bài viết của bạn không sát với chủ đề. Hãy trả lời đúng yêu cầu của bài tập. Bài viết cần thêm chi tiết và ví dụ cụ thể để làm rõ ý hơn.',
         corrections: [],
-        encouragement: 'Try again. You can do it with short simple sentences.',
+        encouragement: 'Hãy thử lại. Bạn có thể làm được với các câu ngắn và đơn giản. Đừng ngại thử thêm các câu mô tả chi tiết hơn để làm bài viết sinh động hơn.',
       };
     }
   }
