@@ -441,9 +441,9 @@ Quy tắc:
       throw new NotFoundException('User not found');
     }
 
-    if (user.accountPackage !== PackageType.VIP) {
+    if (user.accountPackage !== PackageType.PREMIUM) {
       throw new ForbiddenException(
-        'Tinh nang luyen viet voi AI chi danh cho tai khoan VIP.',
+        'Tinh nang luyen viet voi AI chi danh cho tai khoan PREMIUM.',
       );
     }
   }
